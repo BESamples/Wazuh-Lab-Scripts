@@ -1,18 +1,26 @@
 # Wazuh Windows Agent Lab Scripts
 
-PowerShell scripts for quickly setting up and removing the Wazuh Windows Agent in a lab environment.
-
-These scripts are intended for Windows lab VMs used with a Wazuh server.
+PowerShell scripts to install and remove the Wazuh Windows Agent in a lab environment.
 
 ---
 
-## Scripts Included
+## 📁 Scripts
 
 | Script | Purpose |
-|---|---|
-| `setup-wazuh-agent.ps1` | Installs Wazuh Agent, sets agent name, enables Windows logon auditing, enables PowerShell logging, and configures PowerShell event collection |
-| `uninstall-wazuh-agent.ps1` | Stops and removes the Wazuh Agent, deletes leftover files, and offers a reboot |
+|------|--------|
+| `setup-wazuh-agent.ps1` | Installs Wazuh Agent, enables logging, configures system |
+| `uninstall-wazuh-agent.ps1` | Removes Wazuh Agent and cleans up system |
 
+---
+
+## ⚠️ IMPORTANT — PowerShell Execution Policy
+
+Windows blocks unsigned scripts by default.
+
+Before running **ANY script**, run:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ---
 
 ## Requirements
