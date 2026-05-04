@@ -8,38 +8,41 @@ PowerShell scripts to install and remove the Wazuh Windows Agent in a lab enviro
 
 | Script | Purpose |
 |------|--------|
-| `setup-wazuh-agent.ps1` | Installs Wazuh Agent, enables logging, configures system |
-| `uninstall-wazuh-agent.ps1` | Removes Wazuh Agent and cleans up system |
+| `manage-wazuh-agent.ps1` | Interactive script to install OR uninstall the Wazuh Agent with safety checks |
+| `setup-wazuh-agent.ps1` *(legacy)* | Installs Wazuh Agent (replaced by manage script) |
+| `uninstall-wazuh-agent.ps1` *(legacy)* | Removes Wazuh Agent (replaced by manage script) |
 
 ---
 
-## ⚠️ IMPORTANT — PowerShell Execution Policy
+## 🧠 manage-wazuh-agent.ps1 (Recommended)
 
-Windows blocks unsigned scripts by default.
+This is the primary script and replaces both setup and uninstall scripts.
 
-Before running **ANY script**, run:
+### 🔧 Features
+
+- Detects if Wazuh Agent is already installed
+- Prevents reinstall if agent exists
+- Prevents uninstall if agent is not installed
+- Prompts user for:
+  - Wazuh Manager IP
+  - Agent name
+  - Installer file name
+- Installs Wazuh Agent
+- Starts and configures the service
+- Enables:
+  - Windows logon auditing
+  - PowerShell Script Block Logging
+- Configures PowerShell log collection in Wazuh
+- Uninstalls Wazuh Agent cleanly
+- Removes leftover files
+- Prompts for reboot after install or uninstall
+
+---
+
+## 🚀 Usage
+
+Run PowerShell as Administrator:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 .\manage-wazuh-agent.ps1
-.\setup-wazuh-agent.ps1
-.\uninstall-wazuh-agent.ps1
----
-
-## Requirements
-
-- Windows VM
-- PowerShell run as Administrator
-- Wazuh server already installed and reachable
-- Wazuh Agent MSI downloaded to the Windows VM
-- Example MSI: `wazuh-agent-4.14.5-1.msi`
-
----
-
-## 1. Install Wazuh Server First
-
-Install Wazuh on Ubuntu before installing agents.
-
-```bash
-curl -sO https://packages.wazuh.com/x.xx/wazuh-install.sh
-sudo bash ./wazuh-install.sh -a
