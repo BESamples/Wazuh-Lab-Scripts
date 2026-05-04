@@ -8,9 +8,9 @@ PowerShell scripts to install and remove the Wazuh Windows Agent in a lab enviro
 
 | Script | Purpose |
 |------|--------|
-| `manage-wazuh-agent.ps1` | Interactive script to install OR uninstall the Wazuh Agent with safety checks |
-| `setup-wazuh-agent.ps1` *(legacy)* | Installs Wazuh Agent (replaced by manage script) |
-| `uninstall-wazuh-agent.ps1` *(legacy)* | Removes Wazuh Agent (replaced by manage script) |
+| [manage-wazuh-agent.ps1](./manage-wazuh-agent.ps1) | Interactive script to install OR uninstall the Wazuh Agent |
+| [setup-wazuh-agent.ps1](./setup-wazuh-agent.ps1) | Legacy install script |
+| [uninstall-wazuh-agent.ps1](./uninstall-wazuh-agent.ps1) | Legacy uninstall script |
 
 ---
 
