@@ -1,7 +1,7 @@
 ﻿# Run PowerShell as Administrator
 
 $WazuhManager = "Change_ME"
-$AgentName    = "WinLab1"
+$AgentName    = "Change_Name"
 $Installer    = "wazuh-agent-4.14.5-1.msi"
 $DownloadPath = "$env:USERPROFILE\Downloads\$Installer"
 
