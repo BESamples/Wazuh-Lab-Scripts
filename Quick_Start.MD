@@ -1,6 +1,6 @@
 ⚡ WAZUH LAB QUICK START (Morning Reset Guide)
 🧱 1. Install Wazuh (Ubuntu)
-curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
+curl -sO https://packages.wazuh.com/4.xx/wazuh-install.sh
 sudo bash ./wazuh-install.sh -a
 
 Get IP:
