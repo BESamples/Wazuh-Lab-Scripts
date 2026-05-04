@@ -1,6 +1,7 @@
 Download Manage Script
 Open the Powershell in Admin mode
 Copy and paste this command
+In the "YOURNAME" change to GitHub owner Profile name.
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/YOURNAME/wazuh-lab-scripts/main/manage-wazuh-agent.ps1" -OutFile manage-wazuh-agent.ps1
 Run Script(copy and paste)
 .\manage-wazuh-agent.ps1
