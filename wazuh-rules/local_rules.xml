@@ -1,0 +1,18 @@
+ <group name="local,windows,powershell">
+
+  <rule id="100100" level="8">
+    <if_sid>60122</if_sid>
+    <description>Custom: Failed Login</description>
+  </rule>
+
+  <rule id="100101" level="5">
+    <if_sid>60118</if_sid>
+    <description>Custom: Successful Login</description>
+  </rule>
+
+  <rule id="100200" level="8">
+    <if_sid>91815</if_sid>
+    <description>Custom: Powershell execution</description>
+  </rule>
+
+ </group>
