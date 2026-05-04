@@ -36,11 +36,14 @@ Installer = wazuh-agent-*.msi
 cd /home/labadmin
 git clone https://github.com/BESamples/Wazuh-Lab-Scripts.git
 cd wazuh-lab-scripts/wazuh-rules
+
 💾 4. Apply Rules
 sudo cp local_rules.xml /var/ossec/etc/rules/local_rules.xml
+
 🔎 5. Validate + Restart
 sudo /var/ossec/bin/wazuh-analysisd -t
 sudo systemctl restart wazuh-manager
+
 🔍 6. Verify in Dashboard
 
 Search:
