@@ -21,6 +21,9 @@ Before running **ANY script**, run:
 
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\manage-wazuh-agent.ps1
+.\setup-wazuh-agent.ps1
+.\uninstall-wazuh-agent.ps1
 ---
 
 ## Requirements
