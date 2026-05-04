@@ -30,5 +30,5 @@ These scripts are intended for Windows lab VMs used with a Wazuh server.
 Install Wazuh on Ubuntu before installing agents.
 
 ```bash
-curl -sO https://packages.wazuh.com/4.7/wazuh-install.sh
+curl -sO https://packages.wazuh.com/x.xx/wazuh-install.sh
 sudo bash ./wazuh-install.sh -a
