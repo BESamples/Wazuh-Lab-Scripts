@@ -1,6 +1,6 @@
 # manage-wazuh-agent.ps1
 # Run as Administrator
-# Version 1.03
+# Version 1.04
 
 # ============================================================
 # SECTION 1 - ADMIN CHECK
@@ -127,7 +127,72 @@ if (!(Test-Path $InstallerPath)) {
 Write-Host "Using installer: $InstallerPath" -ForegroundColor Green
 
     # ------------------------------------------------------------
-    # SECTION 4E - INSTALL WAZUH AGENT
+    # SECTION 4E - CONFIRM INSTALL SETTINGS / ALLOW CORRECTIONS
+    # ------------------------------------------------------------
+    do {
+        Write-Host ""
+        Write-Host "===== INSTALL SUMMARY =====" -ForegroundColor Cyan
+        Write-Host "1. Wazuh Manager IP : $WazuhManager"
+        Write-Host "2. Agent Name       : $AgentName"
+        Write-Host "3. Installer        : $Installer"
+        Write-Host "4. Proceed with install"
+        Write-Host "5. Cancel install"
+        Write-Host ""
+
+        $ConfirmChoice = Read-Host "Enter 1-3 to correct, 4 to install, or 5 to cancel"
+
+        switch ($ConfirmChoice) {
+            "1" {
+                $WazuhManager = Read-Host "Enter corrected Wazuh Manager IP address"
+            }
+
+            "2" {
+                $DefaultAgentName = $env:COMPUTERNAME
+                $NewAgentName = Read-Host "Enter corrected Agent Name or press Enter to use [$DefaultAgentName]"
+
+                if ([string]::IsNullOrWhiteSpace($NewAgentName)) {
+                    $AgentName = $DefaultAgentName
+                } else {
+                    $AgentName = $NewAgentName
+                }
+            }
+
+            "3" {
+                $Installer = Read-Host "Enter corrected installer filename from Downloads"
+                $InstallerPath = Join-Path $DownloadPath $Installer
+
+                if (!(Test-Path $InstallerPath)) {
+                    Write-Host "ERROR: Installer not found:" -ForegroundColor Red
+                    Write-Host $InstallerPath
+                } else {
+                    Write-Host "Installer updated: $InstallerPath" -ForegroundColor Green
+                }
+            }
+
+            "4" {
+                if (!(Test-Path $InstallerPath)) {
+                    Write-Host "ERROR: Installer path is invalid. Correct option 3 before installing." -ForegroundColor Red
+                } else {
+                    $ProceedInstall = $true
+                }
+            }
+
+            "5" {
+                Write-Host "Install cancelled." -ForegroundColor Yellow
+                exit 0
+            }
+
+            default {
+                Write-Host "Invalid choice. Please enter 1, 2, 3, 4, or 5." -ForegroundColor Yellow
+            }
+        }
+
+    } until ($ProceedInstall -eq $true)
+
+
+
+    # ------------------------------------------------------------
+    # SECTION 4F - INSTALL WAZUH AGENT
     # ------------------------------------------------------------
     Write-Host "Installing Wazuh Agent as [$AgentName]..." -ForegroundColor Yellow
 
@@ -141,14 +206,14 @@ Write-Host "Using installer: $InstallerPath" -ForegroundColor Green
 
 
     # ------------------------------------------------------------
-    # SECTION 4F - START WAZUH SERVICE
+    # SECTION 4G - START WAZUH SERVICE
     # ------------------------------------------------------------
     Write-Host "Starting Wazuh service..."
     Start-Service WazuhSvc -ErrorAction SilentlyContinue
 
 
     # ------------------------------------------------------------
-    # SECTION 4G - ENABLE WINDOWS LOGON AUDITING
+    # SECTION 4H - ENABLE WINDOWS LOGON AUDITING
     # ------------------------------------------------------------
     Write-Host "Enabling Windows logon auditing..."
     auditpol /set /subcategory:"Logon" /failure:enable
@@ -156,7 +221,7 @@ Write-Host "Using installer: $InstallerPath" -ForegroundColor Green
 
 
     # ------------------------------------------------------------
-    # SECTION 4H - ENABLE POWERSHELL SCRIPT BLOCK LOGGING
+    # SECTION 4I - ENABLE POWERSHELL SCRIPT BLOCK LOGGING
     # ------------------------------------------------------------
     Write-Host "Enabling PowerShell Script Block Logging..."
     New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging" -Force | Out-Null
@@ -168,7 +233,7 @@ Write-Host "Using installer: $InstallerPath" -ForegroundColor Green
 
 
     # ------------------------------------------------------------
-    # SECTION 4I - ADD POWERSHELL EVENT LOG COLLECTION TO OSSEC.CONF
+    # SECTION 4J - ADD POWERSHELL EVENT LOG COLLECTION TO OSSEC.CONF
     # ------------------------------------------------------------
     $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
 
@@ -196,14 +261,14 @@ Write-Host "Using installer: $InstallerPath" -ForegroundColor Green
 
 
     # ------------------------------------------------------------
-    # SECTION 4J - RESTART WAZUH SERVICE
+    # SECTION 4K - RESTART WAZUH SERVICE
     # ------------------------------------------------------------
     Write-Host "Restarting Wazuh service..."
     Restart-Service WazuhSvc -ErrorAction SilentlyContinue
 
 
     # ------------------------------------------------------------
-    # SECTION 4K - INSTALL COMPLETE / REBOOT OPTION
+    # SECTION 4L - INSTALL COMPLETE / REBOOT OPTION
     # ------------------------------------------------------------
     Write-Host ""
     Write-Host "Install complete." -ForegroundColor Green
