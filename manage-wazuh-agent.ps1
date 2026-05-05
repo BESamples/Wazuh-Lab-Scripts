@@ -1,6 +1,6 @@
 # manage-wazuh-agent.ps1
 # Run as Administrator
-# Verison 2
+# Version 1.02
 
 # ============================================================
 # SECTION 1 - ADMIN CHECK
@@ -77,68 +77,25 @@ if ($Choice -eq "1") {
 
 
     # ------------------------------------------------------------
-    # SECTION 4D - FIND LATEST WAZUH WINDOWS AGENT INSTALLER
-    # This checks Wazuh's package directory for newest MSI
-    # Example match: wazuh-agent-4.14.5-1.msi
-    # Future match:  wazuh-agent-5.0.0-1.msi
+    # SECTION 4D - ENTER WINDOWS AGENT INSTALLER FILENAME
+    # Installer must already be in the current user's Downloads folder
+    # Example: wazuh-agent-4.14.5-1.msi
     # ------------------------------------------------------------
-    $PackagePage = "https://packages.wazuh.com/4.x/windows/"
-    $DownloadFolder = "$env:TEMP"
-
-    Write-Host "Checking Wazuh package site for latest Windows agent..." -ForegroundColor Yellow
-
-    try {
-        $Page = Invoke-WebRequest -Uri $PackagePage -UseBasicParsing
-    }
-    catch {
-        Write-Host "ERROR: Could not reach Wazuh package site." -ForegroundColor Red
-        Write-Host $_.Exception.Message
-        exit 1
-    }
-
-    $LatestInstaller = $Page.Links.href |
-        Where-Object { $_ -match '^wazuh-agent-[0-9]+\.[0-9]+\.[0-9]+-\d+\.msi$' } |
-        Sort-Object {
-            if ($_ -match 'wazuh-agent-(\d+)\.(\d+)\.(\d+)-(\d+)\.msi') {
-                [version]"$($Matches[1]).$($Matches[2]).$($Matches[3]).$($Matches[4])"
-            }
-        } -Descending |
-        Select-Object -First 1
-
-    if (-not $LatestInstaller) {
-        Write-Host "ERROR: Could not find Wazuh agent MSI on package page." -ForegroundColor Red
-        exit 1
-    }
-
-    $InstallerUrl = "$PackagePage$LatestInstaller"
-    $InstallerPath = Join-Path $DownloadFolder $LatestInstaller
-
-    Write-Host "Latest installer found: $LatestInstaller" -ForegroundColor Green
-
-
-    # ------------------------------------------------------------
-    # SECTION 4E - DOWNLOAD LATEST INSTALLER
-    # ------------------------------------------------------------
-    Write-Host "Downloading installer..." -ForegroundColor Yellow
-
-    try {
-        Invoke-WebRequest -Uri $InstallerUrl -OutFile $InstallerPath -UseBasicParsing
-    }
-    catch {
-        Write-Host "ERROR: Installer download failed." -ForegroundColor Red
-        Write-Host $_.Exception.Message
-        exit 1
-    }
+    $Installer = Read-Host "Enter installer filename from Downloads, example wazuh-agent-4.14.5-1.msi"
+    $InstallerPath = "$env:USERPROFILE\Downloads\$Installer"
 
     if (!(Test-Path $InstallerPath)) {
-        Write-Host "ERROR: Installer was not found after download." -ForegroundColor Red
+        Write-Host "ERROR: Installer not found:" -ForegroundColor Red
         Write-Host $InstallerPath
+        Write-Host "Download the Wazuh Windows agent MSI first, then run this script again."
         exit 1
     }
 
+    Write-Host "Installer found: $InstallerPath" -ForegroundColor Green
+
 
     # ------------------------------------------------------------
-    # SECTION 4F - INSTALL WAZUH AGENT
+    # SECTION 4E - INSTALL WAZUH AGENT
     # ------------------------------------------------------------
     Write-Host "Installing Wazuh Agent as [$AgentName]..." -ForegroundColor Yellow
 
@@ -152,14 +109,14 @@ if ($Choice -eq "1") {
 
 
     # ------------------------------------------------------------
-    # SECTION 4G - START WAZUH SERVICE
+    # SECTION 4F - START WAZUH SERVICE
     # ------------------------------------------------------------
     Write-Host "Starting Wazuh service..."
     Start-Service WazuhSvc -ErrorAction SilentlyContinue
 
 
     # ------------------------------------------------------------
-    # SECTION 4H - ENABLE WINDOWS LOGON AUDITING
+    # SECTION 4G - ENABLE WINDOWS LOGON AUDITING
     # ------------------------------------------------------------
     Write-Host "Enabling Windows logon auditing..."
     auditpol /set /subcategory:"Logon" /failure:enable
@@ -167,7 +124,7 @@ if ($Choice -eq "1") {
 
 
     # ------------------------------------------------------------
-    # SECTION 4I - ENABLE POWERSHELL SCRIPT BLOCK LOGGING
+    # SECTION 4H - ENABLE POWERSHELL SCRIPT BLOCK LOGGING
     # ------------------------------------------------------------
     Write-Host "Enabling PowerShell Script Block Logging..."
     New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging" -Force | Out-Null
@@ -179,7 +136,7 @@ if ($Choice -eq "1") {
 
 
     # ------------------------------------------------------------
-    # SECTION 4J - ADD POWERSHELL EVENT LOG COLLECTION TO OSSEC.CONF
+    # SECTION 4I - ADD POWERSHELL EVENT LOG COLLECTION TO OSSEC.CONF
     # ------------------------------------------------------------
     $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
 
@@ -207,14 +164,14 @@ if ($Choice -eq "1") {
 
 
     # ------------------------------------------------------------
-    # SECTION 4K - RESTART WAZUH SERVICE
+    # SECTION 4J - RESTART WAZUH SERVICE
     # ------------------------------------------------------------
     Write-Host "Restarting Wazuh service..."
     Restart-Service WazuhSvc -ErrorAction SilentlyContinue
 
 
     # ------------------------------------------------------------
-    # SECTION 4L - INSTALL COMPLETE / REBOOT OPTION
+    # SECTION 4K - INSTALL COMPLETE / REBOOT OPTION
     # ------------------------------------------------------------
     Write-Host ""
     Write-Host "Install complete." -ForegroundColor Green
