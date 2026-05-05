@@ -1,0 +1,7 @@
+ <auth>
+   <disabled>no</disabled>
+   <port>1515</port>
+   <use_source_ip>no</no_source_ip>
+   <remote_enrollment>yes</remote_enrollment>
+ </auth>
+
