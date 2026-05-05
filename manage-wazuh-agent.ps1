@@ -1,6 +1,6 @@
 # manage-wazuh-agent.ps1
 # Run as Administrator
-# Version 1.02.1
+# Version 1.03
 
 # ============================================================
 # SECTION 1 - ADMIN CHECK
@@ -77,32 +77,43 @@ if ($Choice -eq "1") {
 
 
 # ------------------------------------------------------------
-# SECTION 4D - DETECT INSTALLER IN DOWNLOADS (SMART PICK)
+# SECTION 4D - SELECT INSTALLER FROM DOWNLOADS
 # ------------------------------------------------------------
 
 $DownloadPath = "$env:USERPROFILE\Downloads"
 
-$DetectedInstaller = Get-ChildItem -Path $DownloadPath -Filter "wazuh-agent-*.msi" -ErrorAction SilentlyContinue |
-    Sort-Object LastWriteTime -Descending |
-    Select-Object -First 1
+$DetectedInstallers = Get-ChildItem -Path $DownloadPath -Filter "wazuh-agent-*.msi" -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending
 
-if ($DetectedInstaller) {
+if ($DetectedInstallers) {
 
-    Write-Host "Detected installer in Downloads:" -ForegroundColor Green
-    Write-Host $DetectedInstaller.Name
+    Write-Host ""
+    Write-Host "Wazuh installers found in Downloads:" -ForegroundColor Green
 
-    $InstallerInput = Read-Host "Press Enter to use this file OR type a different filename"
+    for ($i = 0; $i -lt $DetectedInstallers.Count; $i++) {
+        Write-Host "$($i + 1). $($DetectedInstallers[$i].Name)"
+    }
 
-    if ([string]::IsNullOrWhiteSpace($InstallerInput)) {
-        $Installer = $DetectedInstaller.Name
-    } else {
-        $Installer = $InstallerInput
+    Write-Host ""
+    Write-Host "Press Enter to use the newest installer:"
+    Write-Host "$($DetectedInstallers[0].Name)" -ForegroundColor Yellow
+
+    $InstallerChoice = Read-Host "Enter number, press Enter, or type a filename manually"
+
+    if ([string]::IsNullOrWhiteSpace($InstallerChoice)) {
+        $Installer = $DetectedInstallers[0].Name
+    }
+    elseif ($InstallerChoice -match '^\d+$' -and [int]$InstallerChoice -ge 1 -and [int]$InstallerChoice -le $DetectedInstallers.Count) {
+        $Installer = $DetectedInstallers[[int]$InstallerChoice - 1].Name
+    }
+    else {
+        $Installer = $InstallerChoice
     }
 
 } else {
 
     Write-Host "No Wazuh installer found in Downloads." -ForegroundColor Yellow
-    $Installer = Read-Host "Enter installer filename manually (example: wazuh-agent-4.14.5-1.msi)"
+    $Installer = Read-Host "Enter installer filename manually, example wazuh-agent-4.14.5-1.msi"
 }
 
 $InstallerPath = Join-Path $DownloadPath $Installer
@@ -114,7 +125,6 @@ if (!(Test-Path $InstallerPath)) {
 }
 
 Write-Host "Using installer: $InstallerPath" -ForegroundColor Green
-
 
     # ------------------------------------------------------------
     # SECTION 4E - INSTALL WAZUH AGENT
