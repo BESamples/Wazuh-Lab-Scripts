@@ -1,6 +1,7 @@
 # manage-wazuh-agent.ps1
 # Run as Administrator
 # Version 1.04
+# Added installer selection menu + confirmation screen with correction options
 
 # ============================================================
 # SECTION 1 - ADMIN CHECK
