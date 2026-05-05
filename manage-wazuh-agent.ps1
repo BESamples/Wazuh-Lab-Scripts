@@ -1,6 +1,6 @@
 # manage-wazuh-agent.ps1
 # Run as Administrator
-# Version 1.02
+# Version 1.02.1
 
 # ============================================================
 # SECTION 1 - ADMIN CHECK
@@ -76,22 +76,44 @@ if ($Choice -eq "1") {
     }
 
 
-    # ------------------------------------------------------------
-    # SECTION 4D - ENTER WINDOWS AGENT INSTALLER FILENAME
-    # Installer must already be in the current user's Downloads folder
-    # Example: wazuh-agent-4.14.5-1.msi
-    # ------------------------------------------------------------
-    $Installer = Read-Host "Enter installer filename from Downloads, example wazuh-agent-4.14.5-1.msi"
-    $InstallerPath = "$env:USERPROFILE\Downloads\$Installer"
+# ------------------------------------------------------------
+# SECTION 4D - DETECT INSTALLER IN DOWNLOADS (SMART PICK)
+# ------------------------------------------------------------
 
-    if (!(Test-Path $InstallerPath)) {
-        Write-Host "ERROR: Installer not found:" -ForegroundColor Red
-        Write-Host $InstallerPath
-        Write-Host "Download the Wazuh Windows agent MSI first, then run this script again."
-        exit 1
+$DownloadPath = "$env:USERPROFILE\Downloads"
+
+$DetectedInstaller = Get-ChildItem -Path $DownloadPath -Filter "wazuh-agent-*.msi" -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+
+if ($DetectedInstaller) {
+
+    Write-Host "Detected installer in Downloads:" -ForegroundColor Green
+    Write-Host $DetectedInstaller.Name
+
+    $InstallerInput = Read-Host "Press Enter to use this file OR type a different filename"
+
+    if ([string]::IsNullOrWhiteSpace($InstallerInput)) {
+        $Installer = $DetectedInstaller.Name
+    } else {
+        $Installer = $InstallerInput
     }
 
-    Write-Host "Installer found: $InstallerPath" -ForegroundColor Green
+} else {
+
+    Write-Host "No Wazuh installer found in Downloads." -ForegroundColor Yellow
+    $Installer = Read-Host "Enter installer filename manually (example: wazuh-agent-4.14.5-1.msi)"
+}
+
+$InstallerPath = Join-Path $DownloadPath $Installer
+
+if (!(Test-Path $InstallerPath)) {
+    Write-Host "ERROR: Installer not found:" -ForegroundColor Red
+    Write-Host $InstallerPath
+    exit 1
+}
+
+Write-Host "Using installer: $InstallerPath" -ForegroundColor Green
 
 
     # ------------------------------------------------------------
