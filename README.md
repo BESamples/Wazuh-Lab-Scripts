@@ -30,7 +30,7 @@ It provides one menu to either install or uninstall the Wazuh Agent safely.
   - Wazuh Manager IP
   - Agent name
   - Wazuh installer MSI file name
-- Installs Wazuh Agent from the Downloads folder
+- Downloads and installs Wazuh Agent automatically
 - Starts the Wazuh service
 - Enables Windows logon auditing
 - Enables PowerShell Script Block Logging
