@@ -179,7 +179,7 @@ while true; do
       pause
       ;;
 
-       14)
+          14)
       read -p "Enter Windows Agent IP: " AGENTIP
 
       echo "Testing connectivity to agent..."
@@ -313,7 +313,7 @@ while true; do
       ;;
 
     *)
-      echo "Invalid option. Choose 0-13."
+      echo "Invalid option. Choose 0-20."
       pause
       ;;
   esac
