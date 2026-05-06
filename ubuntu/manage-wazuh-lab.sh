@@ -41,6 +41,13 @@ while true; do
   echo "11) Check agent list"
   echo "12) Git pull"
   echo "13) Git add / commit / push"
+  echo "14) Test Windows agent connectivity"
+  echo "15) Check Wazuh logs live"
+  echo "16) Restore ossec.conf backup"
+  echo "17) Enable/disable auto-enroll"
+  echo "18) Show current Wazuh IP"
+  echo "19) Open dashboard URL helper"
+  echo "20) Update entire lab from GitHub"
   echo "0) Exit"
   echo "======================================"
   read -p "Choose an option: " choice
@@ -172,6 +179,134 @@ while true; do
       pause
       ;;
 
+       14)
+      read -p "Enter Windows Agent IP: " AGENTIP
+
+      echo "Testing connectivity to agent..."
+      ping -c 4 "$AGENTIP"
+
+      echo
+      echo "Checking Wazuh registration port 1514..."
+      nc -zv "$AGENTIP" 1514
+
+      pause
+      ;;
+
+    15)
+      sudo tail -f /var/ossec/logs/ossec.log
+      ;;
+
+    16)
+      LATEST=$(ls -t "$BACKUP_DIR"/ossec.conf.backup-* 2>/dev/null | head -n 1)
+
+      if [ -z "$LATEST" ]; then
+        echo "No ossec.conf backup found."
+      else
+        echo "Restoring: $LATEST"
+
+        sudo cp "$LATEST" "$ACTIVE_OSSEC"
+
+        echo "Testing config..."
+        sudo /var/ossec/bin/wazuh-analysisd -t
+
+        echo "Restarting wazuh-manager..."
+        sudo systemctl restart wazuh-manager
+      fi
+
+      pause
+      ;;
+
+    17)
+      echo "======================================"
+      echo "1) Enable auto-enroll"
+      echo "2) Disable auto-enroll"
+      echo "======================================"
+
+      read -p "Choose: " AUTO
+
+      backup_file "$ACTIVE_OSSEC" "ossec.conf"
+
+      if [ "$AUTO" = "1" ]; then
+        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
+        sudo sed -i "/<\/ossec_config>/e cat $AUTOENROLL_SNIPPET" "$ACTIVE_OSSEC"
+
+        echo "Auto-enroll ENABLED."
+
+      elif [ "$AUTO" = "2" ]; then
+        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
+
+        echo "Auto-enroll DISABLED."
+
+      else
+        echo "Invalid selection."
+      fi
+
+      sudo systemctl restart wazuh-manager
+
+      pause
+      ;;
+
+    18)
+      echo "Current Wazuh Manager IP:"
+      hostname -I | awk '{print $1}'
+
+      pause
+      ;;
+
+    19)
+      IP=$(hostname -I | awk '{print $1}')
+
+      echo
+      echo "======================================"
+      echo "        Wazuh Dashboard URL"
+      echo "======================================"
+      echo
+      echo "https://$IP"
+      echo
+      echo "Default credentials:"
+      echo "Username: admin"
+      echo "Password: Check install output"
+      echo
+      echo "======================================"
+
+      pause
+      ;;
+
+    20)
+      echo "======================================"
+      echo "     Updating Entire Wazuh Lab"
+      echo "======================================"
+
+      cd "$REPO_DIR" || exit
+
+      echo "[+] Pulling latest GitHub updates..."
+      git pull
+
+      echo
+      echo "[+] Reapplying GitHub local_rules.xml..."
+
+      if [ -f "$GITHUB_RULES" ]; then
+        backup_file "$ACTIVE_RULES" "local_rules.xml"
+
+        sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+
+        sudo /var/ossec/bin/wazuh-analysisd -t
+
+        if [ $? -eq 0 ]; then
+          echo "[+] Rules passed."
+          sudo systemctl restart wazuh-manager
+        else
+          echo "[!] Rules failed validation."
+        fi
+      fi
+
+      echo
+      echo "[+] Current wazuh-manager status:"
+      sudo systemctl status wazuh-manager --no-pager
+
+      pause
+      ;;
+     
     0)
       echo "Exiting."
       exit 0
