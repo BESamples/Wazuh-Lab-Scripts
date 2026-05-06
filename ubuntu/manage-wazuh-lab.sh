@@ -118,15 +118,28 @@ while true; do
       pause
       ;;
 
-    9)
+        9)
       if [ ! -f "$AUTOENROLL_SNIPPET" ]; then
         echo "Auto-enroll snippet not found: $AUTOENROLL_SNIPPET"
       else
         backup_file "$ACTIVE_OSSEC" "ossec.conf"
+
         sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
-        sudo sed -i "/<\/ossec_config>/e cat $AUTOENROLL_SNIPPET" "$ACTIVE_OSSEC"
+
+        sudo awk -v snippet="$AUTOENROLL_SNIPPET" '
+          /<\/ossec_config>/ && inserted==0 {
+            while ((getline line < snippet) > 0) print line
+            close(snippet)
+            inserted=1
+          }
+          { print }
+        ' "$ACTIVE_OSSEC" | sudo tee "$ACTIVE_OSSEC.tmp" >/dev/null
+
+        sudo mv "$ACTIVE_OSSEC.tmp" "$ACTIVE_OSSEC"
+
         echo "Restarting wazuh-manager..."
         sudo systemctl restart wazuh-manager
+
         echo "Checking port 1515..."
         sudo ss -tulpn | grep 1515
       fi
