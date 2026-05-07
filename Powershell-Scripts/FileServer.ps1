@@ -15,7 +15,29 @@
 $Port = 8000
 $Folder = Get-Location
 $RuleName = "Wazuh Lab Temp File Server 8000"
-$TimeoutMinutes = 5
+
+while ($true) {
+
+    $TimeoutInput = Read-Host "Enter timeout in minutes (1-1440) or press Enter for 10"
+
+    # Default if blank
+    if ([string]::IsNullOrWhiteSpace($TimeoutInput)) {
+        $TimeoutMinutes = 10
+        break
+    }
+
+    # Validate number
+    if ($TimeoutInput -match '^\d+$') {
+
+        $TimeoutMinutes = [int]$TimeoutInput
+
+        if ($TimeoutMinutes -ge 1 -and $TimeoutMinutes -le 1440) {
+            break
+        }
+    }
+
+    Write-Host "Invalid input. Enter a number between 1 and 1440." -ForegroundColor Red
+}
 
 
 # ============================================================
