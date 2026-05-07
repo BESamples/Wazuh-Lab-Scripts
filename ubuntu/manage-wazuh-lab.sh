@@ -45,7 +45,7 @@ while true; do
   echo "15) Check Wazuh logs live"
   echo "16) Restore ossec.conf backup"
   echo "17) Enable/disable auto-enroll"
-  echo "18) Show current Wazuh IP"
+  echo "18) Show Wazuh dashboard info"
   echo "19) Open dashboard URL helper"
   echo "20) Update entire lab from GitHub"
   echo "0) Exit"
@@ -246,9 +246,26 @@ while true; do
       pause
       ;;
 
-    18)
-      echo "Current Wazuh Manager IP:"
-      hostname -I | awk '{print $1}'
+        18)
+      echo "=============================="
+      echo "   Wazuh Dashboard Info"
+      echo "=============================="
+
+      IP=$(hostname -I | awk '{print $1}')
+
+      echo "Manager IP: $IP"
+      echo "Dashboard URL: https://$IP"
+      echo "Dashboard User: admin"
+      echo
+
+      if [ -f "$REPO_DIR/wazuh-configs/dashboard-admin.txt" ]; then
+        echo -n "Dashboard Password: "
+        cat "$REPO_DIR/wazuh-configs/dashboard-admin.txt"
+      else
+        echo "Dashboard password file not found."
+        echo "Create it with:"
+        echo "nano $REPO_DIR/wazuh-configs/dashboard-admin.txt"
+      fi
 
       pause
       ;;
