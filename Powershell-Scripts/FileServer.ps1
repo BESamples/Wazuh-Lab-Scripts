@@ -15,7 +15,7 @@
 $Port = 8000
 $Folder = Get-Location
 $RuleName = "Wazuh Lab Temp File Server 8000"
-$TimeoutMinutes = 10
+$TimeoutMinutes = 5
 
 
 # ============================================================
