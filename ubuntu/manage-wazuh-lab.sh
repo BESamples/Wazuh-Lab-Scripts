@@ -164,55 +164,132 @@ while true; do
       pause
       ;;
 
-    12)
-      echo "======================================"
-      echo "     Fresh Lab Bootstrap Starting"
-      echo "======================================"
+   12)
+  echo "======================================"
+  echo "     Fresh Lab Bootstrap Starting"
+  echo "======================================"
 
-      cd "$REPO_DIR" || exit
+  cd "$REPO_DIR" || exit
 
-      git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
+  echo "[+] Pulling latest GitHub repo..."
+  git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
 
-      mkdir -p "$BACKUP_DIR"
+  mkdir -p "$BACKUP_DIR"
+  mkdir -p "$LAB_INFO_DIR"
 
-      if [ -f "$GITHUB_RULES" ]; then
-        backup_file "$ACTIVE_RULES" "local_rules.xml"
-        sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
-      fi
+  # -----------------------------
+  # Install Wazuh if not installed
+  # -----------------------------
+  if [ ! -d "/var/ossec" ]; then
+    echo "[+] Wazuh not detected. Installing..."
 
-      if [ -f "$AUTOENROLL_SNIPPET" ]; then
-        backup_file "$ACTIVE_OSSEC" "ossec.conf"
+    cd "$HOME" || exit
 
-        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
+    curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
 
-        sudo awk -v snippet="$AUTOENROLL_SNIPPET" '
-          /<\/ossec_config>/ && inserted==0 {
-            while ((getline line < snippet) > 0) print line
-            close(snippet)
-            inserted=1
-          }
-          { print }
-        ' "$ACTIVE_OSSEC" | sudo tee "$ACTIVE_OSSEC.tmp" >/dev/null
+    sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
 
-        sudo mv "$ACTIVE_OSSEC.tmp" "$ACTIVE_OSSEC"
-      fi
+    echo "[+] Capturing dashboard credentials..."
 
-      echo "[+] Validating configuration..."
-      sudo /var/ossec/bin/wazuh-analysisd -t
+    DASHBOARD_USER=$(grep -i "User:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
+    DASHBOARD_PASS=$(grep -i "Password:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
+    MANAGER_IP=$(hostname -I | awk '{print $1}')
 
-      if [ $? -eq 0 ]; then
-        sudo systemctl restart wazuh-manager
-      else
-        echo "[!] Config failed validation."
-        pause
-        continue
-      fi
+    if [ -z "$DASHBOARD_PASS" ]; then
+      echo "[!] WARNING: Password not detected in install log."
+      DASHBOARD_PASS="NOT FOUND - CHECK LOG"
+    fi
 
-      echo "[+] wazuh-manager status:"
-      sudo systemctl status wazuh-manager --no-pager
+    cat > "$LAB_INFO_FILE" <<EOF
+Dashboard URL: https://$MANAGER_IP
+User: ${DASHBOARD_USER:-admin}
+Password: $DASHBOARD_PASS
+EOF
 
-      echo "[+] Agent list:"
-      sudo /var/ossec/bin/agent_control -l
+    chmod 600 "$LAB_INFO_FILE"
+
+    echo "[+] Dashboard credentials saved:"
+    cat "$LAB_INFO_FILE"
+  else
+    echo "[+] Wazuh already installed. Skipping install."
+  fi
+
+  cd "$REPO_DIR" || exit
+
+  # -----------------------------
+  # Apply rules
+  # -----------------------------
+  if [ -f "$GITHUB_RULES" ]; then
+    echo "[+] Applying local_rules.xml..."
+    backup_file "$ACTIVE_RULES" "local_rules.xml"
+    sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+  else
+    echo "[!] local_rules.xml not found."
+  fi
+
+  # -----------------------------
+  # Apply auto-enroll config
+  # -----------------------------
+  if [ -f "$AUTOENROLL_SNIPPET" ]; then
+    echo "[+] Applying auto-enroll config..."
+
+    backup_file "$ACTIVE_OSSEC" "ossec.conf"
+
+    sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
+
+    sudo awk -v snippet="$AUTOENROLL_SNIPPET" '
+      /<\/ossec_config>/ && inserted==0 {
+        while ((getline line < snippet) > 0) print line
+        close(snippet)
+        inserted=1
+      }
+      { print }
+    ' "$ACTIVE_OSSEC" | sudo tee "$ACTIVE_OSSEC.tmp" >/dev/null
+
+    sudo mv "$ACTIVE_OSSEC.tmp" "$ACTIVE_OSSEC"
+  else
+    echo "[!] Auto-enroll config not found (skipping)"
+  fi
+
+  # -----------------------------
+  # Validate + Restart
+  # -----------------------------
+  echo "[+] Validating Wazuh configuration..."
+  sudo /var/ossec/bin/wazuh-analysisd -t
+
+  if [ $? -eq 0 ]; then
+    echo "[+] Restarting wazuh-manager..."
+    sudo systemctl restart wazuh-manager
+  else
+    echo "[!] Config validation failed."
+    pause
+    continue
+  fi
+
+  # -----------------------------
+  # Final Output
+  # -----------------------------
+  echo
+  echo "[+] wazuh-manager status:"
+  sudo systemctl status wazuh-manager --no-pager
+
+  echo
+  echo "[+] Agent list:"
+  sudo /var/ossec/bin/agent_control -l
+
+  echo
+  echo "======================================"
+  echo "     Bootstrap Complete"
+  echo "======================================"
+
+  if [ -f "$LAB_INFO_FILE" ]; then
+    echo
+    echo "Dashboard Credentials:"
+    cat "$LAB_INFO_FILE"
+  fi
+
+  pause
+  ;;
 
       echo "======================================"
       echo "     Bootstrap Complete"
