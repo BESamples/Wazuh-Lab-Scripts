@@ -291,13 +291,6 @@ EOF
   pause
   ;;
 
-      echo "======================================"
-      echo "     Bootstrap Complete"
-      echo "======================================"
-
-      pause
-      ;;
-
     0)
       echo "Exiting."
       exit 0
