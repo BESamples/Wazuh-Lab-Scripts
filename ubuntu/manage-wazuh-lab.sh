@@ -98,7 +98,7 @@ while true; do
       cd "$REPO_DIR" || exit
 
       # Check if Git identity is set
-if ! git config user.name >/dev/null 2>&1 || ! git config user.email >/dev/null 2>&1; then
+if ! git config --global user.name >/dev/null 2>&1 || ! git config --global user.email >/dev/null 2>&1; then
   echo "[!] Git identity not configured."
 
   read -p "Enter your name for Git: " git_name
@@ -142,12 +142,13 @@ fi
       echo "Username: admin"
 
       if [ -f "$REPO_DIR/wazuh-configs/dashboard-admin.txt" ]; then
-        echo -n "Password: "
-        cat "$REPO_DIR/wazuh-configs/dashboard-admin.txt"
-      else
-        echo "Password file not found."
-      fi
-
+        if [ -f "$LAB_INFO_FILE" ]; then
+  echo "======================================"
+  cat "$LAB_INFO_FILE"
+  echo "======================================"
+else
+  echo "Password file not found."
+fi
       pause
       ;;
 
