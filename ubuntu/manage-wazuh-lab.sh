@@ -139,8 +139,14 @@ while true; do
 
       cd "$REPO_DIR" || exit
 
-      git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
+     if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "[!] You have uncommitted changes."
+  echo "[!] Please run Option 8 (commit) or discard changes before deploying."
+  pause
+  continue
+fi
 
+git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
       if [ ! -f "$GITHUB_RULES" ]; then
         echo "[!] Rules file not found."
         pause
