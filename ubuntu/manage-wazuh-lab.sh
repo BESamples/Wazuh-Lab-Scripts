@@ -169,13 +169,22 @@ while true; do
       pause
       ;;
 
-    13)
+   13)
       cd "$REPO_DIR" || exit
+
+      echo "[+] Syncing with GitHub..."
+      git pull origin main --rebase
+
       git status
+
       read -p "Commit message: " msg
+
       git add .
       git commit -m "$msg"
+
+      echo "[+] Pushing to GitHub..."
       git push
+
       pause
       ;;
 
