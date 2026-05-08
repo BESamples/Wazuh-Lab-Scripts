@@ -10,6 +10,13 @@ INSTALL_LOG="$HOME/Wazuh-Lab-Scripts/wazuh-install-output.log"
 
 mkdir -p "$LAB_INFO_DIR"
 
+# Ignore local-only credential/log files
+grep -qxF "wazuh-configs/dashboard-admin.txt" .gitignore || \
+echo "wazuh-configs/dashboard-admin.txt" >> .gitignore
+
+grep -qxF "wazuh-install-output.log" .gitignore || \
+echo "wazuh-install-output.log" >> .gitignore
+
 cd /home/labadmin || exit
 
 echo "[+] Updating Ubuntu packages..."
@@ -22,7 +29,7 @@ echo "[+] Downloading Wazuh installer..."
 curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
 
 echo "[+] Running Wazuh all-in-one install..."
-sudo bash wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
+sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
 
 echo "Saving Wazuh dashboard login info..."
 
