@@ -379,7 +379,7 @@ while true; do
       ;;
 
     *)
-      echo "Invalid option. Choose 0-20."
+      echo "Invalid option. Choose 0-21."
       pause
       ;;
   esac
