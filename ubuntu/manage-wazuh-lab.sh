@@ -97,6 +97,19 @@ while true; do
     8)
       cd "$REPO_DIR" || exit
 
+      # Check if Git identity is set
+if ! git config user.name >/dev/null 2>&1 || ! git config user.email >/dev/null 2>&1; then
+  echo "[!] Git identity not configured."
+
+  read -p "Enter your name for Git: " git_name
+  read -p "Enter your email for Git: " git_email
+
+  git config --global user.name "$git_name"
+  git config --global user.email "$git_email"
+
+  echo "[+] Git identity configured."
+fi
+
   git status
 
   read -p "Commit message: " msg
