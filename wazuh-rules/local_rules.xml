@@ -15,10 +15,8 @@
     <description>Custom: Powershell execution</description>
   </rule>
 
-<rule id="100300" level="10">
+<rule id="100300" level="10" frequency="5" timeframe="60">
   <if_matched_sid>100100</if_matched_sid>
-  <frequency>3</frequency>
-  <timeframe>30</timeframe>
   <description>Custom: Multiple failed logins detected (possible brute force)</description>
 </rule>
 
