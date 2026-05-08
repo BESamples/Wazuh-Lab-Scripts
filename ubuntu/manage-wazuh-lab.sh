@@ -11,7 +11,6 @@ LAB_INFO_DIR="$REPO_DIR/wazuh-configs"
 LAB_INFO_FILE="$LAB_INFO_DIR/dashboard-admin.txt"
 INSTALL_LOG="$REPO_DIR/wazuh-install-output.log"
 
-
 mkdir -p "$BACKUP_DIR"
 
 pause() {
@@ -97,37 +96,45 @@ while true; do
     8)
       cd "$REPO_DIR" || exit
 
-      # Check if Git identity is set
-if ! git config --global user.name >/dev/null 2>&1 || ! git config --global user.email >/dev/null 2>&1; then
-  echo "[!] Git identity not configured."
+      # Git identity check
+      if ! git config --global user.name >/dev/null 2>&1 || ! git config --global user.email >/dev/null 2>&1; then
+        echo "[!] Git identity not configured."
 
-  read -p "Enter your name for Git: " git_name
-  read -p "Enter your email for Git: " git_email
+        read -p "Enter your name for Git: " git_name
+        read -p "Enter your email for Git: " git_email
 
-  git config --global user.name "$git_name"
-  git config --global user.email "$git_email"
+        git config --global user.name "$git_name"
+        git config --global user.email "$git_email"
 
-  echo "[+] Git identity configured."
-fi
+        echo "[+] Git identity configured."
+      fi
 
-  git status
+      git status
 
-  read -p "Commit message: " msg
+      read -p "Commit message: " msg
+      if [ -z "$msg" ]; then
+        echo "[!] Commit message cannot be empty."
+        pause
+        continue
+      fi
 
-  echo "[+] Staging changes..."
-  git add .
+      echo "[+] Staging changes..."
+      git add .
 
-  echo "[+] Committing..."
-  git commit -m "$msg" || echo "[!] Nothing to commit"
+      echo "[+] Committing..."
+      git commit -m "$msg" || {
+        echo "[!] Nothing to commit."
+      }
 
-  echo "[+] Syncing with GitHub..."
-  git pull origin main --rebase || { echo "[!] Pull failed"; pause; continue; }
+      echo "[+] Syncing with GitHub..."
+      git pull origin main --rebase || { echo "[!] Pull failed"; pause; continue; }
 
-  echo "[+] Pushing to GitHub..."
-  git push
+      echo "[+] Pushing to GitHub..."
+      git push
 
-  pause
-  ;;
+      pause
+      ;;
+
     9)
       sudo tail -f /var/ossec/logs/ossec.log
       ;;
@@ -139,16 +146,13 @@ fi
       echo "   Wazuh Dashboard Info"
       echo "======================================"
       echo "Dashboard URL: https://$IP"
-      echo "Username: admin"
 
-      if [ -f "$REPO_DIR/wazuh-configs/dashboard-admin.txt" ]; then
-        if [ -f "$LAB_INFO_FILE" ]; then
-  echo "======================================"
-  cat "$LAB_INFO_FILE"
-  echo "======================================"
-else
-  echo "Password file not found."
-fi
+      if [ -f "$LAB_INFO_FILE" ]; then
+        cat "$LAB_INFO_FILE"
+      else
+        echo "Dashboard credentials file not found."
+      fi
+
       pause
       ;;
 
@@ -159,14 +163,15 @@ fi
 
       cd "$REPO_DIR" || exit
 
-if ! git diff --quiet || ! git diff --cached --quiet; then
-  echo "[!] You have uncommitted changes."
-  echo "[!] Please run Option 8 or discard changes."
-  pause
-  continue
-fi
+      if ! git diff --quiet || ! git diff --cached --quiet; then
+        echo "[!] You have uncommitted changes."
+        echo "[!] Please run Option 8 or discard changes."
+        pause
+        continue
+      fi
 
-git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
+      git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
+
       if [ ! -f "$GITHUB_RULES" ]; then
         echo "[!] Rules file not found."
         pause
@@ -190,132 +195,105 @@ git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; 
       pause
       ;;
 
-   12)
-  echo "======================================"
-  echo "     Fresh Lab Bootstrap Starting"
-  echo "======================================"
+    12)
+      echo "======================================"
+      echo "     Fresh Lab Bootstrap Starting"
+      echo "======================================"
 
-  cd "$REPO_DIR" || exit
+      cd "$REPO_DIR" || exit
 
-  echo "[+] Pulling latest GitHub repo..."
-  git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
+      git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
 
-  mkdir -p "$BACKUP_DIR"
-  mkdir -p "$LAB_INFO_DIR"
+      mkdir -p "$BACKUP_DIR"
+      mkdir -p "$LAB_INFO_DIR"
 
-  # -----------------------------
-  # Install Wazuh if not installed
-  # -----------------------------
-  if [ ! -d "/var/ossec" ]; then
-    echo "[+] Wazuh not detected. Installing..."
+      # Install Wazuh if not running
+      if ! systemctl is-active --quiet wazuh-manager; then
+        echo "[+] Wazuh not detected. Installing..."
 
-    cd "$HOME" || exit
+        cd "$HOME" || exit
 
-    curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
+        curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
+        sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
 
-    sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
+        echo "[+] Capturing dashboard credentials..."
 
-    echo "[+] Capturing dashboard credentials..."
+        DASHBOARD_USER=$(grep -i "User:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
+        DASHBOARD_PASS=$(grep -i "Password:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
+        MANAGER_IP=$(hostname -I | awk '{print $1}')
 
-    DASHBOARD_USER=$(grep -i "User:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
-    DASHBOARD_PASS=$(grep -i "Password:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
-    MANAGER_IP=$(hostname -I | awk '{print $1}')
+        if [ -z "$DASHBOARD_PASS" ]; then
+          echo "[!] WARNING: Password not detected."
+          DASHBOARD_PASS="NOT FOUND - CHECK LOG"
+        fi
 
-    if [ -z "$DASHBOARD_PASS" ]; then
-      echo "[!] WARNING: Password not detected in install log."
-      DASHBOARD_PASS="NOT FOUND - CHECK LOG"
-    fi
-
-    cat > "$LAB_INFO_FILE" <<EOF
+        cat > "$LAB_INFO_FILE" <<EOF
 Dashboard URL: https://$MANAGER_IP
 User: ${DASHBOARD_USER:-admin}
 Password: $DASHBOARD_PASS
 EOF
 
-    chmod 600 "$LAB_INFO_FILE"
+        chmod 600 "$LAB_INFO_FILE"
 
-    echo "[+] Dashboard credentials saved:"
-    cat "$LAB_INFO_FILE"
-  else
-    echo "[+] Wazuh already installed. Skipping install."
-  fi
+        echo "[+] Dashboard credentials saved:"
+        cat "$LAB_INFO_FILE"
+      else
+        echo "[+] Wazuh already installed."
+      fi
 
-  cd "$REPO_DIR" || exit
+      cd "$REPO_DIR" || exit
 
-  # -----------------------------
-  # Apply rules
-  # -----------------------------
-  if [ -f "$GITHUB_RULES" ]; then
-    echo "[+] Applying local_rules.xml..."
-    backup_file "$ACTIVE_RULES" "local_rules.xml"
-    sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
-  else
-    echo "[!] local_rules.xml not found."
-  fi
+      if [ -f "$GITHUB_RULES" ]; then
+        backup_file "$ACTIVE_RULES" "local_rules.xml"
+        sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+      fi
 
-  # -----------------------------
-  # Apply auto-enroll config
-  # -----------------------------
-  if [ -f "$AUTOENROLL_SNIPPET" ]; then
-    echo "[+] Applying auto-enroll config..."
+      if [ -f "$AUTOENROLL_SNIPPET" ]; then
+        backup_file "$ACTIVE_OSSEC" "ossec.conf"
 
-    backup_file "$ACTIVE_OSSEC" "ossec.conf"
+        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
 
-    sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
+        sudo awk -v snippet="$AUTOENROLL_SNIPPET" '
+          /<\/ossec_config>/ && inserted==0 {
+            while ((getline line < snippet) > 0) print line
+            close(snippet)
+            inserted=1
+          }
+          { print }
+        ' "$ACTIVE_OSSEC" | sudo tee "$ACTIVE_OSSEC.tmp" >/dev/null
 
-    sudo awk -v snippet="$AUTOENROLL_SNIPPET" '
-      /<\/ossec_config>/ && inserted==0 {
-        while ((getline line < snippet) > 0) print line
-        close(snippet)
-        inserted=1
-      }
-      { print }
-    ' "$ACTIVE_OSSEC" | sudo tee "$ACTIVE_OSSEC.tmp" >/dev/null
+        sudo mv "$ACTIVE_OSSEC.tmp" "$ACTIVE_OSSEC"
+      fi
 
-    sudo mv "$ACTIVE_OSSEC.tmp" "$ACTIVE_OSSEC"
-  else
-    echo "[!] Auto-enroll config not found (skipping)"
-  fi
+      echo "[+] Validating configuration..."
+      sudo /var/ossec/bin/wazuh-analysisd -t
 
-  # -----------------------------
-  # Validate + Restart
-  # -----------------------------
-  echo "[+] Validating Wazuh configuration..."
-  sudo /var/ossec/bin/wazuh-analysisd -t
+      if [ $? -eq 0 ]; then
+        sudo systemctl restart wazuh-manager
+      else
+        echo "[!] Config validation failed."
+        pause
+        continue
+      fi
 
-  if [ $? -eq 0 ]; then
-    echo "[+] Restarting wazuh-manager..."
-    sudo systemctl restart wazuh-manager
-  else
-    echo "[!] Config validation failed."
-    pause
-    continue
-  fi
+      echo "[+] wazuh-manager status:"
+      sudo systemctl status wazuh-manager --no-pager
 
-  # -----------------------------
-  # Final Output
-  # -----------------------------
-  echo
-  echo "[+] wazuh-manager status:"
-  sudo systemctl status wazuh-manager --no-pager
+      echo "[+] Agent list:"
+      sudo /var/ossec/bin/agent_control -l
 
-  echo
-  echo "[+] Agent list:"
-  sudo /var/ossec/bin/agent_control -l
+      echo "======================================"
+      echo "     Bootstrap Complete"
+      echo "======================================"
 
-  echo
-  echo "======================================"
-  echo "     Bootstrap Complete"
-  echo "======================================"
+      if [ -f "$LAB_INFO_FILE" ]; then
+        echo
+        echo "Dashboard Credentials:"
+        cat "$LAB_INFO_FILE"
+      fi
 
-  if [ -f "$LAB_INFO_FILE" ]; then
-    echo
-    echo "Dashboard Credentials:"
-    cat "$LAB_INFO_FILE"
-  fi
-
-  pause
-  ;;
+      pause
+      ;;
 
     0)
       echo "Exiting."
