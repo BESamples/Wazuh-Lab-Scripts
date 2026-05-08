@@ -370,7 +370,7 @@ while true; do
   fi
 
   pause
-  ;;"
+  ;;
 
      
     0)
