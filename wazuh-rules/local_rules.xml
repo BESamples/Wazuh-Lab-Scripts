@@ -15,21 +15,21 @@
     <description>Custom: Powershell execution</description>
   </rule>
 
-<rule id="100300" level="10" frequency="5" timeframe="60">
-  <if_matched_sid>100100</if_matched_sid>
-  <description>Custom: Multiple failed logins detected (possible brute force)</description>
-</rule>
+  <rule id="100300" level="10" frequency="5" timeframe="60">
+   <if_matched_sid>100100</if_matched_sid>
+   <description>Custom: Multiple failed logins detected (possible brute force)</description>
+  </rule>
 
-<rule id="100301" level="12">
-  <if_sid>91815</if_sid>
-  <match>-enc</match>
-  <description>Custom: PowerShell encoded command detected</description>
-</rule>
+  <rule id="100301" level="12">
+   <if_sid>91815</if_sid>
+   <match>-enc</match>
+   <description>Custom: PowerShell encoded command detected</description>
+  </rule>
 
-<rule id="100302" level="9">
-  <if_sid>60122</if_sid>
-  <description>Custom: Account lockout detected</description>
-</rule>
+  <rule id="100302" level="9">
+   <if_sid>60122</if_sid>
+   <description>Custom: Account lockout detected</description>
+  </rule>
   
   
  </group>
