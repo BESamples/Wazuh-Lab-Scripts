@@ -27,8 +27,7 @@
 </rule>
 
 <rule id="100302" level="9">
-  <if_sid>4625</if_sid>
-  <match>Account locked out</match>
+  <if_sid>60122</if_sid>
   <description>Custom: Account lockout detected</description>
 </rule>
   
