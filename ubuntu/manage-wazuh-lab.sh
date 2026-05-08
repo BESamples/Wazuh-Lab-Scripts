@@ -7,6 +7,10 @@ AUTOENROLL_SNIPPET="$REPO_DIR/wazuh-configs/ossec-auth-autoenroll.xml"
 ACTIVE_RULES="/var/ossec/etc/rules/local_rules.xml"
 ACTIVE_OSSEC="/var/ossec/etc/ossec.conf"
 BACKUP_DIR="$REPO_DIR/backups"
+LAB_INFO_DIR="$REPO_DIR/wazuh-configs"
+LAB_INFO_FILE="$LAB_INFO_DIR/dashboard-admin.txt"
+INSTALL_LOG="$REPO_DIR/wazuh-install-output.log"
+
 
 mkdir -p "$BACKUP_DIR"
 
@@ -86,29 +90,31 @@ while true; do
 
     7)
       cd "$REPO_DIR" || exit
-      git pull origin main --rebase
+      git pull origin main --rebase || { echo "[!] Pull failed"; pause; continue; }
       pause
       ;;
 
     8)
       cd "$REPO_DIR" || exit
 
-      echo "[+] Syncing with GitHub..."
-      git pull origin main --rebase || { echo "[!] Pull failed"; pause; continue; }
+  git status
 
-      git status
+  read -p "Commit message: " msg
 
-      read -p "Commit message: " msg
+  echo "[+] Staging changes..."
+  git add .
 
-      git add .
-      git commit -m "$msg"
+  echo "[+] Committing..."
+  git commit -m "$msg" || echo "[!] Nothing to commit"
 
-      echo "[+] Pushing to GitHub..."
-      git push
+  echo "[+] Syncing with GitHub..."
+  git pull origin main --rebase || { echo "[!] Pull failed"; pause; continue; }
 
-      pause
-      ;;
+  echo "[+] Pushing to GitHub..."
+  git push
 
+  pause
+  ;;
     9)
       sudo tail -f /var/ossec/logs/ossec.log
       ;;
@@ -139,9 +145,9 @@ while true; do
 
       cd "$REPO_DIR" || exit
 
-     if ! git diff --quiet || ! git diff --cached --quiet; then
+if ! git diff --quiet || ! git diff --cached --quiet; then
   echo "[!] You have uncommitted changes."
-  echo "[!] Please run Option 8 (commit) or discard changes before deploying."
+  echo "[!] Please run Option 8 or discard changes."
   pause
   continue
 fi
