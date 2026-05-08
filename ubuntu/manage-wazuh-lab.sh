@@ -29,26 +29,17 @@ while true; do
   echo "        Wazuh Lab Manager Menu"
   echo "======================================"
   echo "1) Edit GitHub local_rules.xml"
-  echo "2) Edit active Wazuh local_rules.xml"
-  echo "3) Edit active ossec.conf"
-  echo "4) Test Wazuh rules"
-  echo "5) Restart wazuh-manager"
-  echo "6) Backup active local_rules.xml"
-  echo "7) Restore active local_rules.xml from latest backup"
-  echo "8) Apply GitHub local_rules.xml to active Wazuh"
-  echo "9) Apply auto-enroll config to ossec.conf"
-  echo "10) Check wazuh-manager status"
-  echo "11) Check agent list"
-  echo "12) Git pull"
-  echo "13) Git add / commit / push"
-  echo "14) Test Windows agent connectivity"
-  echo "15) Check Wazuh logs live"
-  echo "16) Restore ossec.conf backup"
-  echo "17) Enable/disable auto-enroll"
-  echo "18) Show Wazuh dashboard info"
-  echo "19) Open dashboard URL helper"
-  echo "20) Update entire lab from GitHub"
-  echo "21) Deploy latest rules from GitHub"
+  echo "2) Edit active ossec.conf"
+  echo "3) Test Wazuh rules"
+  echo "4) Restart wazuh-manager (safe)"
+  echo "5) Check wazuh-manager status"
+  echo "6) Check agent list"
+  echo "7) Git pull (safe)"
+  echo "8) Git add / commit / push (safe)"
+  echo "9) Check Wazuh logs live"
+  echo "10) Show Wazuh dashboard info"
+  echo "11) Deploy latest rules (Git → Apply → Restart)"
+  echo "12) Fresh Lab Bootstrap ⭐"
   echo "0) Exit"
   echo "======================================"
   read -p "Choose an option: " choice
@@ -61,120 +52,49 @@ while true; do
       ;;
 
     2)
-      backup_file "$ACTIVE_RULES" "local_rules.xml"
-      sudo nano "$ACTIVE_RULES"
-      pause
-      ;;
-
-    3)
       backup_file "$ACTIVE_OSSEC" "ossec.conf"
       sudo nano "$ACTIVE_OSSEC"
       pause
       ;;
 
-    4)
+    3)
       sudo /var/ossec/bin/wazuh-analysisd -t
+      pause
+      ;;
+
+    4)
+      echo "[+] Testing rules before restart..."
+      sudo /var/ossec/bin/wazuh-analysisd -t
+      if [ $? -eq 0 ]; then
+        echo "[+] Restarting wazuh-manager..."
+        sudo systemctl restart wazuh-manager
+      else
+        echo "[!] Rules failed. Restart cancelled."
+      fi
       pause
       ;;
 
     5)
-      echo "Testing rules before restart..."
-      sudo /var/ossec/bin/wazuh-analysisd -t
-      if [ $? -eq 0 ]; then
-        echo "Rules passed. Restarting wazuh-manager..."
-        sudo systemctl restart wazuh-manager
-      else
-        echo "Rules failed. Restart cancelled."
-      fi
-      pause
-      ;;
-
-    6)
-      backup_file "$ACTIVE_RULES" "local_rules.xml"
-      pause
-      ;;
-
-    7)
-      LATEST=$(ls -t "$BACKUP_DIR"/local_rules.xml.backup-* 2>/dev/null | head -n 1)
-      if [ -z "$LATEST" ]; then
-        echo "No local_rules.xml backup found."
-      else
-        echo "Restoring: $LATEST"
-        sudo cp "$LATEST" "$ACTIVE_RULES"
-        sudo /var/ossec/bin/wazuh-analysisd -t
-      fi
-      pause
-      ;;
-
-    8)
-      if [ ! -f "$GITHUB_RULES" ]; then
-        echo "GitHub rules file not found: $GITHUB_RULES"
-      else
-        backup_file "$ACTIVE_RULES" "local_rules.xml"
-        sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
-        echo "Testing rules..."
-        sudo /var/ossec/bin/wazuh-analysisd -t
-        if [ $? -eq 0 ]; then
-          read -p "Rules passed. Restart wazuh-manager now? (y/n): " restart
-          if [ "$restart" = "y" ]; then
-            sudo systemctl restart wazuh-manager
-          fi
-        else
-          echo "Rules failed. Restore from backup if needed."
-        fi
-      fi
-      pause
-      ;;
-
-        9)
-      if [ ! -f "$AUTOENROLL_SNIPPET" ]; then
-        echo "Auto-enroll snippet not found: $AUTOENROLL_SNIPPET"
-      else
-        backup_file "$ACTIVE_OSSEC" "ossec.conf"
-
-        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
-
-        sudo awk -v snippet="$AUTOENROLL_SNIPPET" '
-          /<\/ossec_config>/ && inserted==0 {
-            while ((getline line < snippet) > 0) print line
-            close(snippet)
-            inserted=1
-          }
-          { print }
-        ' "$ACTIVE_OSSEC" | sudo tee "$ACTIVE_OSSEC.tmp" >/dev/null
-
-        sudo mv "$ACTIVE_OSSEC.tmp" "$ACTIVE_OSSEC"
-
-        echo "Restarting wazuh-manager..."
-        sudo systemctl restart wazuh-manager
-
-        echo "Checking port 1515..."
-        sudo ss -tulpn | grep 1515
-      fi
-      pause
-      ;;
-
-    10)
       sudo systemctl status wazuh-manager
       pause
       ;;
 
-    11)
+    6)
       sudo /var/ossec/bin/agent_control -l
       pause
       ;;
 
-    12)
+    7)
       cd "$REPO_DIR" || exit
       git pull origin main --rebase
       pause
       ;;
 
-   13)
+    8)
       cd "$REPO_DIR" || exit
 
       echo "[+] Syncing with GitHub..."
-      git pull origin main --rebase || { echo "Pull failed"; pause; continue; }
+      git pull origin main --rebase || { echo "[!] Pull failed"; pause; continue; }
 
       git status
 
@@ -189,197 +109,125 @@ while true; do
       pause
       ;;
 
-          14)
-      read -p "Enter Windows Agent IP: " AGENTIP
-
-      echo "Testing connectivity to agent..."
-      ping -c 4 "$AGENTIP"
-
-      echo
-      echo "Checking Wazuh registration port 1514..."
-      nc -zv "$AGENTIP" 1514
-
-      pause
-      ;;
-
-    15)
+    9)
       sudo tail -f /var/ossec/logs/ossec.log
       ;;
 
-    16)
-      LATEST=$(ls -t "$BACKUP_DIR"/ossec.conf.backup-* 2>/dev/null | head -n 1)
-
-      if [ -z "$LATEST" ]; then
-        echo "No ossec.conf backup found."
-      else
-        echo "Restoring: $LATEST"
-
-        sudo cp "$LATEST" "$ACTIVE_OSSEC"
-
-        echo "Testing config..."
-        sudo /var/ossec/bin/wazuh-analysisd -t
-
-        echo "Restarting wazuh-manager..."
-        sudo systemctl restart wazuh-manager
-      fi
-
-      pause
-      ;;
-
-    17)
-      echo "======================================"
-      echo "1) Enable auto-enroll"
-      echo "2) Disable auto-enroll"
-      echo "======================================"
-
-      read -p "Choose: " AUTO
-
-      backup_file "$ACTIVE_OSSEC" "ossec.conf"
-
-      if [ "$AUTO" = "1" ]; then
-        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
-        sudo sed -i "/<\/ossec_config>/e cat $AUTOENROLL_SNIPPET" "$ACTIVE_OSSEC"
-
-        echo "Auto-enroll ENABLED."
-
-      elif [ "$AUTO" = "2" ]; then
-        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
-
-        echo "Auto-enroll DISABLED."
-
-      else
-        echo "Invalid selection."
-      fi
-
-      sudo systemctl restart wazuh-manager
-
-      pause
-      ;;
-
-        18)
-      echo "=============================="
-      echo "   Wazuh Dashboard Info"
-      echo "=============================="
-
+    10)
       IP=$(hostname -I | awk '{print $1}')
 
-      echo "Manager IP: $IP"
+      echo "======================================"
+      echo "   Wazuh Dashboard Info"
+      echo "======================================"
       echo "Dashboard URL: https://$IP"
-      echo "Dashboard User: admin"
-      echo
+      echo "Username: admin"
 
       if [ -f "$REPO_DIR/wazuh-configs/dashboard-admin.txt" ]; then
-        echo -n "Dashboard Password: "
+        echo -n "Password: "
         cat "$REPO_DIR/wazuh-configs/dashboard-admin.txt"
       else
-        echo "Dashboard password file not found."
-        echo "Create it with:"
-        echo "nano $REPO_DIR/wazuh-configs/dashboard-admin.txt"
+        echo "Password file not found."
       fi
 
       pause
       ;;
 
-    19)
-      IP=$(hostname -I | awk '{print $1}')
-
-      echo
+    11)
       echo "======================================"
-      echo "        Wazuh Dashboard URL"
-      echo "======================================"
-      echo
-      echo "https://$IP"
-      echo
-      echo "Default credentials:"
-      echo "Username: admin"
-      echo "Password: Check install output"
-      echo
-      echo "======================================"
-
-      pause
-      ;;
-
-    20)
-      echo "======================================"
-      echo "     Updating Entire Wazuh Lab"
+      echo "   Deploying Latest Wazuh Rules"
       echo "======================================"
 
       cd "$REPO_DIR" || exit
 
-      echo "[+] Pulling latest GitHub updates..."
-      git pull
+      git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
 
-      echo
-      echo "[+] Reapplying GitHub local_rules.xml..."
-
-      if [ -f "$GITHUB_RULES" ]; then
-        backup_file "$ACTIVE_RULES" "local_rules.xml"
-
-        sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
-
-        sudo /var/ossec/bin/wazuh-analysisd -t
-
-        if [ $? -eq 0 ]; then
-          echo "[+] Rules passed."
-          sudo systemctl restart wazuh-manager
-        else
-          echo "[!] Rules failed validation."
-        fi
+      if [ ! -f "$GITHUB_RULES" ]; then
+        echo "[!] Rules file not found."
+        pause
+        continue
       fi
 
-      echo
-      echo "[+] Current wazuh-manager status:"
-      sudo systemctl status wazuh-manager --no-pager
+      backup_file "$ACTIVE_RULES" "local_rules.xml"
+
+      sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+
+      echo "[+] Testing rules..."
+      sudo /var/ossec/bin/wazuh-analysisd -t
+
+      if [ $? -eq 0 ]; then
+        echo "[+] Restarting wazuh-manager..."
+        sudo systemctl restart wazuh-manager
+      else
+        echo "[!] Rules failed validation."
+      fi
 
       pause
       ;;
 
-    21)
-  echo "======================================"
-  echo "   Deploying Latest Wazuh Rules"
-  echo "======================================"
+    12)
+      echo "======================================"
+      echo "     Fresh Lab Bootstrap Starting"
+      echo "======================================"
 
-  cd "$REPO_DIR" || exit
+      cd "$REPO_DIR" || exit
 
-  echo "[+] Pulling latest from GitHub..."
-  git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
+      git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
 
-  if [ ! -f "$GITHUB_RULES" ]; then
-    echo "[!] Rules file not found: $GITHUB_RULES"
-    pause
-    continue
-  fi
+      mkdir -p "$BACKUP_DIR"
 
-  echo "[+] Backing up current rules..."
-  backup_file "$ACTIVE_RULES" "local_rules.xml"
+      if [ -f "$GITHUB_RULES" ]; then
+        backup_file "$ACTIVE_RULES" "local_rules.xml"
+        sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+      fi
 
-  echo "[+] Applying new rules..."
-  sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+      if [ -f "$AUTOENROLL_SNIPPET" ]; then
+        backup_file "$ACTIVE_OSSEC" "ossec.conf"
 
-  echo "[+] Testing rules..."
-  sudo /var/ossec/bin/wazuh-analysisd -t
+        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
 
-  if [ $? -eq 0 ]; then
-    echo "[+] Rules passed validation."
-    echo "[+] Restarting wazuh-manager..."
-    sudo systemctl restart wazuh-manager
-    echo "[+] Deployment complete."
-  else
-    echo "[!] Rules failed validation."
-    echo "[!] Restore from backup if needed."
-  fi
+        sudo awk -v snippet="$AUTOENROLL_SNIPPET" '
+          /<\/ossec_config>/ && inserted==0 {
+            while ((getline line < snippet) > 0) print line
+            close(snippet)
+            inserted=1
+          }
+          { print }
+        ' "$ACTIVE_OSSEC" | sudo tee "$ACTIVE_OSSEC.tmp" >/dev/null
 
-  pause
-  ;;
+        sudo mv "$ACTIVE_OSSEC.tmp" "$ACTIVE_OSSEC"
+      fi
 
-     
+      echo "[+] Validating configuration..."
+      sudo /var/ossec/bin/wazuh-analysisd -t
+
+      if [ $? -eq 0 ]; then
+        sudo systemctl restart wazuh-manager
+      else
+        echo "[!] Config failed validation."
+        pause
+        continue
+      fi
+
+      echo "[+] wazuh-manager status:"
+      sudo systemctl status wazuh-manager --no-pager
+
+      echo "[+] Agent list:"
+      sudo /var/ossec/bin/agent_control -l
+
+      echo "======================================"
+      echo "     Bootstrap Complete"
+      echo "======================================"
+
+      pause
+      ;;
+
     0)
       echo "Exiting."
       exit 0
       ;;
 
     *)
-      echo "Invalid option. Choose 0-21."
+      echo "Invalid option. Choose 0-12."
       pause
       ;;
   esac
