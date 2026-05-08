@@ -48,6 +48,7 @@ while true; do
   echo "18) Show Wazuh dashboard info"
   echo "19) Open dashboard URL helper"
   echo "20) Update entire lab from GitHub"
+  echo "21) Deploy latest rules from GitHub"
   echo "0) Exit"
   echo "======================================"
   read -p "Choose an option: " choice
@@ -332,6 +333,45 @@ while true; do
 
       pause
       ;;
+
+    21)
+  echo "======================================"
+  echo "   Deploying Latest Wazuh Rules"
+  echo "======================================"
+
+  cd "$REPO_DIR" || exit
+
+  echo "[+] Pulling latest from GitHub..."
+  git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
+
+  if [ ! -f "$GITHUB_RULES" ]; then
+    echo "[!] Rules file not found: $GITHUB_RULES"
+    pause
+    continue
+  fi
+
+  echo "[+] Backing up current rules..."
+  backup_file "$ACTIVE_RULES" "local_rules.xml"
+
+  echo "[+] Applying new rules..."
+  sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+
+  echo "[+] Testing rules..."
+  sudo /var/ossec/bin/wazuh-analysisd -t
+
+  if [ $? -eq 0 ]; then
+    echo "[+] Rules passed validation."
+    echo "[+] Restarting wazuh-manager..."
+    sudo systemctl restart wazuh-manager
+    echo "[+] Deployment complete."
+  else
+    echo "[!] Rules failed validation."
+    echo "[!] Restore from backup if needed."
+  fi
+
+  pause
+  ;;"
+
      
     0)
       echo "Exiting."
