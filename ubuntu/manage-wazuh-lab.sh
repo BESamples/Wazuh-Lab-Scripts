@@ -165,7 +165,7 @@ while true; do
 
     12)
       cd "$REPO_DIR" || exit
-      git pull
+      git pull origin main --rebase
       pause
       ;;
 
@@ -173,7 +173,7 @@ while true; do
       cd "$REPO_DIR" || exit
 
       echo "[+] Syncing with GitHub..."
-      git pull origin main --rebase
+      git pull origin main --rebase || { echo "Pull failed"; pause; continue; }
 
       git status
 
