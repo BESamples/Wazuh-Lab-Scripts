@@ -183,9 +183,13 @@ while true; do
         INSTALL_RAN=true
 
       elif ! systemctl is-active --quiet wazuh-manager; then
-        echo "[+] Wazuh installed but not running. Starting..."
-        sudo systemctl start wazuh-manager
-
+          echo "[+] Wazuh installed but not running. Starting services..."
+          sudo systemctl start wazuh-manager
+           echo "[+] wazuh-indexer status:"
+          sudo systemctl status wazuh-indexer --no-pager 2>/dev/null
+          echo "[+] wazuh-dashboard status:"
+          sudo systemctl status wazuh-dashboard --no-pager 2>/dev/null
+        
       else
         echo "[+] Wazuh already installed and running."
       fi
