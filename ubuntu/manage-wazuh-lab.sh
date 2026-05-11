@@ -211,7 +211,13 @@ while true; do
       mkdir -p "$LAB_INFO_DIR"
 
       # Install Wazuh if not running
-      if ! systemctl is-active --quiet wazuh-manager; then
+      if [ ! -d "/var/ossec" ]; then
+  echo "[+] Wazuh not installed. Installing..."
+
+elif ! systemctl is-active --quiet wazuh-manager; then
+  echo "[+] Wazuh installed but not running. Starting..."
+  sudo systemctl start wazuh-manager
+fi
         echo "[+] Wazuh not detected. Installing..."
 
         cd "$HOME" || exit
