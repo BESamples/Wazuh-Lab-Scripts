@@ -43,6 +43,7 @@ while true; do
   echo "10) Show Wazuh dashboard info"
   echo "11) Deploy latest rules (Git → Apply → Restart)"
   echo "12) Fresh Lab Bootstrap ⭐"
+  echo "13) Full Wazuh Uninstall (DANGEROUS)"
   echo "0) Exit"
   echo "======================================"
   read -p "Choose an option: " choice
@@ -323,6 +324,50 @@ EOF
     echo "Dashboard Credentials:"
     cat "$LAB_INFO_FILE"
   fi
+
+  pause
+  ;;
+
+13)
+  echo "======================================"
+  echo "   FULL WAZUH UNINSTALL (DANGEROUS)"
+  echo "======================================"
+  echo "[!] This will completely remove Wazuh."
+  echo "[!] All data, rules, and configs will be lost."
+  echo
+
+  read -p "Type YES to continue: " confirm
+
+  if [ "$confirm" != "YES" ]; then
+    echo "[+] Uninstall cancelled."
+    pause
+    continue
+  fi
+
+  echo "[+] Stopping services..."
+  sudo systemctl stop wazuh-manager 2>/dev/null
+  sudo systemctl stop wazuh-indexer 2>/dev/null
+  sudo systemctl stop wazuh-dashboard 2>/dev/null
+
+  echo "[+] Removing packages..."
+  sudo apt remove --purge -y wazuh-manager wazuh-indexer wazuh-dashboard filebeat 2>/dev/null
+  sudo apt autoremove -y
+
+  echo "[+] Removing directories..."
+  sudo rm -rf /var/ossec
+  sudo rm -rf /var/lib/wazuh*
+  sudo rm -rf /usr/share/wazuh*
+  sudo rm -rf /etc/wazuh*
+  sudo rm -rf /var/lib/opensearch
+  sudo rm -rf /usr/share/opensearch-dashboards
+
+  echo "[+] Cleaning logs..."
+  sudo rm -rf /var/log/wazuh*
+
+  echo
+  echo "======================================"
+  echo "   Wazuh fully removed"
+  echo "======================================"
 
   pause
   ;;
