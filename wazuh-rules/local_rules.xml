@@ -38,6 +38,14 @@
    <field name="file" type="pcre2">(?i)\.ps1$|\.bat$|\.exe$</field>
    <description>Executable or script file added</description>
   </rule>
+
+
+<rule id="100107" level="12">
+  <if_sid>554</if_sid>
+  <field name="file" type="pcre2">(?i)\.locked$|\.encrypted$|\.crypt$</field>
+  <description>Possible ransomware-encrypted file detected</description>
+</rule>
+
   
   <rule id="100300" level="10" frequency="5" timeframe="60">
    <if_matched_sid>100100</if_matched_sid>
