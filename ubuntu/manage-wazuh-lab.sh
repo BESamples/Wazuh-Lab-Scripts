@@ -174,24 +174,36 @@ while true; do
         cd "$HOME" || exit
 
         curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
-        sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG" || {
+
+        sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
+        INSTALL_EXIT=${PIPESTATUS[0]}
+
+        if [ $INSTALL_EXIT -ne 0 ]; then
           echo "[!] Wazuh install failed. Aborting bootstrap."
           pause
           continue
-        }
+        fi
 
         INSTALL_RAN=true
 
       elif ! systemctl is-active --quiet wazuh-manager; then
-          echo "[+] Wazuh installed but not running. Starting services..."
-          sudo systemctl start wazuh-manager
-           echo "[+] wazuh-indexer status:"
-          sudo systemctl status wazuh-indexer --no-pager 2>/dev/null
-          echo "[+] wazuh-dashboard status:"
-          sudo systemctl status wazuh-dashboard --no-pager 2>/dev/null
-        
+        echo "[+] Wazuh installed but not running. Starting services..."
+        sudo systemctl start wazuh-manager
+        sudo systemctl start wazuh-indexer 2>/dev/null
+        sudo systemctl start wazuh-dashboard 2>/dev/null
+
       else
         echo "[+] Wazuh already installed and running."
+      fi
+
+      # -----------------------------
+      # Hard stop if install did not create Wazuh
+      # -----------------------------
+      if [ ! -d "/var/ossec" ]; then
+        echo "[!] Wazuh install did not complete successfully."
+        echo "[!] /var/ossec not found. Aborting bootstrap."
+        pause
+        continue
       fi
 
       # -----------------------------
@@ -277,6 +289,14 @@ EOF
       sudo systemctl status wazuh-manager --no-pager
 
       echo
+      echo "[+] wazuh-indexer status:"
+      sudo systemctl status wazuh-indexer --no-pager 2>/dev/null
+
+      echo
+      echo "[+] wazuh-dashboard status:"
+      sudo systemctl status wazuh-dashboard --no-pager 2>/dev/null
+
+      echo
       echo "[+] Agent list:"
       sudo /var/ossec/bin/agent_control -l
 
@@ -313,35 +333,38 @@ EOF
         continue
       fi
 
-     echo "[+] Stopping services..."
-sudo systemctl stop wazuh-manager 2>/dev/null
-sudo systemctl stop wazuh-indexer 2>/dev/null
-sudo systemctl stop wazuh-dashboard 2>/dev/null
-sudo systemctl stop filebeat 2>/dev/null
+      echo "[+] Stopping services..."
+      sudo systemctl stop wazuh-manager 2>/dev/null
+      sudo systemctl stop wazuh-indexer 2>/dev/null
+      sudo systemctl stop wazuh-dashboard 2>/dev/null
+      sudo systemctl stop filebeat 2>/dev/null
 
-echo "[+] Disabling services..."
-sudo systemctl disable wazuh-manager 2>/dev/null
-sudo systemctl disable wazuh-indexer 2>/dev/null
-sudo systemctl disable wazuh-dashboard 2>/dev/null
-sudo systemctl disable filebeat 2>/dev/null
+      echo "[+] Disabling services..."
+      sudo systemctl disable wazuh-manager 2>/dev/null
+      sudo systemctl disable wazuh-indexer 2>/dev/null
+      sudo systemctl disable wazuh-dashboard 2>/dev/null
+      sudo systemctl disable filebeat 2>/dev/null
 
-echo "[+] Removing packages..."
-sudo apt remove --purge -y wazuh-manager wazuh-indexer wazuh-dashboard filebeat 2>/dev/null
-sudo apt autoremove -y
+      echo "[+] Removing packages..."
+      sudo apt remove --purge -y wazuh-manager wazuh-indexer wazuh-dashboard filebeat 2>/dev/null
+      sudo apt autoremove -y
 
-echo "[+] Removing directories..."
-sudo rm -rf /var/ossec
-sudo rm -rf /var/lib/wazuh*
-sudo rm -rf /usr/share/wazuh*
-sudo rm -rf /etc/wazuh*
-sudo rm -rf /var/lib/opensearch
-sudo rm -rf /usr/share/opensearch-dashboards
-sudo rm -rf /etc/filebeat
-sudo rm -rf /var/lib/filebeat
-sudo rm -rf /var/log/filebeat
+      echo "[+] Removing directories..."
+      sudo rm -rf /var/ossec
+      sudo rm -rf /var/lib/wazuh*
+      sudo rm -rf /usr/share/wazuh*
+      sudo rm -rf /etc/wazuh*
+      sudo rm -rf /var/lib/opensearch
+      sudo rm -rf /usr/share/opensearch-dashboards
+      sudo rm -rf /etc/filebeat
+      sudo rm -rf /var/lib/filebeat
+      sudo rm -rf /var/log/filebeat
 
       echo "[+] Cleaning logs..."
       sudo rm -rf /var/log/wazuh*
+
+      echo "[+] Verifying filebeat removal..."
+      dpkg -l | grep filebeat
 
       echo
       echo "======================================"
