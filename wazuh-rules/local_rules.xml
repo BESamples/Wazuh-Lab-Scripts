@@ -10,18 +10,18 @@
     <description>Custom: Successful Login</description>
   </rule>
 
-  <rule id="100101" level="8">
+  <rule id="100102" level="8">
     <if_sid>91815</if_sid>
     <description>Custom: Powershell execution</description>
   </rule>
 
-<rule id="100102" level="10">
+<rule id="100103" level="10">
     <if_sid>550,554</if_sid>
     <field name="file" type="pcre2">(?i).*ssn.*|.*social.*|.*pii.*</field>
     <description>Possible PII-related file detected or modified: $(file)</description>
   </rule>
 
-  <rule id="100103" level="12">
+  <rule id="100104" level="12">
     <if_sid>550,554</if_sid>
     <match type="pcre2">\b\d{3}-\d{2}-\d{4}\b</match>
     <description>Possible SSN pattern detected in monitored file change: $(file)</description>
