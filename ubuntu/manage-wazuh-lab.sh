@@ -199,7 +199,10 @@ while true; do
       echo "======================================"
       echo "     Fresh Lab Bootstrap Starting"
       echo "======================================"
-
+      echo "[+] Ensuring required tools are installed..."
+      sudo apt update
+      sudo apt install -y curl
+      
       cd "$REPO_DIR" || exit
 
       git pull origin main --rebase || { echo "[!] Git pull failed"; pause; continue; }
@@ -214,8 +217,11 @@ while true; do
         cd "$HOME" || exit
 
         curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
-        sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
-
+        sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG" || {
+        echo "[!] Wazuh install failed. Aborting bootstrap."
+        pause
+        continue
+      }
         echo "[+] Capturing dashboard credentials..."
 
         DASHBOARD_USER=$(grep -i "User:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
