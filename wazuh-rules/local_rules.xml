@@ -27,6 +27,17 @@
     <description>Possible SSN pattern detected in monitored file change: $(file)</description>
   </rule>
 
+  <rule id="100105" level="8">
+   <if_sid>550,554</if_sid>
+   <match type="pcre2">password|confidential|secret</match>
+   <description>Sensitive keyword detected in file</description>
+  </rule>
+
+  <rule id="100106" level="9">
+   <if_sid>554</if_sid>
+   <field name="file" type="pcre2">(?i)\.ps1$|\.bat$|\.exe$</field>
+   <description>Executable or script file added</description>
+  </rule>
   
   <rule id="100300" level="10" frequency="5" timeframe="60">
    <if_matched_sid>100100</if_matched_sid>
