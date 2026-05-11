@@ -309,22 +309,32 @@ EOF
         continue
       fi
 
-      echo "[+] Stopping services..."
-      sudo systemctl stop wazuh-manager 2>/dev/null
-      sudo systemctl stop wazuh-indexer 2>/dev/null
-      sudo systemctl stop wazuh-dashboard 2>/dev/null
+     echo "[+] Stopping services..."
+sudo systemctl stop wazuh-manager 2>/dev/null
+sudo systemctl stop wazuh-indexer 2>/dev/null
+sudo systemctl stop wazuh-dashboard 2>/dev/null
+sudo systemctl stop filebeat 2>/dev/null
 
-      echo "[+] Removing packages..."
-      sudo apt remove --purge -y wazuh-manager wazuh-indexer wazuh-dashboard filebeat 2>/dev/null
-      sudo apt autoremove -y
+echo "[+] Disabling services..."
+sudo systemctl disable wazuh-manager 2>/dev/null
+sudo systemctl disable wazuh-indexer 2>/dev/null
+sudo systemctl disable wazuh-dashboard 2>/dev/null
+sudo systemctl disable filebeat 2>/dev/null
 
-      echo "[+] Removing directories..."
-      sudo rm -rf /var/ossec
-      sudo rm -rf /var/lib/wazuh*
-      sudo rm -rf /usr/share/wazuh*
-      sudo rm -rf /etc/wazuh*
-      sudo rm -rf /var/lib/opensearch
-      sudo rm -rf /usr/share/opensearch-dashboards
+echo "[+] Removing packages..."
+sudo apt remove --purge -y wazuh-manager wazuh-indexer wazuh-dashboard filebeat 2>/dev/null
+sudo apt autoremove -y
+
+echo "[+] Removing directories..."
+sudo rm -rf /var/ossec
+sudo rm -rf /var/lib/wazuh*
+sudo rm -rf /usr/share/wazuh*
+sudo rm -rf /etc/wazuh*
+sudo rm -rf /var/lib/opensearch
+sudo rm -rf /usr/share/opensearch-dashboards
+sudo rm -rf /etc/filebeat
+sudo rm -rf /var/lib/filebeat
+sudo rm -rf /var/log/filebeat
 
       echo "[+] Cleaning logs..."
       sudo rm -rf /var/log/wazuh*
