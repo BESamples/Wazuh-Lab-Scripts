@@ -379,14 +379,18 @@ elseif ($Choice -eq "2") {
 }
 
 # ============================================================
-# SECTION 6 - ADD WAZUH-TEST FIM MONITORING
+# SECTION 6 - ADD FIM MONITORING
 # ============================================================
 
 elseif ($Choice -eq "3") {
 
     $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
     $TestFolder = "C:\Wazuh-Test"
-    $FIMEntry = '    <directories realtime="yes" report_changes="yes">C:\Wazuh-Test</directories>'
+
+    $FIMEntries = @(
+'    <directories realtime="yes" report_changes="yes">C:\Users</directories>',
+'    <directories realtime="yes" report_changes="yes">C:\Wazuh-Test</directories>'
+)
 
     if (-not (Test-Path $TestFolder)) {
         New-Item -Path $TestFolder -ItemType Directory -Force | Out-Null
@@ -396,15 +400,17 @@ elseif ($Choice -eq "3") {
     if (Test-Path $OssecConf) {
         $conf = Get-Content $OssecConf -Raw
 
-        if ($conf -notmatch "C:\\Wazuh-Test") {
-            $conf = $conf -replace "(?s)(<syscheck>.*?)(</syscheck>)", "`$1`n$FIMEntry`n`$2"
-            Set-Content -Path $OssecConf -Value $conf
+        foreach ($Entry in $FIMEntries) {
+            if ($conf -notmatch [regex]::Escape($Entry)) {
+                $conf = $conf -replace "(?s)(<syscheck>.*?)(</syscheck>)", "`$1`n$Entry`n`$2"
+                Write-Host "Added FIM monitoring entry: $Entry" -ForegroundColor Green
+            }
+            else {
+                Write-Host "FIM monitoring entry already exists: $Entry" -ForegroundColor Yellow
+            }
+        }
 
-            Write-Host "Wazuh-Test FIM monitoring added to ossec.conf." -ForegroundColor Green
-        }
-        else {
-            Write-Host "Wazuh-Test FIM monitoring already exists." -ForegroundColor Yellow
-        }
+        Set-Content -Path $OssecConf -Value $conf
 
         Write-Host "Restarting Wazuh service..."
         Restart-Service WazuhSvc -ErrorAction SilentlyContinue
@@ -416,7 +422,6 @@ elseif ($Choice -eq "3") {
 
     exit 0
 }
-
 
 
 
