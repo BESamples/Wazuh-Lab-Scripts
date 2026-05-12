@@ -46,6 +46,11 @@
   <description>Possible ransomware-encrypted file detected</description>
 </rule>
 
+<rule id="100108" level="12">
+  <if_group>sysmon_event1</if_group>
+  <match>-EncodedCommand</match>
+  <description>Encoded PowerShell command detected</description>
+</rule>
   
   <rule id="100300" level="10" frequency="5" timeframe="60">
    <if_matched_sid>100100</if_matched_sid>
