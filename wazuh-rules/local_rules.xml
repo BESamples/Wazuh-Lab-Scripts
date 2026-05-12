@@ -64,7 +64,8 @@
   </rule>
   
 <rule id="100303" level="14" frequency="20" timeframe="60">
-  <if_matched>550</if_matched>
+  <if_matched_sid>550</if_matched_sid>
+  <same_agent />
   <description>Mass file modifications detected possible ransomware activity</description>
 </rule>
 
