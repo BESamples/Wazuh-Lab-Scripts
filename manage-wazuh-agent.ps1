@@ -388,8 +388,8 @@ elseif ($Choice -eq "3") {
     $TestFolder = "C:\Wazuh-Test"
 
     $FIMEntries = @(
-'    <directories realtime="yes" report_changes="yes">C:\Users</directories>',
-'    <directories realtime="yes" report_changes="yes">C:\Wazuh-Test</directories>'
+'    <directories realtime="yes">C:\Users</directories>',
+'    <directories realtime="yes">C:\Wazuh-Test</directories>'
 )
 
     if (-not (Test-Path $TestFolder)) {
