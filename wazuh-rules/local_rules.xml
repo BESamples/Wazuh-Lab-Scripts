@@ -63,5 +63,10 @@
    <description>Custom: Account lockout detected</description>
   </rule>
   
+<rule id="100303" level="14" frequency="20" timeframe="60">
+  <if_sid>550</if_sid>
+  <description>Mass file modifications detected possible ransomware activity</description>
+</rule>
+
   
  </group>
