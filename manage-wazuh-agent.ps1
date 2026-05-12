@@ -1,7 +1,7 @@
 # manage-wazuh-agent.ps1
 # Run as Administrator
-# Version 1.05
-# Added installer selection menu, confirmation screen, and correction options
+# Version 1.06
+# Added FIM to menu and will add FIM capibilites to osssec configuration file.
 
 # ============================================================
 # Wazuh Agent Manager
@@ -42,7 +42,8 @@ Write-Host ""
 Write-Host "Choose an option:"
 Write-Host "1. Install Wazuh Agent"
 Write-Host "2. Uninstall Wazuh Agent"
-Write-Host "3. Exit"
+Write-Host "3. Add Fim Monitoring"
+Write-Host "4. Exit"
 
 $Choice = Read-Host "Enter choice"
 
@@ -377,12 +378,54 @@ elseif ($Choice -eq "2") {
     exit 0
 }
 
+# ============================================================
+# SECTION 6 - ADD WAZUH-TEST FIM MONITORING
+# ============================================================
+
+elseif ($Choice -eq "3") {
+
+    $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
+    $TestFolder = "C:\Wazuh-Test"
+    $FIMEntry = '    <directories realtime="yes" report_changes="yes">C:\Wazuh-Test</directories>'
+
+    if (-not (Test-Path $TestFolder)) {
+        New-Item -Path $TestFolder -ItemType Directory -Force | Out-Null
+        Write-Host "Created folder: $TestFolder" -ForegroundColor Green
+    }
+
+    if (Test-Path $OssecConf) {
+        $conf = Get-Content $OssecConf -Raw
+
+        if ($conf -notmatch "C:\\Wazuh-Test") {
+            $conf = $conf -replace "(?s)(<syscheck>.*?)(</syscheck>)", "`$1`n$FIMEntry`n`$2"
+            Set-Content -Path $OssecConf -Value $conf
+
+            Write-Host "Wazuh-Test FIM monitoring added to ossec.conf." -ForegroundColor Green
+        }
+        else {
+            Write-Host "Wazuh-Test FIM monitoring already exists." -ForegroundColor Yellow
+        }
+
+        Write-Host "Restarting Wazuh service..."
+        Restart-Service WazuhSvc -ErrorAction SilentlyContinue
+    }
+    else {
+        Write-Host "ERROR: ossec.conf not found. Is the Wazuh Agent installed?" -ForegroundColor Red
+        exit 1
+    }
+
+    exit 0
+}
+
+
+
+
 
 # ============================================================
 # SECTION 6 - INVALID OPTION / EXIT
 # ============================================================
 
-elseif ($Choice -eq "3") {
+elseif ($Choice -eq "4") {
     Write-Host "Exiting."
     exit 0
 }
