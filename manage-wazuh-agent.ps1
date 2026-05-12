@@ -400,6 +400,19 @@ elseif ($Choice -eq "3") {
     if (Test-Path $OssecConf) {
         $conf = Get-Content $OssecConf -Raw
 
+        Write-Host ""
+        Write-Host "This option will add recommended FIM monitoring for:" -ForegroundColor Cyan
+        Write-Host " - C:\Users"
+        Write-Host " - C:\Wazuh-Test"
+        Write-Host ""
+
+        $Answer = Read-Host "Do you want to update ossec.conf now? (Y/N)"
+
+        if ($Answer -notmatch "^[Yy]$") {
+            Write-Host "FIM configuration update cancelled." -ForegroundColor Yellow
+            exit 0
+        }
+
         foreach ($Entry in $FIMEntries) {
             if ($conf -notmatch [regex]::Escape($Entry)) {
                 $conf = $conf -replace "(?s)(<syscheck>.*?)(</syscheck>)", "`$1`n$Entry`n`$2"
@@ -422,8 +435,6 @@ elseif ($Choice -eq "3") {
 
     exit 0
 }
-
-
 
 
 # ============================================================
