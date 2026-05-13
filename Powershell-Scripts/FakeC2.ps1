@@ -7,6 +7,15 @@ New-Item -Path "C:\Lab" -ItemType Directory -Force
 New-Item -Path "C:\Lab\commands.txt" -ItemType File -Force
 New-Item -Path "C:\Lab\VictimDrop" -ItemType Directory -Force
 
+#Loop Section
+while (true) {
+    # read commands
+    # parse commands
+    # create file
+
+    Start-Sleep -Seconds 5
+}
+
 # Commands for Commands File #
 
 Set-Content -Path "C:\Lab\commands.txt" -Value "CREATE_FILE|VictimDrop|test1.txt"
