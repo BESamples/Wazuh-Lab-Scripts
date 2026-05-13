@@ -63,7 +63,7 @@ if ($action -eq "CREATE_FILE") {
     # C:\Lab\VictimDrop\test1.txt
     # =================================
 
-    $TargetPath = "C:\Lab\VictimDrop\$filename"
+    $TargetPath = "C:\Lab\$folder\$filename"
 
 
     # =================================
