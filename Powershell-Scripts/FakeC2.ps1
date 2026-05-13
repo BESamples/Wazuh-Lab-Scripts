@@ -42,6 +42,15 @@ while ($true) {
 
     $parts = $cmd -split "\|"
 
+         # =================================
+        # Step if nothing is in command text file
+        # =================================
+        $cmd = Get-Content "C:\Lab\Command.txt"
+        if([string]::IsNullOrWhiteSpace($cmd)) {
+            Write-Host "No command found"
+            Start-Sleep -seconds 5
+            continue
+    }
 
 
     # =================================
@@ -97,15 +106,8 @@ while ($true) {
 
         New-Item -Path $TargetPath -ItemType File -Force
         Clear-Content "C:\Lab\commands.txt"
-
-         # =================================
-        # Step if nothing is in command text file
-        # =================================
-        If $cmd = Get-Content "C:\Lab\Command.txt"
-        Write-Host "No command found"
-        continue
     }
-
+        
 
 
     # =================================
