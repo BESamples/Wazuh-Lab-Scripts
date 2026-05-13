@@ -1,7 +1,7 @@
 # manage-wazuh-agent.ps1
 # Run as Administrator
-# Version 1.06
-# Added FIM to menu and will add FIM capibilites to osssec configuration file.
+# Version 1.07
+# Added Sysmon installation option to menu
 
 # ============================================================
 # Wazuh Agent Manager
@@ -43,7 +43,8 @@ Write-Host "Choose an option:"
 Write-Host "1. Install Wazuh Agent"
 Write-Host "2. Uninstall Wazuh Agent"
 Write-Host "3. Add Fim Monitoring"
-Write-Host "4. Exit"
+Write-Host "4. Install Sysmon"
+Write-Host "5. Exit"
 
 $Choice = Read-Host "Enter choice"
 
@@ -438,10 +439,87 @@ elseif ($Choice -eq "3") {
 
 
 # ============================================================
-# SECTION 6 - INVALID OPTION / EXIT
+# SECTION 7 - INSTALL SYSMON
 # ============================================================
 
 elseif ($Choice -eq "4") {
+
+    $SysmonFolder = "C:\Sysmon"
+    $SysmonZip = "$SysmonFolder\Sysmon.zip"
+    $SysmonConfig = "$SysmonFolder\sysmonconfig.xml"
+    $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
+
+    if (-not (Test-Path $SysmonFolder)) {
+        New-Item -Path $SysmonFolder -ItemType Directory -Force | Out-Null
+        Write-Host "Created folder: $SysmonFolder" -ForegroundColor Green
+    }
+
+    Write-Host "Downloading Sysmon from Microsoft Sysinternals..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri "https://download.sysinternals.com/files/Sysmon.zip" -OutFile $SysmonZip
+
+    Write-Host "Extracting Sysmon..." -ForegroundColor Cyan
+    Expand-Archive -Path $SysmonZip -DestinationPath $SysmonFolder -Force
+
+    Write-Host "Downloading Sysmon config..." -ForegroundColor Cyan
+    Invoke-WebRequest -Uri "https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/master/sysmonconfig-export.xml" -OutFile $SysmonConfig
+
+    Write-Host "Installing Sysmon..." -ForegroundColor Yellow
+    Start-Process -FilePath "$SysmonFolder\Sysmon64.exe" -Wait -ArgumentList "-accepteula -i `"$SysmonConfig`""
+
+    $SysmonService = Get-Service Sysmon64 -ErrorAction SilentlyContinue
+
+    if ($SysmonService) {
+        Write-Host "Sysmon installed successfully." -ForegroundColor Green
+        Write-Host "Service status: $($SysmonService.Status)"
+    }
+    else {
+        Write-Host "WARNING: Sysmon service was not found after install." -ForegroundColor Yellow
+    }
+
+    $SysmonLogConfig = @"
+
+  <localfile>
+    <location>Microsoft-Windows-Sysmon/Operational</location>
+    <log_format>eventchannel</log_format>
+  </localfile>
+"@
+
+    if (Test-Path $OssecConf) {
+        $conf = Get-Content $OssecConf -Raw
+
+        if ($conf -notmatch "Microsoft-Windows-Sysmon/Operational") {
+            $conf = $conf -replace "</ossec_config>", "$SysmonLogConfig`n</ossec_config>"
+            Set-Content -Path $OssecConf -Value $conf
+            Write-Host "Sysmon event log collection added to ossec.conf." -ForegroundColor Green
+        }
+        else {
+            Write-Host "Sysmon event log collection already exists in ossec.conf." -ForegroundColor Yellow
+        }
+
+        Write-Host "Restarting Wazuh service..."
+        Restart-Service WazuhSvc -ErrorAction SilentlyContinue
+    }
+    else {
+        Write-Host "WARNING: ossec.conf not found. Wazuh may not be installed yet." -ForegroundColor Yellow
+    }
+
+    Write-Host ""
+    Write-Host "Sysmon setup complete." -ForegroundColor Green
+    Write-Host "Test search in Wazuh:"
+    Write-Host "Microsoft-Windows-Sysmon"
+    Write-Host "Sysmon Event ID 1"
+    Write-Host "powershell.exe"
+
+    exit 0
+}
+
+
+
+# ============================================================
+# SECTION 8 - INVALID OPTION / EXIT
+# ============================================================
+
+elseif ($Choice -eq "5") {
     Write-Host "Exiting."
     exit 0
 }
