@@ -1,4 +1,4 @@
- <group name="local,windows,powershell,custom_fim,pii,">
+ <group name="local,windows,powershell,custom_fim,pii,lab_attack_simulation,">
 
   <rule id="100100" level="8">
     <if_sid>60122</if_sid>
@@ -73,5 +73,10 @@
   <description>Mass file modifications detected possible ransomware activity</description>
 </rule>
 
+  <rule id="100521" level="12">
+  <if_group>sysmon_event1</if_group>
+  <field name="win.eventdata.commandLine">ExecutionPolicy Bypass</field>
+  <description>LAB: PowerShell executed with ExecutionPolicy Bypass</description>
+</rule>
   
  </group>
