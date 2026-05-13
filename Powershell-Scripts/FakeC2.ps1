@@ -97,6 +97,13 @@ while ($true) {
 
         New-Item -Path $TargetPath -ItemType File -Force
         Clear-Content "C:\Lab\commands.txt"
+
+         # =================================
+        # Step if nothing is in command text file
+        # =================================
+        If $cmd = Get-Content "C:\Lab\Command.txt"
+        Write-Host "No command found"
+        continue
     }
 
 
