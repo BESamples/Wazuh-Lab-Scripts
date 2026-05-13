@@ -1,21 +1,24 @@
- <group name="local,windows,powershell,custom_fim,pii,lab_attack_simulation,">
+<group name="local,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,">
 
+  <!-- Windows login activity -->
   <rule id="100100" level="8">
     <if_sid>60122</if_sid>
-    <description>Custom: Failed Login</description>
+    <description>Custom: Failed Windows login detected</description>
   </rule>
 
   <rule id="100101" level="5">
     <if_sid>60118</if_sid>
-    <description>Custom: Successful Login</description>
+    <description>Custom: Successful Windows login detected</description>
   </rule>
 
+  <!-- PowerShell activity from Wazuh built-in Windows/PowerShell rules -->
   <rule id="100102" level="8">
     <if_sid>91815</if_sid>
-    <description>Custom: Powershell execution</description>
+    <description>Custom: PowerShell execution detected</description>
   </rule>
 
-<rule id="100103" level="10">
+  <!-- FIM / PII detections -->
+  <rule id="100103" level="10">
     <if_sid>550,554</if_sid>
     <field name="file" type="pcre2">(?i).*ssn.*|.*social.*|.*pii.*</field>
     <description>Possible PII-related file detected or modified: $(file)</description>
@@ -28,55 +31,63 @@
   </rule>
 
   <rule id="100105" level="8">
-   <if_sid>550,554</if_sid>
-   <match type="pcre2">password|confidential|secret</match>
-   <description>Sensitive keyword detected in file</description>
+    <if_sid>550,554</if_sid>
+    <match type="pcre2">(?i)password|confidential|secret</match>
+    <description>Sensitive keyword detected in monitored file</description>
   </rule>
 
   <rule id="100106" level="9">
-   <if_sid>554</if_sid>
-   <field name="file" type="pcre2">(?i)\.ps1$|\.bat$|\.exe$</field>
-   <description>Executable or script file added</description>
+    <if_sid>554</if_sid>
+    <field name="file" type="pcre2">(?i)\.ps1$|\.bat$|\.exe$</field>
+    <description>Executable or script file added to monitored directory: $(file)</description>
   </rule>
 
-
-<rule id="100107" level="12">
-  <if_sid>554</if_sid>
-  <field name="file" type="pcre2">(?i)\.locked$|\.encrypted$|\.crypt$</field>
-  <description>Possible ransomware-encrypted file detected</description>
-</rule>
-
-<rule id="100108" level="12">
-  <if_group>sysmon_event1</if_group>
-  <match>-EncodedCommand</match>
-  <description>Encoded PowerShell command detected</description>
-</rule>
-  
-  <rule id="100300" level="10" frequency="5" timeframe="60">
-   <if_matched_sid>100100</if_matched_sid>
-   <description>Custom: Multiple failed logins detected (possible brute force)</description>
+  <rule id="100107" level="12">
+    <if_sid>554</if_sid>
+    <field name="file" type="pcre2">(?i)\.locked$|\.encrypted$|\.crypt$</field>
+    <description>Possible ransomware-style encrypted file extension detected: $(file)</description>
   </rule>
 
-  <rule id="100301" level="12">
-   <if_sid>91815</if_sid>
-   <match>-enc</match>
-   <description>Custom: PowerShell encoded command detected</description>
+  <!-- Sysmon PowerShell / lab attack simulation rules -->
+  <rule id="100108" level="12">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)-encodedcommand|\s-enc\s</field>
+    <description>LAB: Encoded PowerShell command detected</description>
   </rule>
 
-  <rule id="100302" level="9">
-   <if_sid>60122</if_sid>
-   <description>Custom: Account lockout detected</description>
+  <rule id="100520" level="10">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)fake-updater\.ps1</field>
+    <description>LAB: Fake updater payload executed on Windows endpoint</description>
   </rule>
-  
-<rule id="100303" level="14" frequency="20" timeframe="60">
-  <if_matched_sid>550</if_matched_sid>
-  <description>Mass file modifications detected possible ransomware activity</description>
-</rule>
 
   <rule id="100521" level="12">
-  <if_group>sysmon_event1</if_group>
-  <field name="win.eventdata.commandLine">ExecutionPolicy Bypass</field>
-  <description>LAB: PowerShell executed with ExecutionPolicy Bypass</description>
-</rule>
-  
- </group>
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)executionpolicy\s+bypass</field>
+    <description>LAB: PowerShell executed with ExecutionPolicy Bypass</description>
+  </rule>
+
+  <rule id="100522" level="12">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)invoke-restmethod|invoke-webrequest|curl|wget</field>
+    <description>LAB: PowerShell web callback or download activity detected</description>
+  </rule>
+
+  <rule id="100523" level="13">
+    <if_group>sysmon_event1</if_group>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)c:\\users\\public\\.*\.ps1</field>
+    <description>LAB: PowerShell script executed from Public user directory</description>
+  </rule>
+
+  <!-- Correlation / frequency rules -->
+  <rule id="100300" level="10" frequency="5" timeframe="60">
+    <if_matched_sid>100100</if_matched_sid>
+    <description>Custom: Multiple failed Windows logins detected within 60 seconds</description>
+  </rule>
+
+  <rule id="100303" level="14" frequency="20" timeframe="60">
+    <if_matched_sid>550</if_matched_sid>
+    <description>Mass file modifications detected: possible ransomware activity</description>
+  </rule>
+
+</group>
