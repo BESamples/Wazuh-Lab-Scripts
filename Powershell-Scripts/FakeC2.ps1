@@ -40,17 +40,15 @@ while ($true) {
     # CREATE_FILE|VictimDrop|test1.txt
     # =================================
 
-    $parts = $cmd -split "\|"
+    $cmd = Get-Content "C:\Lab\commands.txt"
 
-         # =================================
-        # Step if nothing is in command text file
-        # =================================
-        $cmd = Get-Content "C:\Lab\Command.txt"
-        if([string]::IsNullOrWhiteSpace($cmd)) {
-            Write-Host "No command found"
-            Start-Sleep -seconds 5
-            continue
-    }
+if ([string]::IsNullOrWhiteSpace($cmd)) {
+    Write-Host "No command found"
+    Start-Sleep -Seconds 5
+    continue
+}
+
+$parts = $cmd -split "\|"
 
 
     # =================================
