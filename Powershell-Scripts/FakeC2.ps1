@@ -1,90 +1,108 @@
 # =================================
 # LAB SETUP SECTION
-# CREATES folders/files if missing
+# Creates folders/files if missing
 # =================================
 
 New-Item -Path "C:\Lab" -ItemType Directory -Force
 New-Item -Path "C:\Lab\commands.txt" -ItemType File -Force
 New-Item -Path "C:\Lab\VictimDrop" -ItemType Directory -Force
 
-#Loop Section
-while (true) {
-    # read commands
-    # parse commands
-    # create file
 
-    Start-Sleep -Seconds 5
-}
 
-# Commands for Commands File #
+# =================================
+# COMMANDS FOR COMMAND FILE
+# Writes the test command
+# =================================
 
 Set-Content -Path "C:\Lab\commands.txt" -Value "CREATE_FILE|VictimDrop|test1.txt"
 
-# =================================
-# Step 1 - Read Command File
-# Reads the text inside commands.txt
-# =================================
-
-$cmd = Get-Content "C:\Lab\commands.txt"
 
 
 # =================================
-# Step 2 - Split Command Into Parts
-# Splits:
-# CREATE_FILE|VictimDrop|test1.txt
-#
-#Into:
-#CREATE_FILE
-#VictimDrop
-#test1.txt
+# LOOP SECTION
+# Keeps checking commands.txt
 # =================================
 
-$parts =$cmd -split "\|"
-
-# =================================
-# Step 3 - Assign Variables
-# Save each section into variables
-# =================================
-
-$action = $parts[0]
-$folder = $parts[1]
-$filename = $parts[2]
-
-# =================================
-#Step 4 - Debug Output
-#Shows what Powershell extracted
-# ==================================
-
-Write-Host "Action: $action"
-Write-Host "Folder: $folder"
-Write-Host "Filename: $filename"
-
-# =================================
-# Step 5 - Check Command Type
-# Only  continue if action is CREATE_FILE
-# =================================
-
-if ($action -eq "CREATE_FILE") {
+while ($true) {
 
     # =================================
-    # Step 6 - Build  Full File Path
-    # Example:
-    # C:\Lab\VictimDrop\test1.txt
+    # Step 1 - Read Command File
+    # Reads the text inside commands.txt
     # =================================
 
-    $TargetPath = "C:\Lab\$folder\$filename"
+    $cmd = Get-Content "C:\Lab\commands.txt"
+
 
 
     # =================================
-    # Step 7 - Show Target Path
+    # Step 2 - Split Command Into Parts
+    # Splits:
+    # CREATE_FILE|VictimDrop|test1.txt
     # =================================
 
-    Write-Host "Creating: $TargetPath"
+    $parts = $cmd -split "\|"
+
 
 
     # =================================
-    # Step 8 - Create the File 
+    # Step 3 - Assign Variables
+    # Saves each section into variables
     # =================================
 
-    New-Item -Path $TargetPath -ItemType File -Force
+    $action = $parts[0]
+    $folder = $parts[1]
+    $filename = $parts[2]
+
+
+
+    # =================================
+    # Step 4 - Debug Output
+    # Shows what PowerShell extracted
+    # =================================
+
+    Write-Host "Action: $action"
+    Write-Host "Folder: $folder"
+    Write-Host "Filename: $filename"
+
+
+
+    # =================================
+    # Step 5 - Check Command Type
+    # Only continues if action is CREATE_FILE
+    # =================================
+
+    if ($action -eq "CREATE_FILE") {
+
+        # =================================
+        # Step 6 - Build Full File Path
+        # Example:
+        # C:\Lab\VictimDrop\test1.txt
+        # =================================
+
+        $TargetPath = "C:\Lab\$folder\$filename"
+
+
+
+        # =================================
+        # Step 7 - Show Target Path
+        # =================================
+
+        Write-Host "Creating: $TargetPath"
+
+
+
+        # =================================
+        # Step 8 - Create the File
+        # =================================
+
+        New-Item -Path $TargetPath -ItemType File -Force
+    }
+
+
+
+    # =================================
+    # Step 9 - Wait Before Checking Again
+    # =================================
+
+    Start-Sleep -Seconds 5
 }
