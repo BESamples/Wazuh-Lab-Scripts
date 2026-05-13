@@ -54,8 +54,12 @@ It provides one menu to either install or uninstall the Wazuh Agent safely.
 wazuh-agent-4.14.5-1.msi
 
 ```powershell
-Run this command to download the script but the Wazuh agent will need to downloaded from the Wazuh Website
+Run this command to download the script but the Wazuh agent will need to downloaded from the Wazuh Website:
+
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/BESamples/wazuh-lab-scripts/main/manage-wazuh-agent.ps1" -OutFile manage-wazuh-agent.ps1
+
+
  Run the command in Powershell in Admin Mode:
+
 ./manage-wazuh-agent.ps1
 
