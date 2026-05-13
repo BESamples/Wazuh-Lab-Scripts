@@ -96,6 +96,7 @@ while ($true) {
         # =================================
 
         New-Item -Path $TargetPath -ItemType File -Force
+        Clear-Content "C:\Lab\commands.txt"
     }
 
 
