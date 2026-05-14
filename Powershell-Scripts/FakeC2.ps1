@@ -1,7 +1,6 @@
-# =================================
-# LAB SETUP SECTION
-# Creates folders/files if missing
-# =================================
+# ========================
+# LAB SETUP
+# ========================
 
 New-Item -Path "C:\Lab" -ItemType Directory -Force
 New-Item -Path "C:\Lab\commands.txt" -ItemType File -Force
@@ -9,111 +8,92 @@ New-Item -Path "C:\Lab\VictimDrop" -ItemType Directory -Force
 
 
 
-# =================================
-# COMMANDS FOR COMMAND FILE
-# Writes the test command
-# =================================
+# ========================
+# TEST COMMAND
+# ========================
 
 Set-Content -Path "C:\Lab\commands.txt" -Value "CREATE_FILE|VictimDrop|test1.txt"
 
-Set-Content -Path "C:\Lab\commands.txt" -Value "CREATE_FOLDER|VictimDrop|test1.txt"
+# Set-Content -Path "C:\Lab\commands.txt" -Value "CREATE_FOLDER|VictimDrop|ReconResults"
 
 
-# =================================
-# LOOP SECTION
-# Keeps checking commands.txt
-# =================================
+
+# ========================
+# MAIN LOOP
+# ========================
 
 while ($true) {
 
-    # =================================
-    # Step 1 - Read Command File
-    # Reads the text inside commands.txt
-    # =================================
-
+    # Read command file
     $cmd = Get-Content "C:\Lab\commands.txt"
 
 
 
-    # =================================
-    # Step 2 - Split Command Into Parts
-    # Splits:
-    # CREATE_FILE|VictimDrop|test1.txt
-    # =================================
+    # If empty, wait and restart loop
+    if ([string]::IsNullOrWhiteSpace($cmd)) {
 
-    $cmd = Get-Content "C:\Lab\commands.txt"
+        Write-Host "No command found"
 
-if ([string]::IsNullOrWhiteSpace($cmd)) {
-    Write-Host "No command found"
-    Start-Sleep -Seconds 5
-    continue
-}
+        Start-Sleep -Seconds 5
 
-$parts = $cmd -split "\|"
+        continue
+    }
 
 
-    # =================================
-    # Step 3 - Assign Variables
-    # Saves each section into variables
-    # =================================
 
+    # Split command
+    $parts = $cmd -split "\|"
+
+
+
+    # Variables
     $action = $parts[0]
     $folder = $parts[1]
-    $filename = $parts[2]
+    $name = $parts[2]
 
 
 
-    # =================================
-    # Step 4 - Debug Output
-    # Shows what PowerShell extracted
-    # =================================
-
+    # Debug
     Write-Host "Action: $action"
     Write-Host "Folder: $folder"
-    Write-Host "Filename: $filename"
+    Write-Host "Name: $name"
 
 
 
-    # =================================
-    # Step 5 - Check Command Type
-    # Only continues if action is CREATE_FILE
-    # =================================
+    # ========================
+    # CREATE FILE
+    # ========================
 
     if ($action -eq "CREATE_FILE") {
-    if ($action -eq "CREATE_FOLDER")
-        # =================================
-        # Step 6 - Build Full File Path
-        # Example:
-        # C:\Lab\VictimDrop\test1.txt
-        # =================================
 
-        $TargetPath = "C:\Lab\$folder\$filename"
+        $TargetPath = "C:\Lab\$folder\$name"
 
+        Write-Host "Creating file: $TargetPath"
 
-
-        # =================================
-        # Step 7 - Show Target Path
-        # =================================
-
-        Write-Host "Creating: $TargetPath"
-        Write-Host "Creating folder: $TargetPath"
-
-
-
-        # =================================
-        # Step 8 - Create the File
-        # =================================
-    
         New-Item -Path $TargetPath -ItemType File -Force
-        New-Item -Path $TargetPath -ItemType Directory -Force
+
         Clear-Content "C:\Lab\commands.txt"
     }
-        
 
 
-    # =================================
-    # Step 9 - Wait Before Checking Again
-    # =================================
 
+    # ========================
+    # CREATE FOLDER
+    # ========================
+
+    if ($action -eq "CREATE_FOLDER") {
+
+        $TargetPath = "C:\Lab\$folder\$name"
+
+        Write-Host "Creating folder: $TargetPath"
+
+        New-Item -Path $TargetPath -ItemType Directory -Force
+
+        Clear-Content "C:\Lab\commands.txt"
+    }
+
+
+
+    # Wait before next check
     Start-Sleep -Seconds 5
 }
