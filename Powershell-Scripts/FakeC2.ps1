@@ -79,7 +79,7 @@ $parts = $cmd -split "\|"
     # =================================
 
     if ($action -eq "CREATE_FILE") {
-
+    if ($action -eq "CREATE_FOLDER")
         # =================================
         # Step 6 - Build Full File Path
         # Example:
@@ -95,14 +95,16 @@ $parts = $cmd -split "\|"
         # =================================
 
         Write-Host "Creating: $TargetPath"
+        Write-Host "Creating folder: $TargetPath"
 
 
 
         # =================================
         # Step 8 - Create the File
         # =================================
-
+    
         New-Item -Path $TargetPath -ItemType File -Force
+        New-Item -Path $TargetPath -ItemType Directory -Force
         Clear-Content "C:\Lab\commands.txt"
     }
         
