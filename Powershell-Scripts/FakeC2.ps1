@@ -16,6 +16,7 @@ New-Item -Path "C:\Lab\VictimDrop" -ItemType Directory -Force
 
 Set-Content -Path "C:\Lab\commands.txt" -Value "CREATE_FILE|VictimDrop|test1.txt"
 
+Set-Content -Path "C:\Lab\commands.txt" -Value "CREATE_FOLDER|VictimDrop|test1.txt"
 
 
 # =================================
