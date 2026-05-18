@@ -19,24 +19,31 @@
 
   <!-- FIM / PII detections -->
   <rule id="100103" level="10">
-    <if_sid>550,554</if_sid>
+    <if_sid>550</if_sid>
     <field name="file" type="pcre2">(?i).*ssn.*|.*social.*|.*pii.*</field>
     <description>Possible PII-related file detected or modified: $(file)</description>
   </rule>
 
-  <rule id="100104" level="12">
+<rule id="100104" level="10">
+    <if_sid>554</if_sid>
+    <field name="file" type="pcre2">(?i)ssn|social|pii|password|payroll</field>
+    <description>Added sensitive-looking file: $(file)</description>
+  </rule>
+
+  
+  <rule id="100105" level="12">
     <if_sid>550,554</if_sid>
     <match type="pcre2">\b\d{3}-\d{2}-\d{4}\b</match>
     <description>Possible SSN pattern detected in monitored file change: $(file)</description>
   </rule>
 
-  <rule id="100105" level="8">
+  <rule id="1001065" level="8">
     <if_sid>550,554</if_sid>
     <match type="pcre2">(?i)password|confidential|secret</match>
     <description>Sensitive keyword detected in monitored file</description>
   </rule>
 
-  <rule id="100106" level="9">
+  <rule id="100107" level="9">
     <if_sid>554</if_sid>
     <field name="file" type="pcre2">(?i)\.ps1$|\.bat$|\.exe$</field>
     <description>Executable or script file added to monitored directory: $(file)</description>
@@ -49,7 +56,7 @@
   </rule>
 
   <!-- Sysmon PowerShell / lab attack simulation rules -->
-  <rule id="100108" level="12">
+  <rule id="100109" level="12">
     <if_group>sysmon_event1</if_group>
     <field name="win.eventdata.commandLine" type="pcre2">(?i)-encodedcommand|\s-enc\s</field>
     <description>LAB: Encoded PowerShell command detected</description>
