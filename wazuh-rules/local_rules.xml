@@ -29,20 +29,7 @@
     <field name="file" type="pcre2">(?i)ssn|social|pii|password|payroll</field>
     <description>Added sensitive-looking file: $(file)</description>
   </rule>
-
-  
-  <rule id="100105" level="12">
-    <if_sid>550,554</if_sid>
-    <match type="pcre2">\b\d{3}-\d{2}-\d{4}\b</match>
-    <description>Possible SSN pattern detected in monitored file change: $(file)</description>
-  </rule>
-
-  <rule id="100106" level="8">
-    <if_sid>550,554</if_sid>
-    <match type="pcre2">(?i)password|confidential|secret</match>
-    <description>Sensitive keyword detected in monitored file</description>
-  </rule>
-
+ 
   <rule id="100107" level="9">
     <if_sid>554</if_sid>
     <field name="file" type="pcre2">(?i)\.ps1$|\.bat$|\.exe$</field>
