@@ -37,7 +37,7 @@
     <description>Possible SSN pattern detected in monitored file change: $(file)</description>
   </rule>
 
-  <rule id="1001065" level="8">
+  <rule id="100106" level="8">
     <if_sid>550,554</if_sid>
     <match type="pcre2">(?i)password|confidential|secret</match>
     <description>Sensitive keyword detected in monitored file</description>
