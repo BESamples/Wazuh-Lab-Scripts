@@ -58,8 +58,14 @@ Run this command to download the script but the Wazuh agent will need to downloa
 
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/BESamples/wazuh-lab-scripts/main/manage-wazuh-agent.ps1" -OutFile manage-wazuh-agent.ps1
 
+Or use GUI
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/BESamples/wazuh-lab-scripts/main/manage-wazuh.agent-gui.ps1" -OutFile manage-wazuh.agent-gui.ps1
+
 
  #Run the command in Powershell in Admin Mode:#
 
 ./manage-wazuh-agent.ps1
 
+For GUI version use:
+
+./manage-wazuh-agent-gui.ps1
