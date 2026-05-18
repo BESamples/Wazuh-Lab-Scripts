@@ -176,6 +176,49 @@ function Install-Sysmon {
 }
 
 # ============================================================
+# FIM PATH MANAGER
+# ============================================================
+
+$lblFimPath = New-Object System.Windows.Forms.Label
+$lblFimPath.Text = "FIM Folder Path"
+$lblFimPath.Location = New-Object System.Drawing.Point(20,280)
+$lblFimPath.Size = New-Object System.Drawing.Size(120,20)
+$form.Controls.Add($lblFimPath)
+
+$txtFimPath = New-Object System.Windows.Forms.TextBox
+$txtFimPath.Location = New-Object System.Drawing.Point(160,280)
+$txtFimPath.Size = New-Object System.Drawing.Size(320,20)
+$form.Controls.Add($txtFimPath)
+
+$btnBrowseFim = New-Object System.Windows.Forms.Button
+$btnBrowseFim.Text = "Browse"
+$btnBrowseFim.Location = New-Object System.Drawing.Point(500,275)
+$btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
+$btnBrowseFim.Add_Click({ Browse-FIMFolder })
+$form.Controls.Add($btnBrowseFim)
+
+$btnAddFimPath = New-Object System.Windows.Forms.Button
+$btnAddFimPath.Text = "Add FIM Path"
+$btnAddFimPath.Location = New-Object System.Drawing.Point(20,320)
+$btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
+$btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
+$form.Controls.Add($btnAddFimPath)
+
+$btnRefreshFim = New-Object System.Windows.Forms.Button
+$btnRefreshFim.Text = "Refresh FIM Paths"
+$btnRefreshFim.Location = New-Object System.Drawing.Point(180,320)
+$btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
+$btnRefreshFim.Add_Click({ Get-FIMPaths })
+$form.Controls.Add($btnRefreshFim)
+
+$listFimPaths = New-Object System.Windows.Forms.ListBox
+$listFimPaths.Location = New-Object System.Drawing.Point(20,370)
+$listFimPaths.Size = New-Object System.Drawing.Size(570,80)
+$form.Controls.Add($listFimPaths)
+
+
+
+# ============================================================
 # GUI WINDOW
 # ============================================================
 
