@@ -1,6 +1,6 @@
 # ============================================================
 # Wazuh Agent Manager GUI
-# Version 1.2
+# Version 1.3
 # Run as Administrator
 # ============================================================
 
@@ -297,12 +297,31 @@ function Get-FIMPaths {
         '<directories[^>]*>(.*?)</directories>'
     )
 
+    $CustomPathCount = 0
+
     foreach ($match in $matches) {
         $path = $match.Groups[1].Value.Trim()
+
+        # Hide default Wazuh/Windows system FIM paths from the GUI list.
+        # This keeps the list focused on lab/custom paths like C:\Users or C:\Wazuh-Test.
+        if ($path -match '^%WINDIR%' -or
+            $path -match '^%PROGRAMDATA%' -or
+            $path -match '^%PROGRAMFILES%' -or
+            $path -match '^C:\\Windows' -or
+            $path -match '^C:\\Program Files') {
+            continue
+        }
+
         $listFimPaths.Items.Add($path) | Out-Null
+        $CustomPathCount++
     }
 
-    Write-OutputBox "Loaded current FIM paths."
+    if ($CustomPathCount -eq 0) {
+        Write-OutputBox "Loaded current FIM paths. No custom/lab FIM paths found."
+    }
+    else {
+        Write-OutputBox "Loaded current custom/lab FIM paths."
+    }
 }
 
 function Add-FIMPathFromGUI {
@@ -382,7 +401,9 @@ function Update-WazuhStatus {
         $lblInstallStatusValue.Text = "Not Installed"
         $lblInstallStatusValue.ForeColor = [System.Drawing.Color]::Red
         $lblManagerStatusValue.Text = "N/A"
-        $lblAgentStatusValue.Text = "N/A"
+        $lblAgentStatusValue.Text = $env:COMPUTERNAME
+        $lblRegistrationStatusValue.Text = "Not Installed"
+        $lblRegistrationStatusValue.ForeColor = [System.Drawing.Color]::Red
         return
     }
 
@@ -406,10 +427,22 @@ function Update-WazuhStatus {
         $lblManagerStatusValue.Text = "ossec.conf missing"
     }
 
+    # Default display name should be the textbox value or the Windows computer name.
+    # The GUI does not display the key value from client.keys.
+    $FallbackAgentName = $txtAgentName.Text.Trim()
+
+    if ([string]::IsNullOrWhiteSpace($FallbackAgentName)) {
+        $FallbackAgentName = $env:COMPUTERNAME
+    }
+
+    $lblAgentStatusValue.Text = $FallbackAgentName
+
+    # client.keys is used only as a registration indicator.
+    # If it has a normal registered agent line, the second field is the agent name.
     if (Test-Path $ClientKeys) {
         $keyLine = Get-Content $ClientKeys -ErrorAction SilentlyContinue | Select-Object -First 1
 
-        if ($keyLine) {
+        if (-not [string]::IsNullOrWhiteSpace($keyLine)) {
             $parts = $keyLine -split ' '
 
             if ($parts.Count -ge 2) {
@@ -417,16 +450,18 @@ function Update-WazuhStatus {
                 $lblAgentStatusValue.Text = $AgentName
                 $txtAgentName.Text = $AgentName
             }
-            else {
-                $lblAgentStatusValue.Text = "Could not read"
-            }
+
+            $lblRegistrationStatusValue.Text = "Registered"
+            $lblRegistrationStatusValue.ForeColor = [System.Drawing.Color]::Green
         }
         else {
-            $lblAgentStatusValue.Text = "client.keys empty"
+            $lblRegistrationStatusValue.Text = "Not Registered / Check Manager"
+            $lblRegistrationStatusValue.ForeColor = [System.Drawing.Color]::Red
         }
     }
     else {
-        $lblAgentStatusValue.Text = "client.keys missing"
+        $lblRegistrationStatusValue.Text = "Not Registered / client.keys missing"
+        $lblRegistrationStatusValue.ForeColor = [System.Drawing.Color]::Red
     }
 }
 
@@ -538,8 +573,20 @@ $form.Controls.Add($lblAgentStatus)
 $lblAgentStatusValue = New-Object System.Windows.Forms.Label
 $lblAgentStatusValue.Text = "Checking..."
 $lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,160)
-$lblAgentStatusValue.Size = New-Object System.Drawing.Size(300,20)
+$lblAgentStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblAgentStatusValue)
+
+$lblRegistrationStatus = New-Object System.Windows.Forms.Label
+$lblRegistrationStatus.Text = "Agent Registration"
+$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,160)
+$lblRegistrationStatus.Size = New-Object System.Drawing.Size(120,20)
+$form.Controls.Add($lblRegistrationStatus)
+
+$lblRegistrationStatusValue = New-Object System.Windows.Forms.Label
+$lblRegistrationStatusValue.Text = "Checking..."
+$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,160)
+$lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
+$form.Controls.Add($lblRegistrationStatusValue)
 
 # ============================================================
 # BUTTONS
@@ -616,8 +663,14 @@ $btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
 $btnRefreshFim.Add_Click({ Get-FIMPaths })
 $form.Controls.Add($btnRefreshFim)
 
+$lblFimList = New-Object System.Windows.Forms.Label
+$lblFimList.Text = "Custom / Lab FIM Paths"
+$lblFimList.Location = New-Object System.Drawing.Point(20,400)
+$lblFimList.Size = New-Object System.Drawing.Size(180,20)
+$form.Controls.Add($lblFimList)
+
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,410)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,425)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
@@ -626,7 +679,7 @@ $form.Controls.Add($listFimPaths)
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,510)
+$OutputBox.Location = New-Object System.Drawing.Point(20,525)
 $OutputBox.Size = New-Object System.Drawing.Size(660,120)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
