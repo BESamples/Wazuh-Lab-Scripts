@@ -1,6 +1,6 @@
 # ============================================================
 # Wazuh Agent Manager GUI
-# Version 1.1
+# Version 1.2
 # Run as Administrator
 # ============================================================
 
@@ -29,10 +29,20 @@ if (-not $IsAdmin) {
 # FUNCTIONS
 # ============================================================
 
+function Write-OutputBox {
+    param(
+        [string]$Message
+    )
+
+    if ($OutputBox) {
+        $OutputBox.AppendText("$Message`r`n")
+    }
+}
+
 function Install-WazuhAgent {
 
-    $ManagerIP = $txtManagerIP.Text
-    $AgentName = $txtAgentName.Text
+    $ManagerIP = $txtManagerIP.Text.Trim()
+    $AgentName = $txtAgentName.Text.Trim()
     $Installer = $comboInstaller.SelectedItem
 
     if ([string]::IsNullOrWhiteSpace($ManagerIP)) {
@@ -63,7 +73,7 @@ function Install-WazuhAgent {
         return
     }
 
-    $OutputBox.AppendText("Installing Wazuh Agent as [$AgentName]...`r`n")
+    Write-OutputBox "Installing Wazuh Agent as [$AgentName]..."
 
     Start-Process msiexec.exe -Wait -ArgumentList @(
         "/i `"$InstallerPath`"",
@@ -75,11 +85,11 @@ function Install-WazuhAgent {
 
     Start-Service WazuhSvc -ErrorAction SilentlyContinue
 
-    $OutputBox.AppendText("Enabling Windows logon auditing...`r`n")
+    Write-OutputBox "Enabling Windows logon auditing..."
     auditpol /set /subcategory:"Logon" /failure:enable | Out-Null
     auditpol /set /subcategory:"Logon" /success:enable | Out-Null
 
-    $OutputBox.AppendText("Enabling PowerShell Script Block Logging...`r`n")
+    Write-OutputBox "Enabling PowerShell Script Block Logging..."
     New-Item -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging" -Force | Out-Null
     Set-ItemProperty `
         -Path "HKLM:\SOFTWARE\Policies\Microsoft\Windows\PowerShell\ScriptBlockLogging" `
@@ -102,19 +112,20 @@ function Install-WazuhAgent {
         if ($conf -notmatch "Microsoft-Windows-PowerShell/Operational") {
             $conf = $conf -replace "</ossec_config>", "$PowerShellLogConfig`n</ossec_config>"
             Set-Content -Path $OssecConf -Value $conf
-            $OutputBox.AppendText("PowerShell log collection added to ossec.conf.`r`n")
+            Write-OutputBox "PowerShell log collection added to ossec.conf."
         }
         else {
-            $OutputBox.AppendText("PowerShell log collection already exists.`r`n")
+            Write-OutputBox "PowerShell log collection already exists."
         }
     }
     else {
-        $OutputBox.AppendText("WARNING: ossec.conf not found.`r`n")
+        Write-OutputBox "WARNING: ossec.conf not found."
     }
 
     Restart-Service WazuhSvc -ErrorAction SilentlyContinue
 
-    $OutputBox.AppendText("Wazuh installation complete.`r`n")
+    Write-OutputBox "Wazuh installation complete. Reboot recommended."
+    Update-WazuhStatus
 }
 
 function Uninstall-WazuhAgent {
@@ -134,11 +145,11 @@ function Uninstall-WazuhAgent {
     )
 
     if ($Confirm -ne "Yes") {
-        $OutputBox.AppendText("Uninstall cancelled.`r`n")
+        Write-OutputBox "Uninstall cancelled."
         return
     }
 
-    $OutputBox.AppendText("Stopping Wazuh service...`r`n")
+    Write-OutputBox "Stopping Wazuh service..."
     Stop-Service WazuhSvc -Force -ErrorAction SilentlyContinue
 
     $apps = Get-ItemProperty `
@@ -150,7 +161,7 @@ function Uninstall-WazuhAgent {
     foreach ($app in $apps) {
         if ($app.UninstallString -match "\{.*\}") {
             $guid = $Matches[0]
-            $OutputBox.AppendText("Uninstalling Wazuh Agent...`r`n")
+            Write-OutputBox "Uninstalling Wazuh Agent..."
             Start-Process msiexec.exe -Wait -ArgumentList "/x $guid /qn"
         }
     }
@@ -158,11 +169,12 @@ function Uninstall-WazuhAgent {
     $WazuhFolder = "C:\Program Files (x86)\ossec-agent"
 
     if (Test-Path $WazuhFolder) {
-        $OutputBox.AppendText("Removing leftover Wazuh folder...`r`n")
+        Write-OutputBox "Removing leftover Wazuh folder..."
         Remove-Item $WazuhFolder -Recurse -Force -ErrorAction SilentlyContinue
     }
 
-    $OutputBox.AppendText("Wazuh uninstall complete. Reboot recommended.`r`n")
+    Write-OutputBox "Wazuh uninstall complete. Reboot recommended."
+    Update-WazuhStatus
 }
 
 function Add-FIMMonitoring {
@@ -176,7 +188,7 @@ function Add-FIMMonitoring {
 
     if (!(Test-Path "C:\Wazuh-Test")) {
         New-Item -Path "C:\Wazuh-Test" -ItemType Directory -Force | Out-Null
-        $OutputBox.AppendText("Created folder: C:\Wazuh-Test`r`n")
+        Write-OutputBox "Created folder: C:\Wazuh-Test"
     }
 
     if (Test-Path $OssecConf) {
@@ -185,20 +197,20 @@ function Add-FIMMonitoring {
         foreach ($Entry in $FIMEntries) {
             if ($conf -notmatch [regex]::Escape($Entry)) {
                 $conf = $conf -replace "(?s)(<syscheck>.*?)(</syscheck>)", "`$1`n$Entry`n`$2"
-                $OutputBox.AppendText("Added FIM entry: $Entry`r`n")
+                Write-OutputBox "Added FIM entry: $Entry"
             }
             else {
-                $OutputBox.AppendText("FIM entry already exists: $Entry`r`n")
+                Write-OutputBox "FIM entry already exists: $Entry"
             }
         }
 
         Set-Content -Path $OssecConf -Value $conf
         Restart-Service WazuhSvc -ErrorAction SilentlyContinue
-        $OutputBox.AppendText("Default FIM monitoring added.`r`n")
+        Write-OutputBox "Default FIM monitoring added."
         Get-FIMPaths
     }
     else {
-        $OutputBox.AppendText("ossec.conf not found. Is Wazuh installed?`r`n")
+        Write-OutputBox "ossec.conf not found. Is Wazuh installed?"
     }
 }
 
@@ -213,23 +225,23 @@ function Install-Sysmon {
         New-Item -Path $SysmonFolder -ItemType Directory -Force | Out-Null
     }
 
-    $OutputBox.AppendText("Downloading Sysmon...`r`n")
+    Write-OutputBox "Downloading Sysmon..."
     Invoke-WebRequest `
         -Uri "https://download.sysinternals.com/files/Sysmon.zip" `
         -OutFile $SysmonZip
 
-    $OutputBox.AppendText("Extracting Sysmon...`r`n")
+    Write-OutputBox "Extracting Sysmon..."
     Expand-Archive `
         -Path $SysmonZip `
         -DestinationPath $SysmonFolder `
         -Force
 
-    $OutputBox.AppendText("Downloading Sysmon config...`r`n")
+    Write-OutputBox "Downloading Sysmon config..."
     Invoke-WebRequest `
         -Uri "https://raw.githubusercontent.com/SwiftOnSecurity/sysmon-config/master/sysmonconfig-export.xml" `
         -OutFile $SysmonConfig
 
-    $OutputBox.AppendText("Installing Sysmon...`r`n")
+    Write-OutputBox "Installing Sysmon..."
     Start-Process `
         -FilePath "$SysmonFolder\Sysmon64.exe" `
         -Wait `
@@ -249,29 +261,32 @@ function Install-Sysmon {
         if ($conf -notmatch "Microsoft-Windows-Sysmon/Operational") {
             $conf = $conf -replace "</ossec_config>", "$SysmonLogConfig`n</ossec_config>"
             Set-Content -Path $OssecConf -Value $conf
-            $OutputBox.AppendText("Sysmon log collection added to ossec.conf.`r`n")
+            Write-OutputBox "Sysmon log collection added to ossec.conf."
         }
         else {
-            $OutputBox.AppendText("Sysmon log collection already exists.`r`n")
+            Write-OutputBox "Sysmon log collection already exists."
         }
 
         Restart-Service WazuhSvc -ErrorAction SilentlyContinue
     }
     else {
-        $OutputBox.AppendText("WARNING: ossec.conf not found. Wazuh may not be installed yet.`r`n")
+        Write-OutputBox "WARNING: ossec.conf not found. Wazuh may not be installed yet."
     }
 
-    $OutputBox.AppendText("Sysmon installation complete.`r`n")
+    Write-OutputBox "Sysmon installation complete."
+    Update-WazuhStatus
 }
 
 function Get-FIMPaths {
 
     $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
 
-    $listFimPaths.Items.Clear()
+    if ($listFimPaths) {
+        $listFimPaths.Items.Clear()
+    }
 
     if (!(Test-Path $OssecConf)) {
-        $OutputBox.AppendText("ossec.conf not found. Is Wazuh installed?`r`n")
+        Write-OutputBox "ossec.conf not found. Is Wazuh installed?"
         return
     }
 
@@ -287,7 +302,7 @@ function Get-FIMPaths {
         $listFimPaths.Items.Add($path) | Out-Null
     }
 
-    $OutputBox.AppendText("Loaded current FIM paths.`r`n")
+    Write-OutputBox "Loaded current FIM paths."
 }
 
 function Add-FIMPathFromGUI {
@@ -301,7 +316,7 @@ function Add-FIMPathFromGUI {
     }
 
     if (!(Test-Path $OssecConf)) {
-        $OutputBox.AppendText("ossec.conf not found. Is Wazuh installed?`r`n")
+        Write-OutputBox "ossec.conf not found. Is Wazuh installed?"
         return
     }
 
@@ -315,7 +330,7 @@ function Add-FIMPathFromGUI {
 
         if ($CreateFolder -eq "Yes") {
             New-Item -Path $NewPath -ItemType Directory -Force | Out-Null
-            $OutputBox.AppendText("Created folder: $NewPath`r`n")
+            Write-OutputBox "Created folder: $NewPath"
         }
         else {
             return
@@ -325,7 +340,7 @@ function Add-FIMPathFromGUI {
     $conf = Get-Content $OssecConf -Raw
 
     if ($conf -match [regex]::Escape($NewPath)) {
-        $OutputBox.AppendText("FIM path already exists: $NewPath`r`n")
+        Write-OutputBox "FIM path already exists: $NewPath"
         Get-FIMPaths
         return
     }
@@ -337,8 +352,8 @@ function Add-FIMPathFromGUI {
     Set-Content -Path $OssecConf -Value $conf
     Restart-Service WazuhSvc -ErrorAction SilentlyContinue
 
-    $OutputBox.AppendText("Added FIM path: $NewPath`r`n")
-    $OutputBox.AppendText("Restarted Wazuh service.`r`n")
+    Write-OutputBox "Added FIM path: $NewPath"
+    Write-OutputBox "Restarted Wazuh service."
 
     Get-FIMPaths
 }
@@ -353,13 +368,75 @@ function Browse-FIMFolder {
     }
 }
 
+function Update-WazuhStatus {
+
+    $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
+    $ClientKeys = "C:\Program Files (x86)\ossec-agent\client.keys"
+    $WazuhService = Get-Service WazuhSvc -ErrorAction SilentlyContinue
+
+    if ($WazuhService) {
+        $lblInstallStatusValue.Text = "Installed / $($WazuhService.Status)"
+        $lblInstallStatusValue.ForeColor = [System.Drawing.Color]::Green
+    }
+    else {
+        $lblInstallStatusValue.Text = "Not Installed"
+        $lblInstallStatusValue.ForeColor = [System.Drawing.Color]::Red
+        $lblManagerStatusValue.Text = "N/A"
+        $lblAgentStatusValue.Text = "N/A"
+        return
+    }
+
+    if (Test-Path $OssecConf) {
+        $conf = Get-Content $OssecConf -Raw
+        $managerMatch = [regex]::Match($conf, '<address>(.*?)</address>')
+
+        if ($managerMatch.Success) {
+            $ManagerIP = $managerMatch.Groups[1].Value.Trim()
+            $lblManagerStatusValue.Text = $ManagerIP
+
+            if ([string]::IsNullOrWhiteSpace($txtManagerIP.Text)) {
+                $txtManagerIP.Text = $ManagerIP
+            }
+        }
+        else {
+            $lblManagerStatusValue.Text = "Not found"
+        }
+    }
+    else {
+        $lblManagerStatusValue.Text = "ossec.conf missing"
+    }
+
+    if (Test-Path $ClientKeys) {
+        $keyLine = Get-Content $ClientKeys -ErrorAction SilentlyContinue | Select-Object -First 1
+
+        if ($keyLine) {
+            $parts = $keyLine -split ' '
+
+            if ($parts.Count -ge 2) {
+                $AgentName = $parts[1]
+                $lblAgentStatusValue.Text = $AgentName
+                $txtAgentName.Text = $AgentName
+            }
+            else {
+                $lblAgentStatusValue.Text = "Could not read"
+            }
+        }
+        else {
+            $lblAgentStatusValue.Text = "client.keys empty"
+        }
+    }
+    else {
+        $lblAgentStatusValue.Text = "client.keys missing"
+    }
+}
+
 # ============================================================
 # GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Wazuh Agent Manager GUI"
-$form.Size = New-Object System.Drawing.Size(700,650)
+$form.Size = New-Object System.Drawing.Size(720,700)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
@@ -425,40 +502,80 @@ if ($comboInstaller.Items.Count -gt 0) {
 $form.Controls.Add($comboInstaller)
 
 # ============================================================
+# WAZUH STATUS INDICATOR
+# ============================================================
+
+$lblInstallStatus = New-Object System.Windows.Forms.Label
+$lblInstallStatus.Text = "Wazuh Status"
+$lblInstallStatus.Location = New-Object System.Drawing.Point(20,135)
+$lblInstallStatus.Size = New-Object System.Drawing.Size(120,20)
+$form.Controls.Add($lblInstallStatus)
+
+$lblInstallStatusValue = New-Object System.Windows.Forms.Label
+$lblInstallStatusValue.Text = "Checking..."
+$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,135)
+$lblInstallStatusValue.Size = New-Object System.Drawing.Size(180,20)
+$form.Controls.Add($lblInstallStatusValue)
+
+$lblManagerStatus = New-Object System.Windows.Forms.Label
+$lblManagerStatus.Text = "Current Manager"
+$lblManagerStatus.Location = New-Object System.Drawing.Point(350,135)
+$lblManagerStatus.Size = New-Object System.Drawing.Size(120,20)
+$form.Controls.Add($lblManagerStatus)
+
+$lblManagerStatusValue = New-Object System.Windows.Forms.Label
+$lblManagerStatusValue.Text = "Checking..."
+$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,135)
+$lblManagerStatusValue.Size = New-Object System.Drawing.Size(200,20)
+$form.Controls.Add($lblManagerStatusValue)
+
+$lblAgentStatus = New-Object System.Windows.Forms.Label
+$lblAgentStatus.Text = "Current Agent"
+$lblAgentStatus.Location = New-Object System.Drawing.Point(20,160)
+$lblAgentStatus.Size = New-Object System.Drawing.Size(120,20)
+$form.Controls.Add($lblAgentStatus)
+
+$lblAgentStatusValue = New-Object System.Windows.Forms.Label
+$lblAgentStatusValue.Text = "Checking..."
+$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,160)
+$lblAgentStatusValue.Size = New-Object System.Drawing.Size(300,20)
+$form.Controls.Add($lblAgentStatusValue)
+
+# ============================================================
 # BUTTONS
 # ============================================================
 
 $btnInstall = New-Object System.Windows.Forms.Button
 $btnInstall.Text = "Install Wazuh Agent"
-$btnInstall.Location = New-Object System.Drawing.Point(20,160)
+$btnInstall.Location = New-Object System.Drawing.Point(20,200)
 $btnInstall.Size = New-Object System.Drawing.Size(180,40)
 $btnInstall.Add_Click({ Install-WazuhAgent })
 $form.Controls.Add($btnInstall)
 
 $btnUninstall = New-Object System.Windows.Forms.Button
 $btnUninstall.Text = "Uninstall Wazuh Agent"
-$btnUninstall.Location = New-Object System.Drawing.Point(220,160)
+$btnUninstall.Location = New-Object System.Drawing.Point(220,200)
 $btnUninstall.Size = New-Object System.Drawing.Size(180,40)
 $btnUninstall.Add_Click({ Uninstall-WazuhAgent })
 $form.Controls.Add($btnUninstall)
 
 $btnFIM = New-Object System.Windows.Forms.Button
 $btnFIM.Text = "Add Default FIM"
-$btnFIM.Location = New-Object System.Drawing.Point(420,160)
+$btnFIM.Location = New-Object System.Drawing.Point(420,200)
 $btnFIM.Size = New-Object System.Drawing.Size(180,40)
 $btnFIM.Add_Click({ Add-FIMMonitoring })
 $form.Controls.Add($btnFIM)
 
 $btnSysmon = New-Object System.Windows.Forms.Button
 $btnSysmon.Text = "Install Sysmon"
-$btnSysmon.Location = New-Object System.Drawing.Point(20,220)
+$btnSysmon.Location = New-Object System.Drawing.Point(20,260)
 $btnSysmon.Size = New-Object System.Drawing.Size(180,40)
 $btnSysmon.Add_Click({ Install-Sysmon })
 $form.Controls.Add($btnSysmon)
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
-$btnExit.Location = New-Object System.Drawing.Point(220,220)
+$btnExit.Location = New-Object System.Drawing.Point(220,260)
 $btnExit.Size = New-Object System.Drawing.Size(180,40)
 $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
@@ -469,38 +586,38 @@ $form.Controls.Add($btnExit)
 
 $lblFimPath = New-Object System.Windows.Forms.Label
 $lblFimPath.Text = "FIM Folder Path"
-$lblFimPath.Location = New-Object System.Drawing.Point(20,280)
+$lblFimPath.Location = New-Object System.Drawing.Point(20,320)
 $lblFimPath.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblFimPath)
 
 $txtFimPath = New-Object System.Windows.Forms.TextBox
-$txtFimPath.Location = New-Object System.Drawing.Point(160,280)
+$txtFimPath.Location = New-Object System.Drawing.Point(160,320)
 $txtFimPath.Size = New-Object System.Drawing.Size(320,20)
 $form.Controls.Add($txtFimPath)
 
 $btnBrowseFim = New-Object System.Windows.Forms.Button
 $btnBrowseFim.Text = "Browse"
-$btnBrowseFim.Location = New-Object System.Drawing.Point(500,275)
+$btnBrowseFim.Location = New-Object System.Drawing.Point(500,315)
 $btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
 $btnBrowseFim.Add_Click({ Browse-FIMFolder })
 $form.Controls.Add($btnBrowseFim)
 
 $btnAddFimPath = New-Object System.Windows.Forms.Button
 $btnAddFimPath.Text = "Add FIM Path"
-$btnAddFimPath.Location = New-Object System.Drawing.Point(20,320)
+$btnAddFimPath.Location = New-Object System.Drawing.Point(20,360)
 $btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
 $btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
 $form.Controls.Add($btnAddFimPath)
 
 $btnRefreshFim = New-Object System.Windows.Forms.Button
 $btnRefreshFim.Text = "Refresh FIM Paths"
-$btnRefreshFim.Location = New-Object System.Drawing.Point(180,320)
+$btnRefreshFim.Location = New-Object System.Drawing.Point(180,360)
 $btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
 $btnRefreshFim.Add_Click({ Get-FIMPaths })
 $form.Controls.Add($btnRefreshFim)
 
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,370)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,410)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
@@ -509,8 +626,8 @@ $form.Controls.Add($listFimPaths)
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,470)
-$OutputBox.Size = New-Object System.Drawing.Size(640,120)
+$OutputBox.Location = New-Object System.Drawing.Point(20,510)
+$OutputBox.Size = New-Object System.Drawing.Size(660,120)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
 $OutputBox.ReadOnly = $true
@@ -523,6 +640,7 @@ $form.Controls.Add($OutputBox)
 $form.Topmost = $true
 $form.Add_Shown({
     $form.Activate()
+    Update-WazuhStatus
     Get-FIMPaths
 })
 
