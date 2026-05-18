@@ -49,7 +49,7 @@
     <description>Executable or script file added to monitored directory: $(file)</description>
   </rule>
 
-  <rule id="100107" level="12">
+  <rule id="100108" level="12">
     <if_sid>554</if_sid>
     <field name="file" type="pcre2">(?i)\.locked$|\.encrypted$|\.crypt$</field>
     <description>Possible ransomware-style encrypted file extension detected: $(file)</description>
