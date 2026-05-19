@@ -18,15 +18,15 @@
   </rule>
 
   <!-- FIM / PII detections -->
-  <rule id="100103" level="10">
+    <rule id="100103" level="10">
     <if_sid>550</if_sid>
-    <field name="file" type="pcre2">(?i).*ssn.*|.*social.*|.*pii.*</field>
-    <description>Possible PII-related file detected or modified: $(file)</description>
+    <field name="file" type="pcre2">(?i)ssn|social|pii|password|payroll|confidential|secret</field>
+    <description>Modified sensitive-looking file: $(file)</description>
   </rule>
 
-<rule id="100104" level="10">
+  <rule id="100104" level="10">
     <if_sid>554</if_sid>
-    <field name="file" type="pcre2">(?i)ssn|social|pii|password|payroll</field>
+    <field name="file" type="pcre2">(?i)ssn|social|pii|password|payroll|confidential|secret</field>
     <description>Added sensitive-looking file: $(file)</description>
   </rule>
  
