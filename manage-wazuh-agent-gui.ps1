@@ -377,6 +377,37 @@ function Add-FIMPathFromGUI {
     Get-FIMPaths
 }
 
+
+function Restart-WazuhService {
+
+    $WazuhService = Get-Service WazuhSvc -ErrorAction SilentlyContinue
+
+    if (-not $WazuhService) {
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Wazuh Agent service not found.",
+            "Service Missing",
+            "OK",
+            "Error"
+        )
+
+        return
+    }
+
+    Write-OutputBox "Restarting Wazuh service..."
+
+    Restart-Service WazuhSvc -Force -ErrorAction SilentlyContinue
+
+    Start-Sleep -Seconds 2
+
+    Update-WazuhStatus
+
+    Write-OutputBox "Wazuh service restarted."
+}
+
+
+
+
 function Browse-FIMFolder {
 
     $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
@@ -622,10 +653,29 @@ $form.Controls.Add($btnSysmon)
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
-$btnExit.Location = New-Object System.Drawing.Point(620,260)
-$btnExit.Size = New-Object System.Drawing.Size(70,40)
+$btnExit.Location = New-Object System.Drawing.Point(650,260)
+$btnExit.Size = New-Object System.Drawing.Size(90,40)
 $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
+
+
+# ============================================================
+# RESTART WAZUH BUTTON
+# ============================================================
+
+$btnRestartWazuh = New-Object System.Windows.Forms.Button
+$btnRestartWazuh.Text = "Restart Wazuh"
+$btnRestartWazuh.Location = New-Object System.Drawing.Point(220,260)
+$btnRestartWazuh.Size = New-Object System.Drawing.Size(180,40)
+
+$btnRestartWazuh.Add_Click({
+    Restart-WazuhService
+})
+
+$form.Controls.Add($btnRestartWazuh)
+
+
+
 
 # ============================================================
 # RESTART BUTTON
