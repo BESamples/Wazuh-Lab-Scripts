@@ -81,19 +81,33 @@ These scripts provide interactive menus to:
 
 ---
 
-## ⚠️ YARA / Visual C++ Runtime Notes
+## ⚠️ Wazuh Agent / YARA / Visual C++ Runtime Notes
 
-YARA requires Microsoft Visual C++ Redistributables to function correctly on Windows.
+The scripts expect installation files to be downloaded separately before running installation helpers.
 
-For licensing and version consistency, YARA binaries and Visual C++ Redistributables should be downloaded directly from their official sources before running installation helpers in the scripts.
+Required downloads may include:
+
+- Wazuh Windows Agent MSI
+- YARA Windows binaries
+- Microsoft Visual C++ Redistributables
+
+For licensing, version consistency, and compatibility reasons, these files should be downloaded directly from their official sources.
 
 Official sources:
+
+- Wazuh Windows Agent:
+  https://documentation.wazuh.com/current/installation-guide/wazuh-agent/wazuh-agent-package-windows.html
 
 - YARA:
   https://github.com/VirusTotal/yara/releases
 
 - Microsoft Visual C++ Redistributables:
   https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
+
+The scripts include checks to help detect whether:
+- Wazuh Agent installers exist in the Downloads folder
+- YARA is already installed
+- Required Visual C++ runtime dependencies may be missing
 
 ---
 
