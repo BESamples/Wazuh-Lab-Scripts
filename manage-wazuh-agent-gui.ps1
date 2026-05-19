@@ -622,8 +622,8 @@ $form.Controls.Add($btnSysmon)
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
-$btnExit.Location = New-Object System.Drawing.Point(220,260)
-$btnExit.Size = New-Object System.Drawing.Size(180,40)
+$btnExit.Location = New-Object System.Drawing.Point(620,260)
+$btnExit.Size = New-Object System.Drawing.Size(70,40)
 $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
@@ -633,7 +633,7 @@ $form.Controls.Add($btnExit)
 
 $btnRestart = New-Object System.Windows.Forms.Button
 $btnRestart.Text = "Restart Computer"
-$btnRestart.Location = New-Object System.Drawing.Point(420,260)
+$btnRestart.Location = New-Object System.Drawing.Point(220,260)
 $btnRestart.Size = New-Object System.Drawing.Size(180,40)
 
 $btnRestart.Add_Click({
