@@ -1,4 +1,49 @@
-Set-Content -Path "C:\Program Files (x86)\ossec-agent\active-response\bin\yara\rules\test-malware.yar" -Value @'
+# test-yara-wazuh.ps1
+# Run as Administrator
+
+$YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
+$RulesFolder = "$YaraFolder\rules"
+$YaraExe = "$YaraFolder\yara64.exe"
+$TestFile = "C:\Wazuh-Test\evil.txt"
+$AlwaysRule = "$RulesFolder\always-match.yar"
+$TestRule = "$RulesFolder\test-malware.yar"
+
+Write-Host "=== YARA Wazuh Troubleshooter ===" -ForegroundColor Cyan
+
+if (!(Test-Path $YaraFolder)) {
+    Write-Host "FAIL: YARA folder missing: $YaraFolder" -ForegroundColor Red
+    exit
+}
+
+if (!(Test-Path $RulesFolder)) {
+    Write-Host "Creating rules folder..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Force -Path $RulesFolder | Out-Null
+}
+
+if (!(Test-Path $YaraExe)) {
+    Write-Host "FAIL: yara64.exe missing: $YaraExe" -ForegroundColor Red
+    exit
+}
+
+if (!(Test-Path "C:\Wazuh-Test")) {
+    Write-Host "Creating C:\Wazuh-Test..." -ForegroundColor Yellow
+    New-Item -ItemType Directory -Force -Path "C:\Wazuh-Test" | Out-Null
+}
+
+Write-Host "Creating test file..." -ForegroundColor Yellow
+Set-Content -Path $TestFile -Value "MALWARE_TEST_STRING" -Encoding ASCII
+
+Write-Host "Creating Always_Match rule..." -ForegroundColor Yellow
+Set-Content -Path $AlwaysRule -Encoding ASCII -Value @'
+rule Always_Match
+{
+    condition:
+        true
+}
+'@
+
+Write-Host "Creating Test_Malware_String rule..." -ForegroundColor Yellow
+Set-Content -Path $TestRule -Encoding ASCII -Value @'
 rule Test_Malware_String
 {
     strings:
@@ -9,16 +54,36 @@ rule Test_Malware_String
 }
 '@
 
-& "C:\Program Files (x86)\ossec-agent\active-response\bin\yara\yara64.exe" -s "C:\Program Files (x86)\ossec-agent\active-response\bin\yara\rules\test-malware.yar" "C:\Wazuh-Test\evil.txt"
+Write-Host ""
+Write-Host "Testing Always_Match rule..." -ForegroundColor Cyan
+$AlwaysResult = & $YaraExe $AlwaysRule $TestFile
 
-
-Set-Content -Path "C:\Program Files (x86)\ossec-agent\active-response\bin\yara\rules\always-match.yar" -Value @'
-rule Always_Match
-{
-    condition:
-        true
+if ($AlwaysResult -match "Always_Match") {
+    Write-Host "PASS: Always_Match rule worked." -ForegroundColor Green
 }
-'@
+else {
+    Write-Host "FAIL: Always_Match did not return a match." -ForegroundColor Red
+}
 
+Write-Host ""
+Write-Host "Testing malware string rule..." -ForegroundColor Cyan
+$TestResult = & $YaraExe $TestRule $TestFile
 
-& "C:\Program Files (x86)\ossec-agent\active-response\bin\yara\yara64.exe" "C:\Program Files (x86)\ossec-agent\active-response\bin\yara\rules\always-match.yar" "C:\Wazuh-Test\evil.txt"
+if ($TestResult -match "Test_Malware_String") {
+    Write-Host "PASS: Test_Malware_String rule worked." -ForegroundColor Green
+}
+else {
+    Write-Host "FAIL: Test_Malware_String did not return a match." -ForegroundColor Red
+}
+
+Write-Host ""
+Write-Host "YARA executable:" -ForegroundColor Cyan
+Write-Host $YaraExe
+
+Write-Host ""
+Write-Host "Rules folder:" -ForegroundColor Cyan
+Write-Host $RulesFolder
+
+Write-Host ""
+Write-Host "Test file:" -ForegroundColor Cyan
+Write-Host $TestFile
