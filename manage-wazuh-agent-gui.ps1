@@ -426,12 +426,13 @@ function Install-Yara {
         -DestinationPath $YaraFolder `
         -Force
 
-    $YaraExe = "$YaraFolder\yara64.exe"
+    $YaraExe = Get-ChildItem -Path $YaraFolder -Filter "yara64.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
+    
 
-    if (Test-Path $YaraExe) {
+    if ($YaraExe) {
 
         Write-OutputBox "YARA installed successfully."
-        Write-OutputBox "YARA executable: $YaraExe"
+        Write-OutputBox "YARA executable: $($YaraExe.FullName)"
     }
     else {
 
