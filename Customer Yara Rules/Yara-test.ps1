@@ -8,6 +8,37 @@ $TestFile = "C:\Wazuh-Test\evil.txt"
 $AlwaysRule = "$RulesFolder\always-match.yar"
 $TestRule = "$RulesFolder\test-malware.yar"
 
+# Check for Microsoft Visual C++ runtime required by yara64.exe
+$VcRuntime = @(
+    "C:\Windows\System32\VCRUNTIME140.dll",
+    "C:\Windows\SysWOW64\VCRUNTIME140.dll"
+)
+
+$VcRuntimeFound = $false
+
+foreach ($dll in $VcRuntime) {
+    if (Test-Path $dll) {
+        $VcRuntimeFound = $true
+    }
+}
+
+if (-not $VcRuntimeFound) {
+    Write-Host "FAIL: Microsoft Visual C++ Runtime is missing." -ForegroundColor Red
+    Write-Host "YARA needs VCRUNTIME140.dll to run." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Fix:" -ForegroundColor Cyan
+    Write-Host "Download and install Microsoft Visual C++ Redistributable 2015-2022 x64:"
+    Write-Host "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+    Write-Host ""
+    Write-Host "After installing it, reopen PowerShell as Administrator and rerun this script."
+    exit
+}
+else {
+    Write-Host "PASS: Microsoft Visual C++ Runtime found." -ForegroundColor Green
+}
+
+
+
 Write-Host "=== YARA Wazuh Troubleshooter ===" -ForegroundColor Cyan
 
 if (!(Test-Path $YaraFolder)) {
