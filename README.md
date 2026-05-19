@@ -23,7 +23,7 @@ Review all scripts before using them in production environments.
 |---|---|
 | [manage-wazuh-agent.ps1](./manage-wazuh-agent.ps1) | Main interactive script to install, uninstall, and configure the Wazuh Agent |
 | [manage-wazuh-agent-gui.ps1](./manage-wazuh-agent-gui.ps1) | Optional GUI version of the Wazuh Agent manager |
-| [manage-powershell-wazuh-logging.ps1](./manage-powershell-wazuh-logging.ps1) | Optional helper script to check, enable, or disable PowerShell Operational log collection |
+
 
 ### Legacy Scripts
 
@@ -67,10 +67,33 @@ These scripts provide interactive menus to:
 - Adds optional File Integrity Monitoring (FIM)
 - Installs Sysmon with SwiftOnSecurity configuration
 - Adds Sysmon Operational log collection to `ossec.conf`
+- Includes YARA installation helper options
+- Checks whether YARA is already installed
+- Detects missing YARA dependencies
+- Provides guidance for installing required Microsoft Visual C++ Redistributables
+- Displays download reminders for:
+  - YARA
+  - Microsoft Visual C++ Redistributables
 - Restarts the Wazuh service after configuration changes
 - Uninstalls the Wazuh Agent cleanly
 - Removes leftover Wazuh files
 - Prompts for reboot after install or uninstall
+
+---
+
+## ⚠️ YARA / Visual C++ Runtime Notes
+
+YARA requires Microsoft Visual C++ Redistributables to function correctly on Windows.
+
+For licensing and version consistency, YARA binaries and Visual C++ Redistributables should be downloaded directly from their official sources before running installation helpers in the scripts.
+
+Official sources:
+
+- YARA:
+  https://github.com/VirusTotal/yara/releases
+
+- Microsoft Visual C++ Redistributables:
+  https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
 
 ---
 
