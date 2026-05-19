@@ -1,6 +1,6 @@
 # ============================================================
 # Wazuh Agent Manager GUI
-# Version 1.4
+# Version 1.5
 # Run as Administrator
 # ============================================================
 
@@ -8,7 +8,7 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
 # ============================================================
-# ADMIN CHECK
+# SECTION 1 - ADMIN CHECK
 # ============================================================
 
 $IsAdmin = ([Security.Principal.WindowsPrincipal] `
@@ -26,7 +26,7 @@ if (-not $IsAdmin) {
 }
 
 # ============================================================
-# FUNCTIONS
+# SECTION 2 - HELPER FUNCTION: WRITE TO OUTPUT BOX
 # ============================================================
 
 function Write-OutputBox {
@@ -38,6 +38,10 @@ function Write-OutputBox {
         $OutputBox.AppendText("$Message`r`n")
     }
 }
+
+# ============================================================
+# SECTION 3 - INSTALL WAZUH AGENT
+# ============================================================
 
 function Install-WazuhAgent {
 
@@ -128,6 +132,10 @@ function Install-WazuhAgent {
     Update-WazuhStatus
 }
 
+# ============================================================
+# SECTION 4 - UNINSTALL WAZUH AGENT
+# ============================================================
+
 function Uninstall-WazuhAgent {
 
     $ExistingService = Get-Service WazuhSvc -ErrorAction SilentlyContinue
@@ -177,6 +185,10 @@ function Uninstall-WazuhAgent {
     Update-WazuhStatus
 }
 
+# ============================================================
+# SECTION 5 - ADD DEFAULT FIM MONITORING
+# ============================================================
+
 function Add-FIMMonitoring {
 
     $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
@@ -213,6 +225,10 @@ function Add-FIMMonitoring {
         Write-OutputBox "ossec.conf not found. Is Wazuh installed?"
     }
 }
+
+# ============================================================
+# SECTION 6 - INSTALL SYSMON
+# ============================================================
 
 function Install-Sysmon {
 
@@ -277,6 +293,10 @@ function Install-Sysmon {
     Update-WazuhStatus
 }
 
+# ============================================================
+# SECTION 7 - GET CUSTOM FIM PATHS
+# ============================================================
+
 function Get-FIMPaths {
 
     $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
@@ -302,8 +322,6 @@ function Get-FIMPaths {
     foreach ($match in $matches) {
         $path = $match.Groups[1].Value.Trim()
 
-        # Hide default Wazuh/Windows system FIM paths from the GUI list.
-        # This keeps the list focused on lab/custom paths like C:\Users or C:\Wazuh-Test.
         if ($path -match '^%WINDIR%' -or
             $path -match '^%PROGRAMDATA%' -or
             $path -match '^%PROGRAMFILES%' -or
@@ -323,6 +341,10 @@ function Get-FIMPaths {
         Write-OutputBox "Loaded current custom/lab FIM paths."
     }
 }
+
+# ============================================================
+# SECTION 8 - ADD CUSTOM FIM PATH
+# ============================================================
 
 function Add-FIMPathFromGUI {
 
@@ -377,6 +399,10 @@ function Add-FIMPathFromGUI {
     Get-FIMPaths
 }
 
+# ============================================================
+# SECTION 9 - RESTART WAZUH SERVICE
+# ============================================================
+
 function Restart-WazuhService {
 
     $WazuhService = Get-Service WazuhSvc -ErrorAction SilentlyContinue
@@ -402,43 +428,59 @@ function Restart-WazuhService {
     Write-OutputBox "Wazuh service restarted."
 }
 
+# ============================================================
+# SECTION 10 - INSTALL YARA FROM LOCAL ZIP
+# ============================================================
+
 function Install-Yara {
 
     $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
     $YaraRulesFolder = "$YaraFolder\rules"
-    $YaraZip = "$YaraFolder\yara.zip"
+    $YaraZipName = $comboYaraZip.SelectedItem
+
+    if (-not $YaraZipName) {
+        [System.Windows.Forms.MessageBox]::Show("Select a YARA ZIP file from Downloads.")
+        return
+    }
+
+    $YaraZip = Join-Path "$env:USERPROFILE\Downloads" $YaraZipName
+
+    if (!(Test-Path $YaraZip)) {
+        Write-OutputBox "ERROR: YARA ZIP not found: $YaraZip"
+        return
+    }
 
     Write-OutputBox "Creating YARA folders..."
 
     New-Item -ItemType Directory -Force -Path $YaraFolder | Out-Null
     New-Item -ItemType Directory -Force -Path $YaraRulesFolder | Out-Null
 
-    Write-OutputBox "Downloading YARA..."
-
-    Invoke-WebRequest `
-        -Uri "https://github.com/VirusTotal/yara/releases/download/v4.5.5/yara-4.5.5-2326-win64.zip" `
-        -OutFile $YaraZip
-
-    Write-OutputBox "Extracting YARA..."
+    Write-OutputBox "Extracting YARA from: $YaraZipName"
 
     Expand-Archive `
         -Path $YaraZip `
         -DestinationPath $YaraFolder `
         -Force
 
-    $YaraExe = Get-ChildItem -Path $YaraFolder -Filter "yara64.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-    
+    $YaraExe = Get-ChildItem `
+        -Path $YaraFolder `
+        -Filter "yara64.exe" `
+        -Recurse `
+        -ErrorAction SilentlyContinue |
+        Select-Object -First 1
 
     if ($YaraExe) {
-
         Write-OutputBox "YARA installed successfully."
         Write-OutputBox "YARA executable: $($YaraExe.FullName)"
     }
     else {
-
         Write-OutputBox "WARNING: yara64.exe was not found after extraction."
     }
 }
+
+# ============================================================
+# SECTION 11 - BROWSE FOR FIM FOLDER
+# ============================================================
 
 function Browse-FIMFolder {
 
@@ -449,6 +491,10 @@ function Browse-FIMFolder {
         $txtFimPath.Text = $folderBrowser.SelectedPath
     }
 }
+
+# ============================================================
+# SECTION 12 - UPDATE WAZUH STATUS DISPLAY
+# ============================================================
 
 function Update-WazuhStatus {
 
@@ -490,8 +536,6 @@ function Update-WazuhStatus {
         $lblManagerStatusValue.Text = "ossec.conf missing"
     }
 
-    # Default display name should be the textbox value or the Windows computer name.
-    # The GUI does not display the key value from client.keys.
     $FallbackAgentName = $txtAgentName.Text.Trim()
 
     if ([string]::IsNullOrWhiteSpace($FallbackAgentName)) {
@@ -500,8 +544,6 @@ function Update-WazuhStatus {
 
     $lblAgentStatusValue.Text = $FallbackAgentName
 
-    # client.keys is used only as a registration indicator.
-    # If it has a normal registered agent line, the second field is the agent name.
     if (Test-Path $ClientKeys) {
         $keyLine = Get-Content $ClientKeys -ErrorAction SilentlyContinue | Select-Object -First 1
 
@@ -529,16 +571,16 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
-# GUI WINDOW
+# SECTION 13 - CREATE MAIN GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Wazuh Agent Manager GUI"
-$form.Size = New-Object System.Drawing.Size(820,760)
+$form.Size = New-Object System.Drawing.Size(820,800)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# LABELS
+# SECTION 14 - TOP INPUT LABELS
 # ============================================================
 
 $lblManagerIP = New-Object System.Windows.Forms.Label
@@ -554,13 +596,19 @@ $lblAgentName.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblAgentName)
 
 $lblInstaller = New-Object System.Windows.Forms.Label
-$lblInstaller.Text = "Installer"
+$lblInstaller.Text = "Wazuh Installer"
 $lblInstaller.Location = New-Object System.Drawing.Point(20,100)
 $lblInstaller.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblInstaller)
 
+$lblYaraZip = New-Object System.Windows.Forms.Label
+$lblYaraZip.Text = "YARA ZIP"
+$lblYaraZip.Location = New-Object System.Drawing.Point(20,140)
+$lblYaraZip.Size = New-Object System.Drawing.Size(120,20)
+$form.Controls.Add($lblYaraZip)
+
 # ============================================================
-# TEXT BOXES
+# SECTION 15 - TOP INPUT CONTROLS
 # ============================================================
 
 $txtManagerIP = New-Object System.Windows.Forms.TextBox
@@ -573,10 +621,6 @@ $txtAgentName.Location = New-Object System.Drawing.Point(160,60)
 $txtAgentName.Size = New-Object System.Drawing.Size(200,20)
 $txtAgentName.Text = $env:COMPUTERNAME
 $form.Controls.Add($txtAgentName)
-
-# ============================================================
-# INSTALLER DROPDOWN
-# ============================================================
 
 $comboInstaller = New-Object System.Windows.Forms.ComboBox
 $comboInstaller.Location = New-Object System.Drawing.Point(160,100)
@@ -599,116 +643,121 @@ if ($comboInstaller.Items.Count -gt 0) {
 
 $form.Controls.Add($comboInstaller)
 
+$comboYaraZip = New-Object System.Windows.Forms.ComboBox
+$comboYaraZip.Location = New-Object System.Drawing.Point(160,140)
+$comboYaraZip.Size = New-Object System.Drawing.Size(400,20)
+$comboYaraZip.DropDownStyle = "DropDownList"
+
+$YaraZips = Get-ChildItem `
+    -Path "$env:USERPROFILE\Downloads" `
+    -Filter "*yara*win64*.zip" `
+    -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending
+
+foreach ($item in $YaraZips) {
+    $comboYaraZip.Items.Add($item.Name) | Out-Null
+}
+
+if ($comboYaraZip.Items.Count -gt 0) {
+    $comboYaraZip.SelectedIndex = 0
+}
+
+$form.Controls.Add($comboYaraZip)
+
 # ============================================================
-# WAZUH STATUS INDICATOR
+# SECTION 16 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
 $lblInstallStatus.Text = "Wazuh Status"
-$lblInstallStatus.Location = New-Object System.Drawing.Point(20,135)
+$lblInstallStatus.Location = New-Object System.Drawing.Point(20,180)
 $lblInstallStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblInstallStatus)
 
 $lblInstallStatusValue = New-Object System.Windows.Forms.Label
 $lblInstallStatusValue.Text = "Checking..."
-$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,135)
+$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,180)
 $lblInstallStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblInstallStatusValue)
 
 $lblManagerStatus = New-Object System.Windows.Forms.Label
 $lblManagerStatus.Text = "Current Manager"
-$lblManagerStatus.Location = New-Object System.Drawing.Point(350,135)
+$lblManagerStatus.Location = New-Object System.Drawing.Point(350,180)
 $lblManagerStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblManagerStatus)
 
 $lblManagerStatusValue = New-Object System.Windows.Forms.Label
 $lblManagerStatusValue.Text = "Checking..."
-$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,135)
+$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,180)
 $lblManagerStatusValue.Size = New-Object System.Drawing.Size(200,20)
 $form.Controls.Add($lblManagerStatusValue)
 
 $lblAgentStatus = New-Object System.Windows.Forms.Label
 $lblAgentStatus.Text = "Current Agent"
-$lblAgentStatus.Location = New-Object System.Drawing.Point(20,160)
+$lblAgentStatus.Location = New-Object System.Drawing.Point(20,205)
 $lblAgentStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblAgentStatus)
 
 $lblAgentStatusValue = New-Object System.Windows.Forms.Label
 $lblAgentStatusValue.Text = "Checking..."
-$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,160)
+$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,205)
 $lblAgentStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblAgentStatusValue)
 
 $lblRegistrationStatus = New-Object System.Windows.Forms.Label
 $lblRegistrationStatus.Text = "Agent Registration"
-$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,160)
+$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,205)
 $lblRegistrationStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblRegistrationStatus)
 
 $lblRegistrationStatusValue = New-Object System.Windows.Forms.Label
 $lblRegistrationStatusValue.Text = "Checking..."
-$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,160)
+$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,205)
 $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
 # ============================================================
-# BUTTONS
+# SECTION 17 - MAIN ACTION BUTTONS
 # ============================================================
 
 $btnInstall = New-Object System.Windows.Forms.Button
 $btnInstall.Text = "Install Wazuh Agent"
-$btnInstall.Location = New-Object System.Drawing.Point(20,200)
+$btnInstall.Location = New-Object System.Drawing.Point(20,245)
 $btnInstall.Size = New-Object System.Drawing.Size(180,40)
 $btnInstall.Add_Click({ Install-WazuhAgent })
 $form.Controls.Add($btnInstall)
 
 $btnUninstall = New-Object System.Windows.Forms.Button
 $btnUninstall.Text = "Uninstall Wazuh Agent"
-$btnUninstall.Location = New-Object System.Drawing.Point(220,200)
+$btnUninstall.Location = New-Object System.Drawing.Point(220,245)
 $btnUninstall.Size = New-Object System.Drawing.Size(180,40)
 $btnUninstall.Add_Click({ Uninstall-WazuhAgent })
 $form.Controls.Add($btnUninstall)
 
 $btnFIM = New-Object System.Windows.Forms.Button
 $btnFIM.Text = "Add Default FIM"
-$btnFIM.Location = New-Object System.Drawing.Point(420,200)
+$btnFIM.Location = New-Object System.Drawing.Point(420,245)
 $btnFIM.Size = New-Object System.Drawing.Size(180,40)
 $btnFIM.Add_Click({ Add-FIMMonitoring })
 $form.Controls.Add($btnFIM)
 
 $btnSysmon = New-Object System.Windows.Forms.Button
 $btnSysmon.Text = "Install Sysmon"
-$btnSysmon.Location = New-Object System.Drawing.Point(20,260)
+$btnSysmon.Location = New-Object System.Drawing.Point(20,305)
 $btnSysmon.Size = New-Object System.Drawing.Size(180,40)
 $btnSysmon.Add_Click({ Install-Sysmon })
 $form.Controls.Add($btnSysmon)
 
-# ============================================================
-# INSTALL YARA BUTTON
-# ============================================================
-
-$btnYara = New-Object System.Windows.Forms.Button
-$btnYara.Text = "Install YARA"
-$btnYara.Location = New-Object System.Drawing.Point(20,310)
-$btnYara.Size = New-Object System.Drawing.Size(180,40)
-
-$btnYara.Add_Click({
-    Install-Yara
-})
-
-$form.Controls.Add($btnYara)
-
-
 $btnRestartWazuh = New-Object System.Windows.Forms.Button
 $btnRestartWazuh.Text = "Restart Wazuh"
-$btnRestartWazuh.Location = New-Object System.Drawing.Point(220,260)
+$btnRestartWazuh.Location = New-Object System.Drawing.Point(220,305)
 $btnRestartWazuh.Size = New-Object System.Drawing.Size(180,40)
 $btnRestartWazuh.Add_Click({ Restart-WazuhService })
 $form.Controls.Add($btnRestartWazuh)
 
 $btnRestart = New-Object System.Windows.Forms.Button
 $btnRestart.Text = "Restart Computer"
-$btnRestart.Location = New-Object System.Drawing.Point(420,260)
+$btnRestart.Location = New-Object System.Drawing.Point(420,305)
 $btnRestart.Size = New-Object System.Drawing.Size(180,40)
 
 $btnRestart.Add_Click({
@@ -728,74 +777,81 @@ $btnRestart.Add_Click({
 
 $form.Controls.Add($btnRestart)
 
+$btnYara = New-Object System.Windows.Forms.Button
+$btnYara.Text = "Install YARA"
+$btnYara.Location = New-Object System.Drawing.Point(20,365)
+$btnYara.Size = New-Object System.Drawing.Size(180,40)
+$btnYara.Add_Click({ Install-Yara })
+$form.Controls.Add($btnYara)
+
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
-$btnExit.Location = New-Object System.Drawing.Point(650,260)
+$btnExit.Location = New-Object System.Drawing.Point(650,305)
 $btnExit.Size = New-Object System.Drawing.Size(90,40)
 $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
-# FIM PATH MANAGER CONTROLS
+# SECTION 18 - FIM PATH MANAGER CONTROLS
 # ============================================================
 
 $lblFimPath = New-Object System.Windows.Forms.Label
 $lblFimPath.Text = "FIM Folder Path"
-$lblFimPath.Location = New-Object System.Drawing.Point(20,370)
+$lblFimPath.Location = New-Object System.Drawing.Point(20,430)
 $lblFimPath.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblFimPath)
 
 $txtFimPath = New-Object System.Windows.Forms.TextBox
-$txtFimPath.Location = New-Object System.Drawing.Point(160,370)
+$txtFimPath.Location = New-Object System.Drawing.Point(160,430)
 $txtFimPath.Size = New-Object System.Drawing.Size(320,20)
 $form.Controls.Add($txtFimPath)
 
 $btnBrowseFim = New-Object System.Windows.Forms.Button
 $btnBrowseFim.Text = "Browse"
-$btnBrowseFim.Location = New-Object System.Drawing.Point(500,365)
+$btnBrowseFim.Location = New-Object System.Drawing.Point(500,425)
 $btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
 $btnBrowseFim.Add_Click({ Browse-FIMFolder })
 $form.Controls.Add($btnBrowseFim)
 
 $btnAddFimPath = New-Object System.Windows.Forms.Button
 $btnAddFimPath.Text = "Add FIM Path"
-$btnAddFimPath.Location = New-Object System.Drawing.Point(20,410)
+$btnAddFimPath.Location = New-Object System.Drawing.Point(20,470)
 $btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
 $btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
 $form.Controls.Add($btnAddFimPath)
 
 $btnRefreshFim = New-Object System.Windows.Forms.Button
 $btnRefreshFim.Text = "Refresh FIM Paths"
-$btnRefreshFim.Location = New-Object System.Drawing.Point(180,410)
+$btnRefreshFim.Location = New-Object System.Drawing.Point(180,470)
 $btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
 $btnRefreshFim.Add_Click({ Get-FIMPaths })
 $form.Controls.Add($btnRefreshFim)
 
 $lblFimList = New-Object System.Windows.Forms.Label
 $lblFimList.Text = "Custom / Lab FIM Paths"
-$lblFimList.Location = New-Object System.Drawing.Point(20,450)
+$lblFimList.Location = New-Object System.Drawing.Point(20,515)
 $lblFimList.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblFimList)
 
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,475)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,540)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
 # ============================================================
-# OUTPUT BOX
+# SECTION 19 - OUTPUT BOX
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,575)
-$OutputBox.Size = New-Object System.Drawing.Size(660,120)
+$OutputBox.Location = New-Object System.Drawing.Point(20,640)
+$OutputBox.Size = New-Object System.Drawing.Size(660,100)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
 $OutputBox.ReadOnly = $true
 $form.Controls.Add($OutputBox)
 
 # ============================================================
-# SHOW GUI
+# SECTION 20 - SHOW GUI
 # ============================================================
 
 $form.Topmost = $true
