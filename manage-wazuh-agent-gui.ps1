@@ -1,6 +1,6 @@
 # ============================================================
 # Wazuh Agent Manager GUI
-# Version 1.5
+# Version 1.6
 # Run as Administrator
 # ============================================================
 
@@ -40,7 +40,53 @@ function Write-OutputBox {
 }
 
 # ============================================================
-# SECTION 3 - INSTALL WAZUH AGENT
+# SECTION 3 - CHECK MICROSOFT VC++ RUNTIME FOR YARA
+# ============================================================
+
+function Test-VcRuntime {
+
+    $RuntimePaths = @(
+        "C:\Windows\System32\VCRUNTIME140.dll",
+        "C:\Windows\SysWOW64\VCRUNTIME140.dll"
+    )
+
+    foreach ($Path in $RuntimePaths) {
+        if (Test-Path $Path) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
+function Check-VcRuntimeFromGUI {
+
+    if (Test-VcRuntime) {
+        Write-OutputBox "PASS: Microsoft Visual C++ Runtime found."
+        [System.Windows.Forms.MessageBox]::Show(
+            "Microsoft Visual C++ Runtime found. YARA should be able to run.",
+            "Runtime Found",
+            "OK",
+            "Information"
+        )
+    }
+    else {
+        Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
+        Write-OutputBox "YARA needs VCRUNTIME140.dll to run."
+        Write-OutputBox "Download/install VC++ Redistributable 2015-2022 x64:"
+        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Microsoft Visual C++ Runtime is missing.`r`n`r`nInstall VC++ Redistributable 2015-2022 x64 first:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
+            "Missing Runtime",
+            "OK",
+            "Warning"
+        )
+    }
+}
+
+# ============================================================
+# SECTION 4 - INSTALL WAZUH AGENT
 # ============================================================
 
 function Install-WazuhAgent {
@@ -133,7 +179,7 @@ function Install-WazuhAgent {
 }
 
 # ============================================================
-# SECTION 4 - UNINSTALL WAZUH AGENT
+# SECTION 5 - UNINSTALL WAZUH AGENT
 # ============================================================
 
 function Uninstall-WazuhAgent {
@@ -186,7 +232,7 @@ function Uninstall-WazuhAgent {
 }
 
 # ============================================================
-# SECTION 5 - ADD DEFAULT FIM MONITORING
+# SECTION 6 - ADD DEFAULT FIM MONITORING
 # ============================================================
 
 function Add-FIMMonitoring {
@@ -227,7 +273,7 @@ function Add-FIMMonitoring {
 }
 
 # ============================================================
-# SECTION 6 - INSTALL SYSMON
+# SECTION 7 - INSTALL SYSMON
 # ============================================================
 
 function Install-Sysmon {
@@ -294,7 +340,7 @@ function Install-Sysmon {
 }
 
 # ============================================================
-# SECTION 7 - GET CUSTOM FIM PATHS
+# SECTION 8 - GET CUSTOM FIM PATHS
 # ============================================================
 
 function Get-FIMPaths {
@@ -343,7 +389,7 @@ function Get-FIMPaths {
 }
 
 # ============================================================
-# SECTION 8 - ADD CUSTOM FIM PATH
+# SECTION 9 - ADD CUSTOM FIM PATH
 # ============================================================
 
 function Add-FIMPathFromGUI {
@@ -400,7 +446,7 @@ function Add-FIMPathFromGUI {
 }
 
 # ============================================================
-# SECTION 9 - RESTART WAZUH SERVICE
+# SECTION 10 - RESTART WAZUH SERVICE
 # ============================================================
 
 function Restart-WazuhService {
@@ -429,10 +475,25 @@ function Restart-WazuhService {
 }
 
 # ============================================================
-# SECTION 10 - INSTALL YARA FROM LOCAL ZIP
+# SECTION 11 - INSTALL YARA FROM LOCAL ZIP
 # ============================================================
 
 function Install-Yara {
+
+    if (-not (Test-VcRuntime)) {
+        Write-OutputBox "ERROR: Microsoft Visual C++ Runtime is missing."
+        Write-OutputBox "Install VC++ Redistributable 2015-2022 x64 first:"
+        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Microsoft Visual C++ Runtime is missing.`r`n`r`nInstall VC++ Redistributable 2015-2022 x64 first:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
+            "Missing Runtime",
+            "OK",
+            "Warning"
+        )
+
+        return
+    }
 
     $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
     $YaraRulesFolder = "$YaraFolder\rules"
@@ -479,7 +540,102 @@ function Install-Yara {
 }
 
 # ============================================================
-# SECTION 11 - BROWSE FOR FIM FOLDER
+# SECTION 12 - RUN YARA TROUBLESHOOTER TEST
+# ============================================================
+
+function Test-YaraInstall {
+
+    $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
+    $RulesFolder = "$YaraFolder\rules"
+    $YaraExe = "$YaraFolder\yara64.exe"
+    $TestFolder = "C:\Wazuh-Test"
+    $TestFile = "$TestFolder\evil.txt"
+    $AlwaysRule = "$RulesFolder\always-match.yar"
+    $TestRule = "$RulesFolder\test-malware.yar"
+
+    Write-OutputBox "=== YARA Wazuh Troubleshooter ==="
+
+    if (-not (Test-VcRuntime)) {
+        Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
+        Write-OutputBox "Install VC++ Redistributable 2015-2022 x64 first:"
+        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+        return
+    }
+    else {
+        Write-OutputBox "PASS: Microsoft Visual C++ Runtime found."
+    }
+
+    if (!(Test-Path $YaraFolder)) {
+        Write-OutputBox "FAIL: YARA folder missing: $YaraFolder"
+        return
+    }
+
+    if (!(Test-Path $RulesFolder)) {
+        Write-OutputBox "Creating rules folder..."
+        New-Item -ItemType Directory -Force -Path $RulesFolder | Out-Null
+    }
+
+    if (!(Test-Path $YaraExe)) {
+        Write-OutputBox "FAIL: yara64.exe missing: $YaraExe"
+        return
+    }
+
+    if (!(Test-Path $TestFolder)) {
+        Write-OutputBox "Creating C:\Wazuh-Test..."
+        New-Item -ItemType Directory -Force -Path $TestFolder | Out-Null
+    }
+
+    Write-OutputBox "Creating test file..."
+    Set-Content -Path $TestFile -Value "MALWARE_TEST_STRING" -Encoding ASCII
+
+    Write-OutputBox "Creating Always_Match rule..."
+    Set-Content -Path $AlwaysRule -Encoding ASCII -Value @'
+rule Always_Match
+{
+    condition:
+        true
+}
+'@
+
+    Write-OutputBox "Creating Test_Malware_String rule..."
+    Set-Content -Path $TestRule -Encoding ASCII -Value @'
+rule Test_Malware_String
+{
+    strings:
+        $a = "MALWARE_TEST_STRING"
+
+    condition:
+        $a
+}
+'@
+
+    Write-OutputBox "Testing Always_Match rule..."
+    $AlwaysResult = & $YaraExe $AlwaysRule $TestFile
+
+    if ($AlwaysResult -match "Always_Match") {
+        Write-OutputBox "PASS: Always_Match rule worked."
+    }
+    else {
+        Write-OutputBox "FAIL: Always_Match did not return a match."
+    }
+
+    Write-OutputBox "Testing malware string rule..."
+    $TestResult = & $YaraExe $TestRule $TestFile
+
+    if ($TestResult -match "Test_Malware_String") {
+        Write-OutputBox "PASS: Test_Malware_String rule worked."
+    }
+    else {
+        Write-OutputBox "FAIL: Test_Malware_String did not return a match."
+    }
+
+    Write-OutputBox "YARA executable: $YaraExe"
+    Write-OutputBox "Rules folder: $RulesFolder"
+    Write-OutputBox "Test file: $TestFile"
+}
+
+# ============================================================
+# SECTION 13 - BROWSE FOR FIM FOLDER
 # ============================================================
 
 function Browse-FIMFolder {
@@ -493,7 +649,7 @@ function Browse-FIMFolder {
 }
 
 # ============================================================
-# SECTION 12 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 14 - UPDATE WAZUH STATUS DISPLAY
 # ============================================================
 
 function Update-WazuhStatus {
@@ -571,16 +727,16 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
-# SECTION 13 - CREATE MAIN GUI WINDOW
+# SECTION 15 - CREATE MAIN GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Wazuh Agent Manager GUI"
-$form.Size = New-Object System.Drawing.Size(820,800)
+$form.Size = New-Object System.Drawing.Size(820,850)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# SECTION 14 - TOP INPUT LABELS
+# SECTION 16 - TOP INPUT LABELS
 # ============================================================
 
 $lblManagerIP = New-Object System.Windows.Forms.Label
@@ -608,7 +764,7 @@ $lblYaraZip.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblYaraZip)
 
 # ============================================================
-# SECTION 15 - TOP INPUT CONTROLS
+# SECTION 17 - TOP INPUT CONTROLS
 # ============================================================
 
 $txtManagerIP = New-Object System.Windows.Forms.TextBox
@@ -665,7 +821,7 @@ if ($comboYaraZip.Items.Count -gt 0) {
 $form.Controls.Add($comboYaraZip)
 
 # ============================================================
-# SECTION 16 - WAZUH STATUS INDICATOR
+# SECTION 18 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
@@ -717,7 +873,7 @@ $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
 # ============================================================
-# SECTION 17 - MAIN ACTION BUTTONS
+# SECTION 19 - MAIN ACTION BUTTONS
 # ============================================================
 
 $btnInstall = New-Object System.Windows.Forms.Button
@@ -777,12 +933,26 @@ $btnRestart.Add_Click({
 
 $form.Controls.Add($btnRestart)
 
+$btnCheckRuntime = New-Object System.Windows.Forms.Button
+$btnCheckRuntime.Text = "Check VC++ Runtime"
+$btnCheckRuntime.Location = New-Object System.Drawing.Point(20,365)
+$btnCheckRuntime.Size = New-Object System.Drawing.Size(180,40)
+$btnCheckRuntime.Add_Click({ Check-VcRuntimeFromGUI })
+$form.Controls.Add($btnCheckRuntime)
+
 $btnYara = New-Object System.Windows.Forms.Button
 $btnYara.Text = "Install YARA"
-$btnYara.Location = New-Object System.Drawing.Point(20,365)
+$btnYara.Location = New-Object System.Drawing.Point(220,365)
 $btnYara.Size = New-Object System.Drawing.Size(180,40)
 $btnYara.Add_Click({ Install-Yara })
 $form.Controls.Add($btnYara)
+
+$btnTestYara = New-Object System.Windows.Forms.Button
+$btnTestYara.Text = "Run YARA Test"
+$btnTestYara.Location = New-Object System.Drawing.Point(420,365)
+$btnTestYara.Size = New-Object System.Drawing.Size(180,40)
+$btnTestYara.Add_Click({ Test-YaraInstall })
+$form.Controls.Add($btnTestYara)
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
@@ -792,7 +962,7 @@ $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
-# SECTION 18 - FIM PATH MANAGER CONTROLS
+# SECTION 20 - FIM PATH MANAGER CONTROLS
 # ============================================================
 
 $lblFimPath = New-Object System.Windows.Forms.Label
@@ -839,19 +1009,19 @@ $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
 # ============================================================
-# SECTION 19 - OUTPUT BOX
+# SECTION 21 - OUTPUT BOX
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
 $OutputBox.Location = New-Object System.Drawing.Point(20,640)
-$OutputBox.Size = New-Object System.Drawing.Size(660,100)
+$OutputBox.Size = New-Object System.Drawing.Size(660,150)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
 $OutputBox.ReadOnly = $true
 $form.Controls.Add($OutputBox)
 
 # ============================================================
-# SECTION 20 - SHOW GUI
+# SECTION 22 - SHOW GUI
 # ============================================================
 
 $form.Topmost = $true
