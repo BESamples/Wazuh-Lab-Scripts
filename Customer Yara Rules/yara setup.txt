@@ -9,3 +9,7 @@ rule Test_PII_File
         any of them
 }
 '@ | Set-Content "C:\Yara-Rules\test_pii.yar"
+
+
+##Then Run This##
+& "C:\Program Files (x86)\ossec-agent\active-response\bin\yara\yara64.exe" "C:\Yara-Rules\test_pii.yar" "C:\Wazuh-Test\payroll_test.txt"
