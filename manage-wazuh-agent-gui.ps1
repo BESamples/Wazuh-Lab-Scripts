@@ -480,7 +480,16 @@ function Restart-WazuhService {
 
 function Install-Yara {
 
+    $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
+    $YaraRulesFolder = "$YaraFolder\rules"
+    $YaraZipName = $comboYaraZip.SelectedItem
+
+    # ------------------------------------------------------------
+    # Check Microsoft VC++ Runtime
+    # ------------------------------------------------------------
+
     if (-not (Test-VcRuntime)) {
+
         Write-OutputBox "ERROR: Microsoft Visual C++ Runtime is missing."
         Write-OutputBox "Install VC++ Redistributable 2015-2022 x64 first:"
         Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
@@ -493,26 +502,45 @@ function Install-Yara {
         )
 
         return
-   if (-not $YaraZipName) {
+    }
 
-    Write-OutputBox "No YARA ZIP selected."
-    Write-OutputBox "Download YARA Windows ZIP first from:"
-    Write-OutputBox "https://github.com/VirusTotal/yara/releases"
+    # ------------------------------------------------------------
+    # Check if YARA ZIP selected
+    # ------------------------------------------------------------
 
-    [System.Windows.Forms.MessageBox]::Show(
-        "Download a YARA Windows ZIP first.`r`n`r`nExample:`r`nyara-v4.x.x-win64.zip`r`n`r`nDownload from:`r`nhttps://github.com/VirusTotal/yara/releases",
-        "YARA ZIP Missing",
-        "OK",
-        "Warning"
-    )
+    if (-not $YaraZipName) {
 
-    return
-}
+        Write-OutputBox "No YARA ZIP selected."
+        Write-OutputBox "Download YARA Windows ZIP first from:"
+        Write-OutputBox "https://github.com/VirusTotal/yara/releases"
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Download a YARA Windows ZIP first.`r`n`r`nExample:`r`nyara-v4.x.x-win64.zip`r`n`r`nDownload from:`r`nhttps://github.com/VirusTotal/yara/releases",
+            "YARA ZIP Missing",
+            "OK",
+            "Warning"
+        )
+
+        return
+    }
+
+    # ------------------------------------------------------------
+    # Continue YARA install
+    # ------------------------------------------------------------
 
     $YaraZip = Join-Path "$env:USERPROFILE\Downloads" $YaraZipName
 
     if (!(Test-Path $YaraZip)) {
+
         Write-OutputBox "ERROR: YARA ZIP not found: $YaraZip"
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Selected YARA ZIP was not found in Downloads.",
+            "ZIP Missing",
+            "OK",
+            "Error"
+        )
+
         return
     }
 
@@ -536,14 +564,29 @@ function Install-Yara {
         Select-Object -First 1
 
     if ($YaraExe) {
+
         Write-OutputBox "YARA installed successfully."
         Write-OutputBox "YARA executable: $($YaraExe.FullName)"
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "YARA installed successfully.",
+            "Install Complete",
+            "OK",
+            "Information"
+        )
     }
     else {
+
         Write-OutputBox "WARNING: yara64.exe was not found after extraction."
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "YARA extraction completed, but yara64.exe was not found.",
+            "Install Warning",
+            "OK",
+            "Warning"
+        )
     }
 }
-
 # ============================================================
 # SECTION 12 - RUN YARA TROUBLESHOOTER TEST
 # ============================================================
