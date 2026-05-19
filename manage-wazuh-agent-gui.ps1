@@ -500,9 +500,20 @@ function Install-Yara {
     $YaraZipName = $comboYaraZip.SelectedItem
 
     if (-not $YaraZipName) {
-        [System.Windows.Forms.MessageBox]::Show("Select a YARA ZIP file from Downloads.")
-        return
-    }
+
+    Write-OutputBox "No YARA ZIP selected."
+    Write-OutputBox "Download YARA Windows ZIP first from:"
+    Write-OutputBox "https://github.com/VirusTotal/yara/releases"
+
+    [System.Windows.Forms.MessageBox]::Show(
+        "Download a YARA Windows ZIP first.`r`n`r`nDownload from:`r`nhttps://github.com/VirusTotal/yara/releases",
+        "YARA ZIP Missing",
+        "OK",
+        "Warning"
+    )
+
+    return
+}
 
     $YaraZip = Join-Path "$env:USERPROFILE\Downloads" $YaraZipName
 
