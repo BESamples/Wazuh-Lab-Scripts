@@ -24,21 +24,27 @@ Review all scripts before using them in production environments.
 | [manage-wazuh-agent.ps1](./manage-wazuh-agent.ps1) | Main interactive script to install, uninstall, and configure the Wazuh Agent |
 | [manage-wazuh-agent-gui.ps1](./manage-wazuh-agent-gui.ps1) | Optional GUI version of the Wazuh Agent manager |
 | [manage-powershell-wazuh-logging.ps1](./manage-powershell-wazuh-logging.ps1) | Optional helper script to check, enable, or disable PowerShell Operational log collection |
-| [setup-wazuh-agent.ps1](./setup-wazuh-agent.ps1) *(legacy)* | Older install-only script replaced by `manage-wazuh-agent.ps1` |
-| [uninstall-wazuh-agent.ps1](./uninstall-wazuh-agent.ps1) *(legacy)* | Older uninstall-only script replaced by `manage-wazuh-agent.ps1` |
+
+### Legacy Scripts
+
+| Script | Purpose |
+|---|---|
+| [setup-wazuh-agent.ps1](./Legacy/setup-wazuh-agent.ps1) | Older install-only script replaced by `manage-wazuh-agent.ps1` |
+| [uninstall-wazuh-agent.ps1](./Legacy/uninstall-wazuh-agent.ps1) | Older uninstall-only script replaced by `manage-wazuh-agent.ps1` |
 
 ---
 
-## 🧠 manage-wazuh-agent.ps1 Recommended
+## 🧠 Recommended Main Scripts
 
-This is the primary script for the lab and replaces the older standalone setup and uninstall scripts.
+The standard and GUI versions both replace the older standalone setup and uninstall scripts now stored in the `Legacy` folder.
 
-The script provides one interactive menu to:
+These scripts provide interactive menus to:
 
 - Install Wazuh Agent
 - Uninstall Wazuh Agent
 - Add File Integrity Monitoring (FIM)
 - Install Sysmon
+- Configure PowerShell logging
 - Exit safely
 
 ---
@@ -83,7 +89,7 @@ wazuh-agent-4.14.5-1.msi
 
 Download the Wazuh Agent MSI separately from the official Wazuh website:
 
-:contentReference[oaicite:0]{index=0}
+https://documentation.wazuh.com/current/installation-guide/wazuh-agent/wazuh-agent-package-windows.html
 
 ---
 
@@ -102,13 +108,13 @@ Set-ExecutionPolicy Bypass -Scope Process
 Download the standard version:
 
 ```powershell
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/BESamples/wazuh-lab-scripts/main/manage-wazuh-agent.ps1" -OutFile manage-wazuh-agent.ps1
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/manage-wazuh-agent.ps1" -OutFile manage-wazuh-agent.ps1
 ```
 
 Download the GUI version:
 
 ```powershell
-Invoke-WebRequest -Uri "https://raw.githubusercontent.com/BESamples/wazuh-lab-scripts/main/manage-wazuh-agent-gui.ps1" -OutFile manage-wazuh-agent-gui.ps1
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/manage-wazuh-agent-gui.ps1" -OutFile manage-wazuh-agent-gui.ps1
 ```
 
 ---
@@ -135,7 +141,7 @@ GUI version:
 
 Sysmon configuration provided by:
 
-:contentReference[oaicite:1]{index=1}
+https://github.com/SwiftOnSecurity/sysmon-config
 
 ---
 
@@ -145,6 +151,18 @@ Sysmon configuration provided by:
 - Always review scripts before running in production.
 - Reboot after install or uninstall is strongly recommended.
 - Sysmon and PowerShell logging may require reboot before telemetry appears correctly in Wazuh.
+
+---
+
+## 📂 Suggested Repository Structure
+
+```text
+Legacy/                            -> Older replaced scripts
+manage-wazuh-agent.ps1             -> Main console version
+manage-wazuh-agent-gui.ps1         -> Main GUI version
+manage-powershell-wazuh-logging.ps1 -> PowerShell logging helper
+README.md
+```
 
 ---
 
