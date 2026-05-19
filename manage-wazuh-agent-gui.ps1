@@ -493,16 +493,21 @@ function Install-Yara {
         )
 
         return
-    }
+   if (-not $YaraZipName) {
 
-    $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
-    $YaraRulesFolder = "$YaraFolder\rules"
-    $YaraZipName = $comboYaraZip.SelectedItem
+    Write-OutputBox "No YARA ZIP selected."
+    Write-OutputBox "Download YARA Windows ZIP first from:"
+    Write-OutputBox "https://github.com/VirusTotal/yara/releases"
 
-    if (-not $YaraZipName) {
-        [System.Windows.Forms.MessageBox]::Show("Select a YARA ZIP file from Downloads.")
-        return
-    }
+    [System.Windows.Forms.MessageBox]::Show(
+        "Download a YARA Windows ZIP first.`r`n`r`nExample:`r`nyara-v4.x.x-win64.zip`r`n`r`nDownload from:`r`nhttps://github.com/VirusTotal/yara/releases",
+        "YARA ZIP Missing",
+        "OK",
+        "Warning"
+    )
+
+    return
+}
 
     $YaraZip = Join-Path "$env:USERPROFILE\Downloads" $YaraZipName
 
