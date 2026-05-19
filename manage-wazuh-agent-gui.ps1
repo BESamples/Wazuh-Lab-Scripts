@@ -628,6 +628,34 @@ $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
+# RESTART BUTTON
+# ============================================================
+
+$btnRestart = New-Object System.Windows.Forms.Button
+$btnRestart.Text = "Restart Computer"
+$btnRestart.Location = New-Object System.Drawing.Point(420,260)
+$btnRestart.Size = New-Object System.Drawing.Size(180,40)
+
+$btnRestart.Add_Click({
+
+    $ConfirmRestart = [System.Windows.Forms.MessageBox]::Show(
+        "Restart this computer now?",
+        "Confirm Restart",
+        "YesNo",
+        "Warning"
+    )
+
+    if ($ConfirmRestart -eq "Yes") {
+
+        Write-OutputBox "Restarting computer..."
+
+        Restart-Computer -Force
+    }
+})
+
+$form.Controls.Add($btnRestart)
+
+# ============================================================
 # FIM PATH MANAGER CONTROLS
 # ============================================================
 
