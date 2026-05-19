@@ -402,6 +402,43 @@ function Restart-WazuhService {
     Write-OutputBox "Wazuh service restarted."
 }
 
+function Install-Yara {
+
+    $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
+    $YaraRulesFolder = "$YaraFolder\rules"
+    $YaraZip = "$YaraFolder\yara.zip"
+
+    Write-OutputBox "Creating YARA folders..."
+
+    New-Item -ItemType Directory -Force -Path $YaraFolder | Out-Null
+    New-Item -ItemType Directory -Force -Path $YaraRulesFolder | Out-Null
+
+    Write-OutputBox "Downloading YARA..."
+
+    Invoke-WebRequest `
+        -Uri "https://github.com/VirusTotal/yara/releases/download/v4.5.5/yara-4.5.5-2326-win64.zip" `
+        -OutFile $YaraZip
+
+    Write-OutputBox "Extracting YARA..."
+
+    Expand-Archive `
+        -Path $YaraZip `
+        -DestinationPath $YaraFolder `
+        -Force
+
+    $YaraExe = "$YaraFolder\yara64.exe"
+
+    if (Test-Path $YaraExe) {
+
+        Write-OutputBox "YARA installed successfully."
+        Write-OutputBox "YARA executable: $YaraExe"
+    }
+    else {
+
+        Write-OutputBox "WARNING: yara64.exe was not found after extraction."
+    }
+}
+
 function Browse-FIMFolder {
 
     $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
@@ -496,7 +533,7 @@ function Update-WazuhStatus {
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Wazuh Agent Manager GUI"
-$form.Size = New-Object System.Drawing.Size(820,700)
+$form.Size = New-Object System.Drawing.Size(820,760)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
@@ -645,6 +682,22 @@ $btnSysmon.Size = New-Object System.Drawing.Size(180,40)
 $btnSysmon.Add_Click({ Install-Sysmon })
 $form.Controls.Add($btnSysmon)
 
+# ============================================================
+# INSTALL YARA BUTTON
+# ============================================================
+
+$btnYara = New-Object System.Windows.Forms.Button
+$btnYara.Text = "Install YARA"
+$btnYara.Location = New-Object System.Drawing.Point(20,310)
+$btnYara.Size = New-Object System.Drawing.Size(180,40)
+
+$btnYara.Add_Click({
+    Install-Yara
+})
+
+$form.Controls.Add($btnYara)
+
+
 $btnRestartWazuh = New-Object System.Windows.Forms.Button
 $btnRestartWazuh.Text = "Restart Wazuh"
 $btnRestartWazuh.Location = New-Object System.Drawing.Point(220,260)
@@ -687,44 +740,44 @@ $form.Controls.Add($btnExit)
 
 $lblFimPath = New-Object System.Windows.Forms.Label
 $lblFimPath.Text = "FIM Folder Path"
-$lblFimPath.Location = New-Object System.Drawing.Point(20,320)
+$lblFimPath.Location = New-Object System.Drawing.Point(20,370)
 $lblFimPath.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblFimPath)
 
 $txtFimPath = New-Object System.Windows.Forms.TextBox
-$txtFimPath.Location = New-Object System.Drawing.Point(160,320)
+$txtFimPath.Location = New-Object System.Drawing.Point(160,370)
 $txtFimPath.Size = New-Object System.Drawing.Size(320,20)
 $form.Controls.Add($txtFimPath)
 
 $btnBrowseFim = New-Object System.Windows.Forms.Button
 $btnBrowseFim.Text = "Browse"
-$btnBrowseFim.Location = New-Object System.Drawing.Point(500,315)
+$btnBrowseFim.Location = New-Object System.Drawing.Point(500,365)
 $btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
 $btnBrowseFim.Add_Click({ Browse-FIMFolder })
 $form.Controls.Add($btnBrowseFim)
 
 $btnAddFimPath = New-Object System.Windows.Forms.Button
 $btnAddFimPath.Text = "Add FIM Path"
-$btnAddFimPath.Location = New-Object System.Drawing.Point(20,360)
+$btnAddFimPath.Location = New-Object System.Drawing.Point(20,410)
 $btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
 $btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
 $form.Controls.Add($btnAddFimPath)
 
 $btnRefreshFim = New-Object System.Windows.Forms.Button
 $btnRefreshFim.Text = "Refresh FIM Paths"
-$btnRefreshFim.Location = New-Object System.Drawing.Point(180,360)
+$btnRefreshFim.Location = New-Object System.Drawing.Point(180,410)
 $btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
 $btnRefreshFim.Add_Click({ Get-FIMPaths })
 $form.Controls.Add($btnRefreshFim)
 
 $lblFimList = New-Object System.Windows.Forms.Label
 $lblFimList.Text = "Custom / Lab FIM Paths"
-$lblFimList.Location = New-Object System.Drawing.Point(20,400)
+$lblFimList.Location = New-Object System.Drawing.Point(20,450)
 $lblFimList.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblFimList)
 
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,425)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,475)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
@@ -733,7 +786,7 @@ $form.Controls.Add($listFimPaths)
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,525)
+$OutputBox.Location = New-Object System.Drawing.Point(20,575)
 $OutputBox.Size = New-Object System.Drawing.Size(660,120)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
