@@ -1,6 +1,6 @@
 # ============================================================
 # Wazuh Agent Manager GUI
-# Version 1.6
+# Version 1.7
 # Run as Administrator
 # ============================================================
 
@@ -40,7 +40,7 @@ function Write-OutputBox {
 }
 
 # ============================================================
-# SECTION 3 - CHECK MICROSOFT VC++ RUNTIME FOR YARA
+# SECTION 3 - CHECK / INSTALL MICROSOFT VC++ RUNTIME FOR YARA
 # ============================================================
 
 function Test-VcRuntime {
@@ -76,6 +76,8 @@ function Check-VcRuntimeFromGUI {
     }
 
     Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
+    Write-OutputBox "Download VC++ Redistributable 2015-2022 x64 from:"
+    Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
     $VcInstaller = $comboVcInstaller.SelectedItem
 
@@ -120,7 +122,7 @@ function Check-VcRuntimeFromGUI {
                 Write-OutputBox "WARNING: Runtime still not detected after install."
 
                 [System.Windows.Forms.MessageBox]::Show(
-                    "VC++ installer finished, but runtime was not detected.",
+                    "VC++ installer finished, but runtime was not detected. A reboot may be needed.",
                     "Install Warning",
                     "OK",
                     "Warning"
@@ -132,11 +134,9 @@ function Check-VcRuntimeFromGUI {
     }
 
     Write-OutputBox "No VC++ installer found in Downloads."
-    Write-OutputBox "Download from:"
-    Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
     [System.Windows.Forms.MessageBox]::Show(
-        "VC++ Runtime missing.`r`n`r`nDownload VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
+        "VC++ Runtime is missing.`r`n`r`nDownload VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe`r`n`r`nSave it to Downloads, then reopen this GUI or run Check VC++ Runtime again.",
         "Runtime Missing",
         "OK",
         "Warning"
@@ -540,11 +540,11 @@ function Install-Yara {
 
     if (-not (Test-VcRuntime)) {
         Write-OutputBox "ERROR: Microsoft Visual C++ Runtime is missing."
-        Write-OutputBox "Install VC++ Redistributable 2015-2022 x64 first:"
+        Write-OutputBox "Run Check VC++ Runtime first or install VC++ Redistributable 2015-2022 x64:"
         Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
         [System.Windows.Forms.MessageBox]::Show(
-            "Microsoft Visual C++ Runtime is missing.`r`n`r`nInstall VC++ Redistributable 2015-2022 x64 first:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
+            "Microsoft Visual C++ Runtime is missing.`r`n`r`nRun Check VC++ Runtime first, or install VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
             "Missing Runtime",
             "OK",
             "Warning"
@@ -559,19 +559,19 @@ function Install-Yara {
 
     if (-not $YaraZipName) {
 
-    Write-OutputBox "No YARA ZIP selected."
-    Write-OutputBox "Download YARA Windows ZIP first from:"
-    Write-OutputBox "https://github.com/VirusTotal/yara/releases"
+        Write-OutputBox "No YARA ZIP selected."
+        Write-OutputBox "Download YARA Windows ZIP first from:"
+        Write-OutputBox "https://github.com/VirusTotal/yara/releases"
 
-    [System.Windows.Forms.MessageBox]::Show(
-        "Download a YARA Windows ZIP first.`r`n`r`nDownload from:`r`nhttps://github.com/VirusTotal/yara/releases",
-        "YARA ZIP Missing",
-        "OK",
-        "Warning"
-    )
+        [System.Windows.Forms.MessageBox]::Show(
+            "Download a YARA Windows ZIP first.`r`n`r`nDownload from:`r`nhttps://github.com/VirusTotal/yara/releases`r`n`r`nSave the ZIP to Downloads, then reopen this GUI.",
+            "YARA ZIP Missing",
+            "OK",
+            "Warning"
+        )
 
-    return
-}
+        return
+    }
 
     $YaraZip = Join-Path "$env:USERPROFILE\Downloads" $YaraZipName
 
@@ -616,7 +616,6 @@ function Test-YaraInstall {
 
     $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
     $RulesFolder = "$YaraFolder\rules"
-    $YaraExe = "$YaraFolder\yara64.exe"
     $TestFolder = "C:\Wazuh-Test"
     $TestFile = "$TestFolder\evil.txt"
     $AlwaysRule = "$RulesFolder\always-match.yar"
@@ -626,7 +625,7 @@ function Test-YaraInstall {
 
     if (-not (Test-VcRuntime)) {
         Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
-        Write-OutputBox "Install VC++ Redistributable 2015-2022 x64 first:"
+        Write-OutputBox "Run Check VC++ Runtime first or install VC++ Redistributable 2015-2022 x64:"
         Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
         return
     }
@@ -644,10 +643,19 @@ function Test-YaraInstall {
         New-Item -ItemType Directory -Force -Path $RulesFolder | Out-Null
     }
 
-    if (!(Test-Path $YaraExe)) {
-        Write-OutputBox "FAIL: yara64.exe missing: $YaraExe"
+    $YaraExeItem = Get-ChildItem `
+        -Path $YaraFolder `
+        -Filter "yara64.exe" `
+        -Recurse `
+        -ErrorAction SilentlyContinue |
+        Select-Object -First 1
+
+    if (-not $YaraExeItem) {
+        Write-OutputBox "FAIL: yara64.exe missing under: $YaraFolder"
         return
     }
+
+    $YaraExe = $YaraExeItem.FullName
 
     if (!(Test-Path $TestFolder)) {
         Write-OutputBox "Creating C:\Wazuh-Test..."
@@ -801,7 +809,7 @@ function Update-WazuhStatus {
 
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "Wazuh Agent Manager GUI"
-$form.Size = New-Object System.Drawing.Size(820,850)
+$form.Size = New-Object System.Drawing.Size(820,900)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
@@ -831,6 +839,12 @@ $lblYaraZip.Text = "YARA ZIP"
 $lblYaraZip.Location = New-Object System.Drawing.Point(20,140)
 $lblYaraZip.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblYaraZip)
+
+$lblVcInstaller = New-Object System.Windows.Forms.Label
+$lblVcInstaller.Text = "VC++ Installer"
+$lblVcInstaller.Location = New-Object System.Drawing.Point(20,180)
+$lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
+$form.Controls.Add($lblVcInstaller)
 
 # ============================================================
 # SECTION 17 - TOP INPUT CONTROLS
@@ -889,18 +903,8 @@ if ($comboYaraZip.Items.Count -gt 0) {
 
 $form.Controls.Add($comboYaraZip)
 
-# ============================================================
-# VC++ INSTALLER DROPDOWN
-# ============================================================
-
-$lblVcInstaller = New-Object System.Windows.Forms.Label
-$lblVcInstaller.Text = "VC++ Installer"
-$lblVcInstaller.Location = New-Object System.Drawing.Point(20,170)
-$lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblVcInstaller)
-
 $comboVcInstaller = New-Object System.Windows.Forms.ComboBox
-$comboVcInstaller.Location = New-Object System.Drawing.Point(160,170)
+$comboVcInstaller.Location = New-Object System.Drawing.Point(160,180)
 $comboVcInstaller.Size = New-Object System.Drawing.Size(400,20)
 $comboVcInstaller.DropDownStyle = "DropDownList"
 
@@ -926,49 +930,49 @@ $form.Controls.Add($comboVcInstaller)
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
 $lblInstallStatus.Text = "Wazuh Status"
-$lblInstallStatus.Location = New-Object System.Drawing.Point(20,210)
+$lblInstallStatus.Location = New-Object System.Drawing.Point(20,220)
 $lblInstallStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblInstallStatus)
 
 $lblInstallStatusValue = New-Object System.Windows.Forms.Label
 $lblInstallStatusValue.Text = "Checking..."
-$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,180)
+$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,220)
 $lblInstallStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblInstallStatusValue)
 
 $lblManagerStatus = New-Object System.Windows.Forms.Label
 $lblManagerStatus.Text = "Current Manager"
-$lblManagerStatus.Location = New-Object System.Drawing.Point(350,180)
+$lblManagerStatus.Location = New-Object System.Drawing.Point(350,220)
 $lblManagerStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblManagerStatus)
 
 $lblManagerStatusValue = New-Object System.Windows.Forms.Label
 $lblManagerStatusValue.Text = "Checking..."
-$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,180)
+$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,220)
 $lblManagerStatusValue.Size = New-Object System.Drawing.Size(200,20)
 $form.Controls.Add($lblManagerStatusValue)
 
 $lblAgentStatus = New-Object System.Windows.Forms.Label
 $lblAgentStatus.Text = "Current Agent"
-$lblAgentStatus.Location = New-Object System.Drawing.Point(20,205)
+$lblAgentStatus.Location = New-Object System.Drawing.Point(20,245)
 $lblAgentStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblAgentStatus)
 
 $lblAgentStatusValue = New-Object System.Windows.Forms.Label
 $lblAgentStatusValue.Text = "Checking..."
-$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,205)
+$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,245)
 $lblAgentStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblAgentStatusValue)
 
 $lblRegistrationStatus = New-Object System.Windows.Forms.Label
 $lblRegistrationStatus.Text = "Agent Registration"
-$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,205)
+$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,245)
 $lblRegistrationStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblRegistrationStatus)
 
 $lblRegistrationStatusValue = New-Object System.Windows.Forms.Label
 $lblRegistrationStatusValue.Text = "Checking..."
-$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,205)
+$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,245)
 $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
@@ -978,42 +982,42 @@ $form.Controls.Add($lblRegistrationStatusValue)
 
 $btnInstall = New-Object System.Windows.Forms.Button
 $btnInstall.Text = "Install Wazuh Agent"
-$btnInstall.Location = New-Object System.Drawing.Point(20,245)
+$btnInstall.Location = New-Object System.Drawing.Point(20,285)
 $btnInstall.Size = New-Object System.Drawing.Size(180,40)
 $btnInstall.Add_Click({ Install-WazuhAgent })
 $form.Controls.Add($btnInstall)
 
 $btnUninstall = New-Object System.Windows.Forms.Button
 $btnUninstall.Text = "Uninstall Wazuh Agent"
-$btnUninstall.Location = New-Object System.Drawing.Point(220,245)
+$btnUninstall.Location = New-Object System.Drawing.Point(220,285)
 $btnUninstall.Size = New-Object System.Drawing.Size(180,40)
 $btnUninstall.Add_Click({ Uninstall-WazuhAgent })
 $form.Controls.Add($btnUninstall)
 
 $btnFIM = New-Object System.Windows.Forms.Button
 $btnFIM.Text = "Add Default FIM"
-$btnFIM.Location = New-Object System.Drawing.Point(420,245)
+$btnFIM.Location = New-Object System.Drawing.Point(420,285)
 $btnFIM.Size = New-Object System.Drawing.Size(180,40)
 $btnFIM.Add_Click({ Add-FIMMonitoring })
 $form.Controls.Add($btnFIM)
 
 $btnSysmon = New-Object System.Windows.Forms.Button
 $btnSysmon.Text = "Install Sysmon"
-$btnSysmon.Location = New-Object System.Drawing.Point(20,305)
+$btnSysmon.Location = New-Object System.Drawing.Point(20,345)
 $btnSysmon.Size = New-Object System.Drawing.Size(180,40)
 $btnSysmon.Add_Click({ Install-Sysmon })
 $form.Controls.Add($btnSysmon)
 
 $btnRestartWazuh = New-Object System.Windows.Forms.Button
 $btnRestartWazuh.Text = "Restart Wazuh"
-$btnRestartWazuh.Location = New-Object System.Drawing.Point(220,305)
+$btnRestartWazuh.Location = New-Object System.Drawing.Point(220,345)
 $btnRestartWazuh.Size = New-Object System.Drawing.Size(180,40)
 $btnRestartWazuh.Add_Click({ Restart-WazuhService })
 $form.Controls.Add($btnRestartWazuh)
 
 $btnRestart = New-Object System.Windows.Forms.Button
 $btnRestart.Text = "Restart Computer"
-$btnRestart.Location = New-Object System.Drawing.Point(420,305)
+$btnRestart.Location = New-Object System.Drawing.Point(420,345)
 $btnRestart.Size = New-Object System.Drawing.Size(180,40)
 
 $btnRestart.Add_Click({
@@ -1035,110 +1039,28 @@ $form.Controls.Add($btnRestart)
 
 $btnCheckRuntime = New-Object System.Windows.Forms.Button
 $btnCheckRuntime.Text = "Check VC++ Runtime"
-$btnCheckRuntime.Location = New-Object System.Drawing.Point(20,365)
+$btnCheckRuntime.Location = New-Object System.Drawing.Point(20,405)
 $btnCheckRuntime.Size = New-Object System.Drawing.Size(180,40)
-function Check-VcRuntimeFromGUI {
-
-    if (Test-VcRuntime) {
-
-        Write-OutputBox "PASS: Microsoft Visual C++ Runtime found."
-
-        [System.Windows.Forms.MessageBox]::Show(
-            "Microsoft Visual C++ Runtime found.",
-            "Runtime Found",
-            "OK",
-            "Information"
-        )
-
-        return
-    }
-
-    Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
-
-    $VcInstaller = $comboVcInstaller.SelectedItem
-
-    if ($VcInstaller) {
-
-        $InstallerPath = Join-Path "$env:USERPROFILE\Downloads" $VcInstaller
-
-        Write-OutputBox "VC++ installer detected:"
-        Write-OutputBox $InstallerPath
-
-        $InstallNow = [System.Windows.Forms.MessageBox]::Show(
-            "VC++ Runtime is missing.`r`n`r`nInstall detected VC++ installer now?",
-            "Install VC++ Runtime",
-            "YesNo",
-            "Question"
-        )
-
-        if ($InstallNow -eq "Yes") {
-
-            Write-OutputBox "Launching VC++ installer..."
-
-            Start-Process `
-                -FilePath $InstallerPath `
-                -Wait `
-                -ArgumentList "/install /quiet /norestart"
-
-            Start-Sleep -Seconds 3
-
-            if (Test-VcRuntime) {
-
-                Write-OutputBox "PASS: VC++ Runtime installed successfully."
-
-                [System.Windows.Forms.MessageBox]::Show(
-                    "VC++ Runtime installed successfully.",
-                    "Install Complete",
-                    "OK",
-                    "Information"
-                )
-            }
-            else {
-
-                Write-OutputBox "WARNING: Runtime still not detected after install."
-
-                [System.Windows.Forms.MessageBox]::Show(
-                    "VC++ installer finished, but runtime was not detected.",
-                    "Install Warning",
-                    "OK",
-                    "Warning"
-                )
-            }
-        }
-
-        return
-    }
-
-    Write-OutputBox "No VC++ installer found in Downloads."
-    Write-OutputBox "Download from:"
-    Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-
-    [System.Windows.Forms.MessageBox]::Show(
-        "VC++ Runtime missing.`r`n`r`nDownload VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
-        "Runtime Missing",
-        "OK",
-        "Warning"
-    )
-}
+$btnCheckRuntime.Add_Click({ Check-VcRuntimeFromGUI })
 $form.Controls.Add($btnCheckRuntime)
 
 $btnYara = New-Object System.Windows.Forms.Button
 $btnYara.Text = "Install YARA"
-$btnYara.Location = New-Object System.Drawing.Point(220,365)
+$btnYara.Location = New-Object System.Drawing.Point(220,405)
 $btnYara.Size = New-Object System.Drawing.Size(180,40)
 $btnYara.Add_Click({ Install-Yara })
 $form.Controls.Add($btnYara)
 
 $btnTestYara = New-Object System.Windows.Forms.Button
 $btnTestYara.Text = "Run YARA Test"
-$btnTestYara.Location = New-Object System.Drawing.Point(420,365)
+$btnTestYara.Location = New-Object System.Drawing.Point(420,405)
 $btnTestYara.Size = New-Object System.Drawing.Size(180,40)
 $btnTestYara.Add_Click({ Test-YaraInstall })
 $form.Controls.Add($btnTestYara)
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
-$btnExit.Location = New-Object System.Drawing.Point(650,305)
+$btnExit.Location = New-Object System.Drawing.Point(650,345)
 $btnExit.Size = New-Object System.Drawing.Size(90,40)
 $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
@@ -1149,44 +1071,44 @@ $form.Controls.Add($btnExit)
 
 $lblFimPath = New-Object System.Windows.Forms.Label
 $lblFimPath.Text = "FIM Folder Path"
-$lblFimPath.Location = New-Object System.Drawing.Point(20,430)
+$lblFimPath.Location = New-Object System.Drawing.Point(20,470)
 $lblFimPath.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblFimPath)
 
 $txtFimPath = New-Object System.Windows.Forms.TextBox
-$txtFimPath.Location = New-Object System.Drawing.Point(160,430)
+$txtFimPath.Location = New-Object System.Drawing.Point(160,470)
 $txtFimPath.Size = New-Object System.Drawing.Size(320,20)
 $form.Controls.Add($txtFimPath)
 
 $btnBrowseFim = New-Object System.Windows.Forms.Button
 $btnBrowseFim.Text = "Browse"
-$btnBrowseFim.Location = New-Object System.Drawing.Point(500,425)
+$btnBrowseFim.Location = New-Object System.Drawing.Point(500,465)
 $btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
 $btnBrowseFim.Add_Click({ Browse-FIMFolder })
 $form.Controls.Add($btnBrowseFim)
 
 $btnAddFimPath = New-Object System.Windows.Forms.Button
 $btnAddFimPath.Text = "Add FIM Path"
-$btnAddFimPath.Location = New-Object System.Drawing.Point(20,470)
+$btnAddFimPath.Location = New-Object System.Drawing.Point(20,510)
 $btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
 $btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
 $form.Controls.Add($btnAddFimPath)
 
 $btnRefreshFim = New-Object System.Windows.Forms.Button
 $btnRefreshFim.Text = "Refresh FIM Paths"
-$btnRefreshFim.Location = New-Object System.Drawing.Point(180,470)
+$btnRefreshFim.Location = New-Object System.Drawing.Point(180,510)
 $btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
 $btnRefreshFim.Add_Click({ Get-FIMPaths })
 $form.Controls.Add($btnRefreshFim)
 
 $lblFimList = New-Object System.Windows.Forms.Label
 $lblFimList.Text = "Custom / Lab FIM Paths"
-$lblFimList.Location = New-Object System.Drawing.Point(20,515)
+$lblFimList.Location = New-Object System.Drawing.Point(20,555)
 $lblFimList.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblFimList)
 
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,540)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,580)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
@@ -1195,8 +1117,8 @@ $form.Controls.Add($listFimPaths)
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,640)
-$OutputBox.Size = New-Object System.Drawing.Size(660,150)
+$OutputBox.Location = New-Object System.Drawing.Point(20,680)
+$OutputBox.Size = New-Object System.Drawing.Size(660,160)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
 $OutputBox.ReadOnly = $true
