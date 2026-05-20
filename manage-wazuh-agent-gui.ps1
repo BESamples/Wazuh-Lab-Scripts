@@ -17,6 +17,7 @@ $IsAdmin = ([Security.Principal.WindowsPrincipal] `
 
 if (-not $IsAdmin) {
     [System.Windows.Forms.MessageBox]::Show(
+        $form,
         "Run PowerShell as Administrator.",
         "Administrator Required",
         "OK",
@@ -66,6 +67,7 @@ function Check-VcRuntimeFromGUI {
         Write-OutputBox "PASS: Microsoft Visual C++ Runtime found."
 
         [System.Windows.Forms.MessageBox]::Show(
+            $form,
             "Microsoft Visual C++ Runtime found.",
             "Runtime Found",
             "OK",
@@ -89,6 +91,7 @@ function Check-VcRuntimeFromGUI {
         Write-OutputBox $InstallerPath
 
         $InstallNow = [System.Windows.Forms.MessageBox]::Show(
+            $form,
             "VC++ Runtime is missing.`r`n`r`nInstall detected VC++ installer now?",
             "Install VC++ Runtime",
             "YesNo",
@@ -111,6 +114,7 @@ function Check-VcRuntimeFromGUI {
                 Write-OutputBox "PASS: VC++ Runtime installed successfully."
 
                 [System.Windows.Forms.MessageBox]::Show(
+                    $form,
                     "VC++ Runtime installed successfully.",
                     "Install Complete",
                     "OK",
@@ -122,6 +126,7 @@ function Check-VcRuntimeFromGUI {
                 Write-OutputBox "WARNING: Runtime still not detected after install."
 
                 [System.Windows.Forms.MessageBox]::Show(
+                    $form,
                     "VC++ installer finished, but runtime was not detected. A reboot may be needed.",
                     "Install Warning",
                     "OK",
@@ -136,6 +141,7 @@ function Check-VcRuntimeFromGUI {
     Write-OutputBox "No VC++ installer found in Downloads."
 
     [System.Windows.Forms.MessageBox]::Show(
+        $form,
         "VC++ Runtime is missing.`r`n`r`nDownload VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe`r`n`r`nSave it to Downloads, then reopen this GUI or run Check VC++ Runtime again.",
         "Runtime Missing",
         "OK",
@@ -1128,7 +1134,7 @@ $form.Controls.Add($OutputBox)
 # SECTION 22 - SHOW GUI
 # ============================================================
 
-$form.Topmost = $true
+$form.Topmost = $false
 $form.Add_Shown({
     $form.Activate()
     Update-WazuhStatus
