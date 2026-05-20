@@ -1,4 +1,4 @@
-<group name="local,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,">
+<group name="local,syscheck,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,">
 
   <!-- Windows login activity -->
   <rule id="100100" level="8">
@@ -18,16 +18,16 @@
   </rule>
 
   <!-- FIM / PII detections -->
-    <rule id="100103" level="10">
+  <rule id="100103" level="10">
     <if_sid>550</if_sid>
-    <field name="file" type="pcre2">(?i)ssn|social|pii|password|payroll|confidential|secret</field>
-    <description>Modified sensitive-looking file: $(file)</description>
+    <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
+    <description>Modified sensitive-looking file by filename/path: $(file)</description>
   </rule>
 
-  <rule id="100104" level="10">
+<rule id="100104" level="10">
     <if_sid>554</if_sid>
-    <field name="file" type="pcre2">(?i)ssn|social|pii|password|payroll|confidential|secret</field>
-    <description>Added sensitive-looking file: $(file)</description>
+    <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
+    <description>Added sensitive-looking file by filename/path: $(file)</description>
   </rule>
  
   <rule id="100107" level="9">
