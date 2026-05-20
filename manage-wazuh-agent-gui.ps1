@@ -62,27 +62,85 @@ function Test-VcRuntime {
 function Check-VcRuntimeFromGUI {
 
     if (Test-VcRuntime) {
+
         Write-OutputBox "PASS: Microsoft Visual C++ Runtime found."
+
         [System.Windows.Forms.MessageBox]::Show(
-            "Microsoft Visual C++ Runtime found. YARA should be able to run.",
+            "Microsoft Visual C++ Runtime found.",
             "Runtime Found",
             "OK",
             "Information"
         )
-    }
-    else {
-        Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
-        Write-OutputBox "YARA needs VCRUNTIME140.dll to run."
-        Write-OutputBox "Download/install VC++ Redistributable 2015-2022 x64:"
-        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
-        [System.Windows.Forms.MessageBox]::Show(
-            "Microsoft Visual C++ Runtime is missing.`r`n`r`nInstall VC++ Redistributable 2015-2022 x64 first:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
-            "Missing Runtime",
-            "OK",
-            "Warning"
-        )
+        return
     }
+
+    Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
+
+    $VcInstaller = $comboVcInstaller.SelectedItem
+
+    if ($VcInstaller) {
+
+        $InstallerPath = Join-Path "$env:USERPROFILE\Downloads" $VcInstaller
+
+        Write-OutputBox "VC++ installer detected:"
+        Write-OutputBox $InstallerPath
+
+        $InstallNow = [System.Windows.Forms.MessageBox]::Show(
+            "VC++ Runtime is missing.`r`n`r`nInstall detected VC++ installer now?",
+            "Install VC++ Runtime",
+            "YesNo",
+            "Question"
+        )
+
+        if ($InstallNow -eq "Yes") {
+
+            Write-OutputBox "Launching VC++ installer..."
+
+            Start-Process `
+                -FilePath $InstallerPath `
+                -Wait `
+                -ArgumentList "/install /quiet /norestart"
+
+            Start-Sleep -Seconds 3
+
+            if (Test-VcRuntime) {
+
+                Write-OutputBox "PASS: VC++ Runtime installed successfully."
+
+                [System.Windows.Forms.MessageBox]::Show(
+                    "VC++ Runtime installed successfully.",
+                    "Install Complete",
+                    "OK",
+                    "Information"
+                )
+            }
+            else {
+
+                Write-OutputBox "WARNING: Runtime still not detected after install."
+
+                [System.Windows.Forms.MessageBox]::Show(
+                    "VC++ installer finished, but runtime was not detected.",
+                    "Install Warning",
+                    "OK",
+                    "Warning"
+                )
+            }
+        }
+
+        return
+    }
+
+    Write-OutputBox "No VC++ installer found in Downloads."
+    Write-OutputBox "Download from:"
+    Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+
+    [System.Windows.Forms.MessageBox]::Show(
+        "VC++ Runtime missing.`r`n`r`nDownload VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
+        "Runtime Missing",
+        "OK",
+        "Warning"
+    )
 }
 
 # ============================================================
@@ -832,12 +890,43 @@ if ($comboYaraZip.Items.Count -gt 0) {
 $form.Controls.Add($comboYaraZip)
 
 # ============================================================
+# VC++ INSTALLER DROPDOWN
+# ============================================================
+
+$lblVcInstaller = New-Object System.Windows.Forms.Label
+$lblVcInstaller.Text = "VC++ Installer"
+$lblVcInstaller.Location = New-Object System.Drawing.Point(20,170)
+$lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
+$form.Controls.Add($lblVcInstaller)
+
+$comboVcInstaller = New-Object System.Windows.Forms.ComboBox
+$comboVcInstaller.Location = New-Object System.Drawing.Point(160,170)
+$comboVcInstaller.Size = New-Object System.Drawing.Size(400,20)
+$comboVcInstaller.DropDownStyle = "DropDownList"
+
+$VcInstallers = Get-ChildItem `
+    -Path "$env:USERPROFILE\Downloads" `
+    -Filter "vc_redist*.exe" `
+    -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending
+
+foreach ($item in $VcInstallers) {
+    $comboVcInstaller.Items.Add($item.Name) | Out-Null
+}
+
+if ($comboVcInstaller.Items.Count -gt 0) {
+    $comboVcInstaller.SelectedIndex = 0
+}
+
+$form.Controls.Add($comboVcInstaller)
+
+# ============================================================
 # SECTION 18 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
 $lblInstallStatus.Text = "Wazuh Status"
-$lblInstallStatus.Location = New-Object System.Drawing.Point(20,180)
+$lblInstallStatus.Location = New-Object System.Drawing.Point(20,210)
 $lblInstallStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblInstallStatus)
 
@@ -948,7 +1037,89 @@ $btnCheckRuntime = New-Object System.Windows.Forms.Button
 $btnCheckRuntime.Text = "Check VC++ Runtime"
 $btnCheckRuntime.Location = New-Object System.Drawing.Point(20,365)
 $btnCheckRuntime.Size = New-Object System.Drawing.Size(180,40)
-$btnCheckRuntime.Add_Click({ Check-VcRuntimeFromGUI })
+function Check-VcRuntimeFromGUI {
+
+    if (Test-VcRuntime) {
+
+        Write-OutputBox "PASS: Microsoft Visual C++ Runtime found."
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Microsoft Visual C++ Runtime found.",
+            "Runtime Found",
+            "OK",
+            "Information"
+        )
+
+        return
+    }
+
+    Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
+
+    $VcInstaller = $comboVcInstaller.SelectedItem
+
+    if ($VcInstaller) {
+
+        $InstallerPath = Join-Path "$env:USERPROFILE\Downloads" $VcInstaller
+
+        Write-OutputBox "VC++ installer detected:"
+        Write-OutputBox $InstallerPath
+
+        $InstallNow = [System.Windows.Forms.MessageBox]::Show(
+            "VC++ Runtime is missing.`r`n`r`nInstall detected VC++ installer now?",
+            "Install VC++ Runtime",
+            "YesNo",
+            "Question"
+        )
+
+        if ($InstallNow -eq "Yes") {
+
+            Write-OutputBox "Launching VC++ installer..."
+
+            Start-Process `
+                -FilePath $InstallerPath `
+                -Wait `
+                -ArgumentList "/install /quiet /norestart"
+
+            Start-Sleep -Seconds 3
+
+            if (Test-VcRuntime) {
+
+                Write-OutputBox "PASS: VC++ Runtime installed successfully."
+
+                [System.Windows.Forms.MessageBox]::Show(
+                    "VC++ Runtime installed successfully.",
+                    "Install Complete",
+                    "OK",
+                    "Information"
+                )
+            }
+            else {
+
+                Write-OutputBox "WARNING: Runtime still not detected after install."
+
+                [System.Windows.Forms.MessageBox]::Show(
+                    "VC++ installer finished, but runtime was not detected.",
+                    "Install Warning",
+                    "OK",
+                    "Warning"
+                )
+            }
+        }
+
+        return
+    }
+
+    Write-OutputBox "No VC++ installer found in Downloads."
+    Write-OutputBox "Download from:"
+    Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+
+    [System.Windows.Forms.MessageBox]::Show(
+        "VC++ Runtime missing.`r`n`r`nDownload VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
+        "Runtime Missing",
+        "OK",
+        "Warning"
+    )
+}
 $form.Controls.Add($btnCheckRuntime)
 
 $btnYara = New-Object System.Windows.Forms.Button
