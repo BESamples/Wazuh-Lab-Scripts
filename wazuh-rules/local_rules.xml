@@ -17,18 +17,19 @@
     <description>Custom: PowerShell execution detected</description>
   </rule>
 
-  <!-- FIM / PII detections -->
-  <rule id="100103" level="10">
-    <if_sid>550</if_sid>
-    <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
-    <description>Modified sensitive-looking file by filename/path: $(file)</description>
-  </rule>
+ <!-- FIM / PII detections -->
+
+<rule id="100103" level="10">
+  <if_sid>554</if_sid>
+  <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
+  <description>Added sensitive-looking file: $(file)</description>
+</rule>
 
 <rule id="100104" level="10">
-    <if_sid>554</if_sid>
-    <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
-    <description>Added sensitive-looking file by filename/path: $(file)</description>
-  </rule>
+  <if_sid>550</if_sid>
+  <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
+  <description>Modified sensitive-looking file: $(file)</description>
+</rule>
  
   <rule id="100107" level="9">
     <if_sid>554</if_sid>
