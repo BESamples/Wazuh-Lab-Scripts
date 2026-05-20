@@ -46,10 +46,15 @@ catch {
 # ----------------------------
 $form = New-Object System.Windows.Forms.Form
 $form.Text = "AD Lab User Creator - Wazuh Test"
-$form.Size = New-Object System.Drawing.Size(560, 560)
+$form.Size = New-Object System.Drawing.Size(580, 520)
+$form.MinimumSize = New-Object System.Drawing.Size(580, 520)
 $form.StartPosition = "CenterScreen"
-$form.FormBorderStyle = "FixedDialog"
-$form.MaximizeBox = $false
+$form.FormBorderStyle = "Sizable"
+$form.MaximizeBox = $true
+
+# Allows scrolling if the menu gets cut off
+$form.AutoScroll = $true
+$form.AutoScrollMinSize = New-Object System.Drawing.Size(560, 650)
 
 $title = New-Object System.Windows.Forms.Label
 $title.Text = "Create AD Lab User for Wazuh Detection"
@@ -124,13 +129,19 @@ $outputBox.ReadOnly = $true
 $form.Controls.Add($outputBox)
 
 # ----------------------------
-# Section 8 - Create button
+# Section 8 - Create and Delete buttons
 # ----------------------------
 $btnCreate = New-Object System.Windows.Forms.Button
 $btnCreate.Text = "Create AD User"
-$btnCreate.Location = New-Object System.Drawing.Point(180, 480)
+$btnCreate.Location = New-Object System.Drawing.Point(90, 510)
 $btnCreate.Size = New-Object System.Drawing.Size(160, 35)
 $form.Controls.Add($btnCreate)
+
+$btnDelete = New-Object System.Windows.Forms.Button
+$btnDelete.Text = "Delete AD User"
+$btnDelete.Location = New-Object System.Drawing.Point(280, 510)
+$btnDelete.Size = New-Object System.Drawing.Size(160, 35)
+$form.Controls.Add($btnDelete)
 
 # ----------------------------
 # Section 9 - Button action
@@ -205,6 +216,88 @@ Also check Event Viewer > Windows Logs > Security.
 })
 
 # ----------------------------
-# Section 10 - Show GUI
+# Section 10 - Delete button action
+# ----------------------------
+$btnDelete.Add_Click({
+
+    $Username = $txtUsername.Text.Trim()
+
+    if ([string]::IsNullOrWhiteSpace($Username)) {
+        $outputBox.Text = "Enter a username to delete."
+        return
+    }
+
+    if ($Username -notmatch '^[a-zA-Z0-9._-]{1,20}$') {
+        $outputBox.Text = "Invalid username. Use letters, numbers, dot, dash, or underscore. Max 20 characters."
+        return
+    }
+
+    # Safety block so you do not accidentally delete important built-in accounts
+    $ProtectedUsers = @("administrator", "guest", "krbtgt")
+    if ($ProtectedUsers -contains $Username.ToLower()) {
+        $outputBox.Text = "Blocked: You cannot delete protected account: $Username"
+        return
+    }
+
+    # Lab safety check
+    # This only allows deleting lab-style users that start with wazuh, lab, or test.
+    # Example: wazuh.test01, labuser01, test.user
+    if ($Username -notmatch '^(wazuh|lab|test)[a-zA-Z0-9._-]*$') {
+        $outputBox.Text = @"
+Safety check blocked deletion.
+
+This script only deletes lab users starting with:
+wazuh
+lab
+test
+
+Example:
+wazuh.test01
+labuser01
+test.user
+"@
+        return
+    }
+
+    try {
+        $UserToDelete = Get-ADUser -Identity $Username -ErrorAction Stop
+    }
+    catch {
+        $outputBox.Text = "User not found: $Username"
+        return
+    }
+
+    $ConfirmDelete = [System.Windows.Forms.MessageBox]::Show(
+        "Are you sure you want to delete AD user:`n`n$Username`n`nThis should generate Windows Event ID 4726.",
+        "Confirm AD User Delete",
+        [System.Windows.Forms.MessageBoxButtons]::YesNo,
+        [System.Windows.Forms.MessageBoxIcon]::Warning
+    )
+
+    if ($ConfirmDelete -ne [System.Windows.Forms.DialogResult]::Yes) {
+        $outputBox.Text = "Delete cancelled for user: $Username"
+        return
+    }
+
+    try {
+        Remove-ADUser -Identity $UserToDelete.DistinguishedName -Confirm:$false -ErrorAction Stop
+
+        $outputBox.Text = @"
+SUCCESS: AD user deleted.
+
+Deleted username: $Username
+
+Check Wazuh for Windows Event ID 4726.
+Also check Event Viewer > Windows Logs > Security.
+"@
+    }
+    catch {
+        $outputBox.Text = "ERROR deleting user:`r`n$($_.Exception.Message)"
+    }
+})
+
+
+# ----------------------------
+# Section 11 - Show GUI
 # ----------------------------
 [void]$form.ShowDialog()
