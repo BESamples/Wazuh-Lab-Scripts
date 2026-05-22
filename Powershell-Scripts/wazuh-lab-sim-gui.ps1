@@ -26,8 +26,9 @@ function Create-Custom-PII {
     Ensure-LabFolders
 
     $Name = $TextName.Text
+    $DOB = $TextDOB.Text
     $SSN = $TextSSN.Text
-    $Password = $TextPassword.Text
+        $Password = $TextPassword.Text
     $Card = $TextCard.Text
     $FileName = $TextFileName.Text
     $Extension = $DropExtension.SelectedItem
@@ -44,6 +45,7 @@ function Create-Custom-PII {
 
 @"
 Employee: $Name
+Date of Birth: $DOB
 SSN: $SSN
 Password: $Password
 Credit Card: $Card
@@ -58,11 +60,13 @@ function Generate-Random-PII {
     $LastNames = @("Test", "Sample", "Demo", "User", "Employee")
 
     $RandomName = "$(Get-Random $FirstNames) $(Get-Random $LastNames)"
+    $RandomDOB = Get-Date -Year (Get-Random -Minimum 1950 -Maximum 2005) -Month (Get-Random -Minimum 1 -Maximum 13) -Day (Get-Random -Minimum 1 -Maximum 29)
     $RandomSSN = "{0:000}-{1:00}-{2:0000}" -f (Get-Random -Minimum 100 -Maximum 999), (Get-Random -Minimum 10 -Maximum 99), (Get-Random -Minimum 1000 -Maximum 9999)
     $RandomPassword = "TestPass$(Get-Random -Minimum 1000 -Maximum 9999)!"
     $RandomCard = "4111-1111-1111-$(Get-Random -Minimum 1000 -Maximum 9999)"
 
     $TextName.Text = $RandomName
+    $TextDOB.Text = $RandomDOB.ToString("MM/dd/yyyy")
     $TextSSN.Text = $RandomSSN
     $TextPassword.Text = $RandomPassword
     $TextCard.Text = $RandomCard
@@ -77,6 +81,7 @@ function Create-PII-Txt {
 
 @"
 Employee: John Test
+Date of Birth: 01/01/1901
 SSN: 123-45-6789
 Password: Abc123!
 Credit Card: 4111-1111-1111-1111
@@ -93,6 +98,7 @@ function Create-PII-RTF {
 {\rtf1\ansi
 \b Employee Record\b0\line
 Name: John Test\line
+Date of Birth\line
 SSN: 123-45-6789\line
 Password: Abc123!\line
 Credit Card: 4111-1111-1111-1111\line
@@ -192,6 +198,7 @@ $Form.Controls.Add($SubTitle)
 
 # Input labels and boxes
 
+######Employee Name######
 $LabelName = New-Object System.Windows.Forms.Label
 $LabelName.Text = "Employee Name"
 $LabelName.Location = New-Object System.Drawing.Point(25, 95)
@@ -203,6 +210,19 @@ $TextName.Location = New-Object System.Drawing.Point(150, 92)
 $TextName.Size = New-Object System.Drawing.Size(200, 22)
 $Form.Controls.Add($TextName)
 
+######Date of Birth######
+$LabelDOB = New-Object System.Windows.Forms.Label
+$LabelDOB.Text = "Date of Birth"
+$LabelDOB.Location = New-Object System.Drawing.Point(25, 215)
+$LabelDOB.Size = New-Object System.Drawing.Size(120, 20)
+$Form.Controls.Add($LabelDOB)
+
+$TextDOB = New-Object System.Windows.Forms.TextBox
+$TextDOB.Location = New-Object System.Drawing.Point(150, 212)
+$TextDOB.Size = New-Object System.Drawing.Size(200, 22)
+$Form.Controls.Add($TextDOB)
+
+###### SSN ######
 $LabelSSN = New-Object System.Windows.Forms.Label
 $LabelSSN.Text = "SSN"
 $LabelSSN.Location = New-Object System.Drawing.Point(25, 125)
@@ -214,6 +234,7 @@ $TextSSN.Location = New-Object System.Drawing.Point(150, 122)
 $TextSSN.Size = New-Object System.Drawing.Size(200, 22)
 $Form.Controls.Add($TextSSN)
 
+###### Password ######
 $LabelPassword = New-Object System.Windows.Forms.Label
 $LabelPassword.Text = "Password"
 $LabelPassword.Location = New-Object System.Drawing.Point(25, 155)
