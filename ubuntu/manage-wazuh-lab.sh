@@ -109,7 +109,7 @@ while true; do
 
   echo "🚀 START / RESET"
   echo "1) Fresh Lab Bootstrap (RUN FIRST)"
-  echo "2) Full Wazuh Uninstall (DANGEROUS)"
+  echo "2) Full Wazuh Uninstall / Cleanup (DANGEROUS)"
 
   echo
   echo "⚙️ DAILY WORKFLOW"
@@ -169,13 +169,28 @@ while true; do
       # Install or start Wazuh
       # -----------------------------
       if [ ! -d "/var/ossec" ]; then
-        echo "[+] Wazuh not installed. Installing..."
+        echo "[+] Wazuh not installed or install is incomplete."
+        echo "[+] Starting Wazuh installer..."
 
         cd "$HOME" || exit
 
         curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
 
-        sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
+        echo
+        echo "[?] Choose Wazuh install mode:"
+        echo "1) Normal install"
+        echo "2) Overwrite existing Wazuh install (-o) - ERASES existing Wazuh config/data"
+        echo
+        read -p "Choose install mode: " install_mode
+
+        if [ "$install_mode" = "2" ]; then
+          echo "[!] Running Wazuh installer with overwrite option..."
+          sudo bash ./wazuh-install.sh -a -o 2>&1 | tee "$INSTALL_LOG"
+        else
+          echo "[+] Running normal Wazuh installer..."
+          sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
+        fi
+
         INSTALL_EXIT=${PIPESTATUS[0]}
 
         if [ $INSTALL_EXIT -ne 0 ]; then
@@ -319,7 +334,7 @@ EOF
     # ======================================
     2)
       echo "======================================"
-      echo "   FULL WAZUH UNINSTALL (DANGEROUS)"
+      echo "   FULL WAZUH UNINSTALL / CLEANUP"
       echo "======================================"
       echo "[!] This will completely remove Wazuh."
       echo "[!] All data, rules, and configs will be lost."
@@ -363,8 +378,11 @@ EOF
       echo "[+] Cleaning logs..."
       sudo rm -rf /var/log/wazuh*
 
+      echo "[+] Reloading systemd..."
+      sudo systemctl daemon-reload
+
       echo "[+] Verifying filebeat removal..."
-      dpkg -l | grep filebeat
+      dpkg -l | grep filebeat || echo "[+] Filebeat package not found."
 
       echo
       echo "======================================"
@@ -497,7 +515,7 @@ EOF
     # 8) SERVICE STATUS
     # ======================================
     8)
-      sudo systemctl status wazuh-manager
+      sudo systemctl status wazuh-manager --no-pager
       pause
       ;;
 
