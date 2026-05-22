@@ -1,7 +1,7 @@
 # manage-wazuh-agent.ps1
 # Run as Administrator
-# Version 1.07
-# Added Sysmon installation option to menu
+# Version 1.08
+# Added feature to download attacker scripts
 
 # ============================================================
 # Wazuh Agent Manager
@@ -42,9 +42,11 @@ Write-Host ""
 Write-Host "Choose an option:"
 Write-Host "1. Install Wazuh Agent"
 Write-Host "2. Uninstall Wazuh Agent"
-Write-Host "3. Add Fim Monitoring"
+Write-Host "3. Add FIM Monitoring"
 Write-Host "4. Install Sysmon"
-Write-Host "5. Exit"
+Write-Host "5. Download Wazuh Lab Simulator GUI"
+Write-Host "6. Download AD Lab User GUI"
+Write-Host "7. Exit"
 
 $Choice = Read-Host "Enter choice"
 
@@ -513,13 +515,80 @@ elseif ($Choice -eq "4") {
     exit 0
 }
 
-
-
 # ============================================================
-# SECTION 8 - INVALID OPTION / EXIT
+# SECTION 8 - DOWNLOAD WAZUH LAB SIMULATOR GUI
 # ============================================================
 
 elseif ($Choice -eq "5") {
+
+    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/wazuh-lab-sim-gui.ps1"
+    $Destination = "$PSScriptRoot\wazuh-lab-sim-gui.ps1"
+
+    if (Test-Path $Destination) {
+        $Overwrite = Read-Host "File already exists. Overwrite? (y/n)"
+
+        if ($Overwrite -notmatch "^[Yy]$") {
+            Write-Host "Download cancelled." -ForegroundColor Yellow
+            exit 0
+        }
+    }
+
+    Write-Host "Downloading Wazuh Lab Simulator GUI..." -ForegroundColor Cyan
+
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $Destination
+        Write-Host "Download complete:" -ForegroundColor Green
+        Write-Host $Destination
+    }
+    catch {
+        Write-Host "Download failed." -ForegroundColor Red
+        Write-Host $_.Exception.Message
+        exit 1
+    }
+
+    exit 0
+}
+
+# ============================================================
+# SECTION 9 - DOWNLOAD AD LAB USER GUI
+# ============================================================
+
+elseif ($Choice -eq "6") {
+
+    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/create-adlabuser-gui.ps1"
+    $Destination = "$PSScriptRoot\create-adlabuser-gui.ps1"
+
+    if (Test-Path $Destination) {
+        $Overwrite = Read-Host "File already exists. Overwrite? (y/n)"
+
+        if ($Overwrite -notmatch "^[Yy]$") {
+            Write-Host "Download cancelled." -ForegroundColor Yellow
+            exit 0
+        }
+    }
+
+    Write-Host "Downloading AD Lab User GUI..." -ForegroundColor Cyan
+
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $Destination
+        Write-Host "Download complete:" -ForegroundColor Green
+        Write-Host $Destination
+    }
+    catch {
+        Write-Host "Download failed." -ForegroundColor Red
+        Write-Host $_.Exception.Message
+        exit 1
+    }
+
+    exit 0
+}
+
+
+# ============================================================
+# SECTION 10 - INVALID OPTION / EXIT
+# ============================================================
+
+elseif ($Choice -eq "7") {
     Write-Host "Exiting."
     exit 0
 }
