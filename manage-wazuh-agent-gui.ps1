@@ -624,6 +624,21 @@ function Download-LabSimulator {
 
     $Destination = "$PSScriptRoot\wazuh-lab-sim-gui.ps1"
 
+if (Test-Path $Destination) {
+
+    $Overwrite = [System.Windows.Forms.MessageBox]::Show(
+        "File already exists. Overwrite?",
+        "Confirm Overwrite",
+        "YesNo",
+        "Question"
+    )
+
+    if ($Overwrite -ne "Yes") {
+        Write-OutputBox "Download cancelled."
+        return
+    }
+}
+
     Write-OutputBox "Downloading Wazuh Lab Simulator..."
 
     try {
@@ -648,6 +663,21 @@ function Download-ADLabGUI {
 
     $Destination = "$PSScriptRoot\create-adlabuser-gui.ps1"
 
+    if (Test-Path $Destination) {
+
+        $Overwrite = [System.Windows.Forms.MessageBox]::Show(
+            "File already exists. Overwrite?",
+            "Confirm Overwrite",
+            "YesNo",
+            "Question"
+        )
+
+        if ($Overwrite -ne "Yes") {
+            Write-OutputBox "Download cancelled."
+            return
+        }
+    }
+
     Write-OutputBox "Downloading AD Lab GUI..."
 
     try {
@@ -665,7 +695,6 @@ function Download-ADLabGUI {
         Write-OutputBox $_.Exception.Message
     }
 }
-
 
 
 # ============================================================
@@ -1193,7 +1222,7 @@ $form.Controls.Add($listFimPaths)
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
 $OutputBox.Location = New-Object System.Drawing.Point(20,680)
-$OutputBox.Size = New-Object System.Drawing.Size(660,160)
+$OutputBox.Size = New-Object System.Drawing.Size(660,140)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
 $OutputBox.ReadOnly = $true
