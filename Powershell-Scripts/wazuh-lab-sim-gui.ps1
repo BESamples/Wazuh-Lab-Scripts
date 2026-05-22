@@ -75,6 +75,99 @@ function Generate-Random-PII {
     Write-Log "Generated random fake PII values."
 }
 
+function Create-Realistic-Business-PII {
+
+    Ensure-LabFolders
+
+    $Departments = @(
+        "finance",
+        "hr",
+        "sales",
+        "operations",
+        "benefits",
+        "vendor",
+        "client",
+        "audit"
+    )
+
+    $FileTypes = @(
+        "export",
+        "sync",
+        "review",
+        "cache",
+        "backup",
+        "notes",
+        "records",
+        "update"
+    )
+
+    $Extensions = @("txt","csv","log","rtf","tmp")
+
+    $FirstNames = @(
+        "John",
+        "Mary",
+        "Alex",
+        "Sarah",
+        "David",
+        "Lisa",
+        "Chris",
+        "Taylor"
+    )
+
+    $LastNames = @(
+        "Smith",
+        "Johnson",
+        "Brown",
+        "Davis",
+        "Wilson",
+        "Taylor"
+    )
+
+    $Department = Get-Random $Departments
+    $FileType = Get-Random $FileTypes
+    $Extension = Get-Random $Extensions
+
+    $RandomName = "$(Get-Random $FirstNames) $(Get-Random $LastNames)"
+
+    $RandomDOB = Get-Date `
+        -Year (Get-Random -Minimum 1950 -Maximum 2005) `
+        -Month (Get-Random -Minimum 1 -Maximum 13) `
+        -Day (Get-Random -Minimum 1 -Maximum 29)
+
+    $RandomSSN = "{0:000}-{1:00}-{2:0000}" -f `
+        (Get-Random -Minimum 100 -Maximum 999),
+        (Get-Random -Minimum 10 -Maximum 99),
+        (Get-Random -Minimum 1000 -Maximum 9999)
+
+    $RandomPassword = "TempPass$(Get-Random -Minimum 1000 -Maximum 9999)!"
+
+    $RandomCard = "4111-1111-1111-$(Get-Random -Minimum 1000 -Maximum 9999)"
+
+    $FileName = "$Department`_$FileType`_$(Get-Random -Minimum 1000 -Maximum 9999).$Extension"
+
+    $File = "$PiiPath\$FileName"
+
+@"
+Business Export Record
+Department: $Department
+Record Type: $FileType
+
+Employee/Client: $RandomName
+Date of Birth: $($RandomDOB.ToString("MM/dd/yyyy"))
+SSN: $RandomSSN
+
+Account Note: Password reset issued
+Temporary Password: $RandomPassword
+
+Payment Card: $RandomCard
+
+Created: $(Get-Date)
+"@ | Out-File -FilePath $File -Encoding UTF8
+
+    Write-Log "Created realistic business PII file: $File"
+}
+
+
 function Create-PII-Txt {
     Ensure-LabFolders
     $File = "$PiiPath\payroll_login.txt"
@@ -98,7 +191,7 @@ function Create-PII-RTF {
 {\rtf1\ansi
 \b Employee Record\b0\line
 Name: John Test\line
-Date of Birth: $DOB\line
+Date of Birth: $($TextDOB.Text)\line
 SSN: 123-45-6789\line
 Password: Abc123!\line
 Credit Card: 4111-1111-1111-1111\line
@@ -180,7 +273,7 @@ function Clear-Test-Files {
 
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "Wazuh Lab Simulator GUI"
-$Form.Size = New-Object System.Drawing.Size(760, 720)
+$Form.Size = New-Object System.Drawing.Size(760, 760)
 $Form.StartPosition = "CenterScreen"
 
 $Title = New-Object System.Windows.Forms.Label
@@ -301,21 +394,23 @@ function New-GuiButton {
 New-GuiButton "Generate Random PII" 380 155 { Generate-Random-PII }
 New-GuiButton "Create Custom PII File" 380 205 { Create-Custom-PII }
 
-New-GuiButton "Create Default PII TXT" 25 245 { Create-PII-Txt }
-New-GuiButton "Create Default PII RTF" 245 245 { Create-PII-RTF }
-New-GuiButton "Create Fake EXE File" 465 245 { Create-Fake-Exe }
+New-GuiButton "Create Realistic Business File" 25 245 { Create-Realistic-Business-PII }
+New-GuiButton "Create Default PII TXT" 245 245 { Create-PII-Txt }
+New-GuiButton "Create Default PII RTF" 465 245 { Create-PII-RTF }
 
-New-GuiButton "Modify FIM Test File" 25 300 { Modify-FIM-TestFile }
-New-GuiButton "Safe PowerShell Test" 245 300 { Run-Safe-PowerShell-Test }
-New-GuiButton "Random Lab Event" 465 300 { Simulate-Random-Lab-Event }
+New-GuiButton "Create Fake EXE File" 25 300 { Create-Fake-Exe }
+New-GuiButton "Modify FIM Test File" 245 300 { Modify-FIM-TestFile }
+New-GuiButton "Safe PowerShell Test" 465 300 { Run-Safe-PowerShell-Test }
 
-New-GuiButton "Check Wazuh Agent" 25 355 { Check-Wazuh-Agent }
-New-GuiButton "Restart Wazuh Agent" 245 355 { Restart-Wazuh-Agent }
-New-GuiButton "Clear Test Files" 465 355 { Clear-Test-Files }
+New-GuiButton "Random Lab Event" 25 355 { Simulate-Random-Lab-Event }
+New-GuiButton "Check Wazuh Agent" 245 355 { Check-Wazuh-Agent }
+New-GuiButton "Restart Wazuh Agent" 465 355 { Restart-Wazuh-Agent }
+
+New-GuiButton "Clear Test Files" 245 410 { Clear-Test-Files }
 
 $StatusBox = New-Object System.Windows.Forms.TextBox
-$StatusBox.Location = New-Object System.Drawing.Point(25, 420)
-$StatusBox.Size = New-Object System.Drawing.Size(685, 145)
+$StatusBox.Location = New-Object System.Drawing.Point(25, 470)
+$StatusBox.Size = New-Object System.Drawing.Size(685, 120)
 $StatusBox.Multiline = $true
 $StatusBox.ScrollBars = "Vertical"
 $StatusBox.ReadOnly = $true
@@ -323,7 +418,7 @@ $Form.Controls.Add($StatusBox)
 
 $ExitButton = New-Object System.Windows.Forms.Button
 $ExitButton.Text = "Exit"
-$ExitButton.Location = New-Object System.Drawing.Point(610, 575)
+$ExitButton.Location = New-Object System.Drawing.Point(610, 610)
 $ExitButton.Size = New-Object System.Drawing.Size(100, 30)
 $ExitButton.Add_Click({ $Form.Close() })
 $Form.Controls.Add($ExitButton)
