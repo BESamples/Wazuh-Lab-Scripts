@@ -98,7 +98,7 @@ function Create-PII-RTF {
 {\rtf1\ansi
 \b Employee Record\b0\line
 Name: John Test\line
-Date of Birth\line
+Date of Birth: $DOB\line
 SSN: 123-45-6789\line
 Password: Abc123!\line
 Credit Card: 4111-1111-1111-1111\line
@@ -180,7 +180,7 @@ function Clear-Test-Files {
 
 $Form = New-Object System.Windows.Forms.Form
 $Form.Text = "Wazuh Lab Simulator GUI"
-$Form.Size = New-Object System.Drawing.Size(760, 650)
+$Form.Size = New-Object System.Drawing.Size(760, 720)
 $Form.StartPosition = "CenterScreen"
 
 $Title = New-Object System.Windows.Forms.Label
@@ -198,7 +198,7 @@ $Form.Controls.Add($SubTitle)
 
 # Input labels and boxes
 
-######Employee Name######
+###### Employee Name ######
 $LabelName = New-Object System.Windows.Forms.Label
 $LabelName.Text = "Employee Name"
 $LabelName.Location = New-Object System.Drawing.Point(25, 95)
@@ -210,7 +210,7 @@ $TextName.Location = New-Object System.Drawing.Point(150, 92)
 $TextName.Size = New-Object System.Drawing.Size(200, 22)
 $Form.Controls.Add($TextName)
 
-######Date of Birth######
+###### Date of Birth ######
 $LabelDOB = New-Object System.Windows.Forms.Label
 $LabelDOB.Text = "Date of Birth"
 $LabelDOB.Location = New-Object System.Drawing.Point(25, 215)
