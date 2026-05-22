@@ -615,7 +615,7 @@ function Install-Yara {
 }
 
 # ============================================================
-# SECTION 12 - INSTALL WAZUH AGENT
+# # SECTION 12 - DOWNLOAD LAB TOOLS
 # ============================================================
 
 function Download-LabSimulator {
@@ -1150,14 +1150,14 @@ $form.Controls.Add($btnTestYara)
 
 $btnDownloadLabSim = New-Object System.Windows.Forms.Button
 $btnDownloadLabSim.Text = "Download Lab Simulator"
-$btnDownloadLabSim.Location = New-Object System.Drawing.Point(20,860)
+$btnDownloadLabSim.Location = New-Object System.Drawing.Point(20,465)
 $btnDownloadLabSim.Size = New-Object System.Drawing.Size(180,40)
 $btnDownloadLabSim.Add_Click({ Download-LabSimulator })
 $form.Controls.Add($btnDownloadLabSim)
 
 $btnDownloadADLab = New-Object System.Windows.Forms.Button
 $btnDownloadADLab.Text = "Download AD Lab GUI"
-$btnDownloadADLab.Location = New-Object System.Drawing.Point(220,860)
+$btnDownloadADLab.Location = New-Object System.Drawing.Point(220,465)
 $btnDownloadADLab.Size = New-Object System.Drawing.Size(180,40)
 $btnDownloadADLab.Add_Click({ Download-ADLabGUI })
 $form.Controls.Add($btnDownloadADLab)
@@ -1175,44 +1175,44 @@ $form.Controls.Add($btnExit)
 
 $lblFimPath = New-Object System.Windows.Forms.Label
 $lblFimPath.Text = "FIM Folder Path"
-$lblFimPath.Location = New-Object System.Drawing.Point(20,470)
+$lblFimPath.Location = New-Object System.Drawing.Point(20,540)
 $lblFimPath.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblFimPath)
 
 $txtFimPath = New-Object System.Windows.Forms.TextBox
-$txtFimPath.Location = New-Object System.Drawing.Point(160,470)
+$txtFimPath.Location = New-Object System.Drawing.Point(160,540)
 $txtFimPath.Size = New-Object System.Drawing.Size(320,20)
 $form.Controls.Add($txtFimPath)
 
 $btnBrowseFim = New-Object System.Windows.Forms.Button
 $btnBrowseFim.Text = "Browse"
-$btnBrowseFim.Location = New-Object System.Drawing.Point(500,465)
+$btnBrowseFim.Location = New-Object System.Drawing.Point(500,535)
 $btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
 $btnBrowseFim.Add_Click({ Browse-FIMFolder })
 $form.Controls.Add($btnBrowseFim)
 
 $btnAddFimPath = New-Object System.Windows.Forms.Button
 $btnAddFimPath.Text = "Add FIM Path"
-$btnAddFimPath.Location = New-Object System.Drawing.Point(20,510)
+$btnAddFimPath.Location = New-Object System.Drawing.Point(20,580)
 $btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
 $btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
 $form.Controls.Add($btnAddFimPath)
 
 $btnRefreshFim = New-Object System.Windows.Forms.Button
 $btnRefreshFim.Text = "Refresh FIM Paths"
-$btnRefreshFim.Location = New-Object System.Drawing.Point(180,510)
+$btnRefreshFim.Location = New-Object System.Drawing.Point(180,580)
 $btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
 $btnRefreshFim.Add_Click({ Get-FIMPaths })
 $form.Controls.Add($btnRefreshFim)
 
 $lblFimList = New-Object System.Windows.Forms.Label
 $lblFimList.Text = "Custom / Lab FIM Paths"
-$lblFimList.Location = New-Object System.Drawing.Point(20,555)
+$lblFimList.Location = New-Object System.Drawing.Point(20,625)
 $lblFimList.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblFimList)
 
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,580)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,650)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
@@ -1221,7 +1221,7 @@ $form.Controls.Add($listFimPaths)
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,680)
+$OutputBox.Location = New-Object System.Drawing.Point(20,750)
 $OutputBox.Size = New-Object System.Drawing.Size(660,140)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
