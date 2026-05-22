@@ -615,7 +615,61 @@ function Install-Yara {
 }
 
 # ============================================================
-# SECTION 12 - RUN YARA TROUBLESHOOTER TEST
+# SECTION 12 - INSTALL WAZUH AGENT
+# ============================================================
+
+function Download-LabSimulator {
+
+    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/wazuh-lab-sim-gui.ps1"
+
+    $Destination = "$PSScriptRoot\wazuh-lab-sim-gui.ps1"
+
+    Write-OutputBox "Downloading Wazuh Lab Simulator..."
+
+    try {
+
+        Invoke-WebRequest `
+            -Uri $Url `
+            -OutFile $Destination
+
+        Write-OutputBox "Download complete:"
+        Write-OutputBox $Destination
+    }
+    catch {
+
+        Write-OutputBox "Download failed."
+        Write-OutputBox $_.Exception.Message
+    }
+}
+
+function Download-ADLabGUI {
+
+    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/create-adlabuser-gui.ps1"
+
+    $Destination = "$PSScriptRoot\create-adlabuser-gui.ps1"
+
+    Write-OutputBox "Downloading AD Lab GUI..."
+
+    try {
+
+        Invoke-WebRequest `
+            -Uri $Url `
+            -OutFile $Destination
+
+        Write-OutputBox "Download complete:"
+        Write-OutputBox $Destination
+    }
+    catch {
+
+        Write-OutputBox "Download failed."
+        Write-OutputBox $_.Exception.Message
+    }
+}
+
+
+
+# ============================================================
+# SECTION 13 - RUN YARA TROUBLESHOOTER TEST
 # ============================================================
 
 function Test-YaraInstall {
@@ -718,7 +772,7 @@ rule Test_Malware_String
 }
 
 # ============================================================
-# SECTION 13 - BROWSE FOR FIM FOLDER
+# SECTION 14 - BROWSE FOR FIM FOLDER
 # ============================================================
 
 function Browse-FIMFolder {
@@ -732,7 +786,7 @@ function Browse-FIMFolder {
 }
 
 # ============================================================
-# SECTION 14 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
 # ============================================================
 
 function Update-WazuhStatus {
@@ -810,17 +864,17 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
-# SECTION 15 - CREATE MAIN GUI WINDOW
+# SECTION 16 - CREATE MAIN GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
 $form.AutoScroll = $true
 $form.Text = "Wazuh Agent Manager GUI"
-$form.Size = New-Object System.Drawing.Size(820,950)
+$form.Size = New-Object System.Drawing.Size(820,1050)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# SECTION 16 - TOP INPUT LABELS
+# SECTION 17 - TOP INPUT LABELS
 # ============================================================
 
 $lblManagerIP = New-Object System.Windows.Forms.Label
@@ -854,7 +908,7 @@ $lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblVcInstaller)
 
 # ============================================================
-# SECTION 17 - TOP INPUT CONTROLS
+# SECTION 18 - TOP INPUT CONTROLS
 # ============================================================
 
 $txtManagerIP = New-Object System.Windows.Forms.TextBox
@@ -932,7 +986,7 @@ if ($comboVcInstaller.Items.Count -gt 0) {
 $form.Controls.Add($comboVcInstaller)
 
 # ============================================================
-# SECTION 18 - WAZUH STATUS INDICATOR
+# SECTION 19 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
@@ -984,7 +1038,7 @@ $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
 # ============================================================
-# SECTION 19 - MAIN ACTION BUTTONS
+# SECTION 20 - MAIN ACTION BUTTONS
 # ============================================================
 
 $btnInstall = New-Object System.Windows.Forms.Button
@@ -1065,6 +1119,20 @@ $btnTestYara.Size = New-Object System.Drawing.Size(180,40)
 $btnTestYara.Add_Click({ Test-YaraInstall })
 $form.Controls.Add($btnTestYara)
 
+$btnDownloadLabSim = New-Object System.Windows.Forms.Button
+$btnDownloadLabSim.Text = "Download Lab Simulator"
+$btnDownloadLabSim.Location = New-Object System.Drawing.Point(20,860)
+$btnDownloadLabSim.Size = New-Object System.Drawing.Size(180,40)
+$btnDownloadLabSim.Add_Click({ Download-LabSimulator })
+$form.Controls.Add($btnDownloadLabSim)
+
+$btnDownloadADLab = New-Object System.Windows.Forms.Button
+$btnDownloadADLab.Text = "Download AD Lab GUI"
+$btnDownloadADLab.Location = New-Object System.Drawing.Point(220,860)
+$btnDownloadADLab.Size = New-Object System.Drawing.Size(180,40)
+$btnDownloadADLab.Add_Click({ Download-ADLabGUI })
+$form.Controls.Add($btnDownloadADLab)
+
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
 $btnExit.Location = New-Object System.Drawing.Point(650,345)
@@ -1073,7 +1141,7 @@ $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
-# SECTION 20 - FIM PATH MANAGER CONTROLS
+# SECTION 21 - FIM PATH MANAGER CONTROLS
 # ============================================================
 
 $lblFimPath = New-Object System.Windows.Forms.Label
@@ -1120,7 +1188,7 @@ $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
 # ============================================================
-# SECTION 21 - OUTPUT BOX
+# SECTION 22 - OUTPUT BOX
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
@@ -1132,7 +1200,7 @@ $OutputBox.ReadOnly = $true
 $form.Controls.Add($OutputBox)
 
 # ============================================================
-# SECTION 22 - SHOW GUI
+# SECTION 23 - SHOW GUI
 # ============================================================
 
 $form.Topmost = $false
