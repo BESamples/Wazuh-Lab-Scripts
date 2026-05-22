@@ -697,6 +697,41 @@ function Download-ADLabGUI {
 }
 
 
+function Launch-LabSimulator {
+
+    $ScriptPath = "$PSScriptRoot\wazuh-lab-sim-gui.ps1"
+
+    if (Test-Path $ScriptPath) {
+
+        Write-OutputBox "Launching Wazuh Lab Simulator..."
+
+        Start-Process powershell.exe `
+            -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`""
+    }
+    else {
+
+        Write-OutputBox "Lab Simulator not found."
+    }
+}
+
+function Launch-ADLabGUI {
+
+    $ScriptPath = "$PSScriptRoot\create-adlabuser-gui.ps1"
+
+    if (Test-Path $ScriptPath) {
+
+        Write-OutputBox "Launching AD Lab GUI..."
+
+        Start-Process powershell.exe `
+            -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`""
+    }
+    else {
+
+        Write-OutputBox "AD Lab GUI not found."
+    }
+}
+
+
 # ============================================================
 # SECTION 13 - RUN YARA TROUBLESHOOTER TEST
 # ============================================================
@@ -1160,7 +1195,23 @@ $btnDownloadADLab.Text = "Download AD Lab GUI"
 $btnDownloadADLab.Location = New-Object System.Drawing.Point(220,465)
 $btnDownloadADLab.Size = New-Object System.Drawing.Size(180,40)
 $btnDownloadADLab.Add_Click({ Download-ADLabGUI })
+
 $form.Controls.Add($btnDownloadADLab)
+
+$btnOpenLabSim = New-Object System.Windows.Forms.Button
+$btnOpenLabSim.Text = "Open Lab Simulator"
+$btnOpenLabSim.Location = New-Object System.Drawing.Point(420,465)
+$btnOpenLabSim.Size = New-Object System.Drawing.Size(180,40)
+$btnOpenLabSim.Add_Click({ Launch-LabSimulator })
+$form.Controls.Add($btnOpenLabSim)
+
+$btnOpenADLab = New-Object System.Windows.Forms.Button
+$btnOpenADLab.Text = "Open AD Lab GUI"
+$btnOpenADLab.Location = New-Object System.Drawing.Point(620,465)
+$btnOpenADLab.Size = New-Object System.Drawing.Size(160,40)
+$btnOpenADLab.Add_Click({ Launch-ADLabGUI })
+$form.Controls.Add($btnOpenADLab)
+
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
