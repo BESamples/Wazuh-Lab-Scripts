@@ -1,7 +1,52 @@
 # ============================================================
 # Wazuh Agent Manager GUI
-# Version 1.7
+# Version 1.8
 # Run as Administrator
+# ============================================================
+
+
+
+
+
+# ============================================================
+# TABLE OF CONTENTS
+# ============================================================
+#
+# SECTION 1  - ADMIN CHECK
+# SECTION 2  - HELPER FUNCTION: WRITE TO OUTPUT BOX
+# SECTION 3  - CHECK / INSTALL MICROSOFT VC++ RUNTIME FOR YARA
+# SECTION 4  - INSTALL WAZUH AGENT
+# SECTION 5  - UNINSTALL WAZUH AGENT
+# SECTION 6  - ADD DEFAULT FIM MONITORING
+# SECTION 7  - INSTALL SYSMON
+# SECTION 8  - GET CUSTOM FIM PATHS
+# SECTION 9  - ADD CUSTOM FIM PATH
+# SECTION 10 - RESTART WAZUH SERVICE
+# SECTION 11 - INSTALL YARA FROM LOCAL ZIP
+# SECTION 12 - DOWNLOAD LAB TOOLS
+# SECTION 13 - RUN YARA TROUBLESHOOTER TEST
+# SECTION 14 - BROWSE FOR FIM FOLDER
+# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 16 - CREATE MAIN GUI WINDOW
+# SECTION 17 - TOP INPUT LABELS
+# SECTION 18 - TOP INPUT CONTROLS
+# SECTION 19 - WAZUH STATUS INDICATOR
+# SECTION 20 - MAIN ACTION BUTTONS
+# SECTION 21 - FIM PATH MANAGER CONTROLS
+# SECTION 22 - OUTPUT BOX
+# SECTION 23 - SHOW GUI
+#
+# QUICK SEARCH TERMS:
+# Admin Check           -> SECTION 1
+# VC++ Runtime          -> SECTION 3
+# Wazuh Install         -> SECTION 4
+# Sysmon Install        -> SECTION 7
+# YARA Install          -> SECTION 11
+# YARA Test             -> SECTION 13
+# Wazuh Status          -> SECTION 15
+# Buttons               -> SECTION 20
+# FIM Manager           -> SECTION 21
+#
 # ============================================================
 
 Add-Type -AssemblyName System.Windows.Forms
