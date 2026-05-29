@@ -4,10 +4,6 @@
 # Run as Administrator
 # ============================================================
 
-
-
-
-
 # ============================================================
 # TABLE OF CONTENTS
 # ============================================================
@@ -787,63 +783,25 @@ function Test-YaraInstall {
     $RulesFolder = "$YaraFolder\rules"
     $TestFolder = "C:\Wazuh-Test"
     $TestFile = "$TestFolder\evil.txt"
-    $AlwaysRule = "$RulesFolder\always-match.yar"
     $TestRule = "$RulesFolder\test-malware.yar"
+    $YaraLog = "$TestFolder\yara-results.log"
 
-    Write-OutputBox "=== YARA Wazuh Troubleshooter ==="
+    Write-OutputBox "=== YARA Wazuh Test ==="
 
-    if (-not (Test-VcRuntime)) {
-        Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
-        Write-OutputBox "Run Check VC++ Runtime first or install VC++ Redistributable 2015-2022 x64:"
-        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-        return
-    }
-    else {
-        Write-OutputBox "PASS: Microsoft Visual C++ Runtime found."
-    }
+    New-Item -ItemType Directory -Force -Path $TestFolder | Out-Null
+    New-Item -ItemType Directory -Force -Path $RulesFolder | Out-Null
 
-    if (!(Test-Path $YaraFolder)) {
-        Write-OutputBox "FAIL: YARA folder missing: $YaraFolder"
-        return
-    }
-
-    if (!(Test-Path $RulesFolder)) {
-        Write-OutputBox "Creating rules folder..."
-        New-Item -ItemType Directory -Force -Path $RulesFolder | Out-Null
-    }
-
-    $YaraExeItem = Get-ChildItem `
-        -Path $YaraFolder `
-        -Filter "yara64.exe" `
-        -Recurse `
-        -ErrorAction SilentlyContinue |
-        Select-Object -First 1
+    $YaraExeItem = Get-ChildItem -Path $YaraFolder -Filter "yara64.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
 
     if (-not $YaraExeItem) {
-        Write-OutputBox "FAIL: yara64.exe missing under: $YaraFolder"
+        Write-OutputBox "FAIL: yara64.exe not found."
         return
     }
 
     $YaraExe = $YaraExeItem.FullName
 
-    if (!(Test-Path $TestFolder)) {
-        Write-OutputBox "Creating C:\Wazuh-Test..."
-        New-Item -ItemType Directory -Force -Path $TestFolder | Out-Null
-    }
-
-    Write-OutputBox "Creating test file..."
     Set-Content -Path $TestFile -Value "MALWARE_TEST_STRING" -Encoding ASCII
 
-    Write-OutputBox "Creating Always_Match rule..."
-    Set-Content -Path $AlwaysRule -Encoding ASCII -Value @'
-rule Always_Match
-{
-    condition:
-        true
-}
-'@
-
-    Write-OutputBox "Creating Test_Malware_String rule..."
     Set-Content -Path $TestRule -Encoding ASCII -Value @'
 rule Test_Malware_String
 {
@@ -855,29 +813,19 @@ rule Test_Malware_String
 }
 '@
 
-    Write-OutputBox "Testing Always_Match rule..."
-    $AlwaysResult = & $YaraExe $AlwaysRule $TestFile
+    $Result = & $YaraExe $TestRule $TestFile
 
-    if ($AlwaysResult -match "Always_Match") {
-        Write-OutputBox "PASS: Always_Match rule worked."
+    if ($Result -match "Test_Malware_String") {
+        Write-OutputBox "PASS: YARA rule matched."
+
+        Add-Content -Path $YaraLog -Value "YARA_MATCH: Test_Malware_String File=$TestFile"
+
+        Write-OutputBox "Wrote YARA log:"
+        Write-OutputBox $YaraLog
     }
     else {
-        Write-OutputBox "FAIL: Always_Match did not return a match."
+        Write-OutputBox "FAIL: YARA rule did not match."
     }
-
-    Write-OutputBox "Testing malware string rule..."
-    $TestResult = & $YaraExe $TestRule $TestFile
-
-    if ($TestResult -match "Test_Malware_String") {
-        Write-OutputBox "PASS: Test_Malware_String rule worked."
-    }
-    else {
-        Write-OutputBox "FAIL: Test_Malware_String did not return a match."
-    }
-
-    Write-OutputBox "YARA executable: $YaraExe"
-    Write-OutputBox "Rules folder: $RulesFolder"
-    Write-OutputBox "Test file: $TestFile"
 }
 
 # ============================================================
