@@ -1,4 +1,4 @@
-<group name="local,syscheck,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,">
+<group name="local,syscheck,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,yara,">
 
   <!-- Windows login activity -->
   <rule id="100100" level="8">
@@ -85,4 +85,8 @@
     <description>Mass file modifications detected: possible ransomware activity</description>
   </rule>
 
+  <rule id="100302" level="10">
+    <match>YARA_MATCH<\match>
+    <description>YARA DETECTION on Endpoint<\description>
+  </rule>
 </group>
