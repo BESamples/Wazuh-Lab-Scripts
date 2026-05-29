@@ -87,7 +87,7 @@
 
   <rule id="100302" level="10">
     <match>YARA_MATCH:<\match>
-    <description>YARA DETECTION on Endpoint<\description>
+    <description>YARA DETECTION on Endpoint</description>
   </rule>
   
 </group>
