@@ -779,6 +779,13 @@ function Test-YaraInstall {
     }
 
     $YaraExe = $YaraExeItem.FullName
+    Write-OutputBox "Testing YARA version..."
+
+    $VersionResult = & $YaraExe --version
+
+    Write-OutputBox "Version: [$VersionResult]"
+    Write-OutputBox "Version ExitCode: $LASTEXITCODE"
+    
 
     if (!(Test-Path $TestFolder)) {
         Write-OutputBox "Creating C:\Wazuh-Test..."
