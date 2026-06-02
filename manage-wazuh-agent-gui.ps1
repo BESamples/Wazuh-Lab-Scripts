@@ -738,11 +738,11 @@ function Launch-ADLabGUI {
 function Test-YaraInstall {
 
     $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
-    $RulesFolder = "$YaraFolder\rules"
+    $RulesFolder = "C:\Yara-Rules"
     $TestFolder = "C:\Wazuh-Test"
     $TestFile = "$TestFolder\evil.txt"
     $AlwaysRule = "$RulesFolder\always-match.yar"
-    $TestRule = "$RulesFolder\test-malware.yar"
+    $TestRule = "$RulesFolder\test-malware.log"
 
     Write-OutputBox "=== YARA Wazuh Troubleshooter ==="
 
