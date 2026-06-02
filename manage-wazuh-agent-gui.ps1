@@ -742,7 +742,7 @@ function Test-YaraInstall {
     $TestFolder = "C:\Wazuh-Test"
     $TestFile = "$TestFolder\evil.txt"
     $AlwaysRule = "$RulesFolder\always-match.yar"
-    $TestRule = "$RulesFolder\test-malware.log"
+    $TestRule = "$RulesFolder\test-malware.yar"
 
     Write-OutputBox "=== YARA Wazuh Troubleshooter ==="
 
@@ -811,6 +811,8 @@ rule Test_Malware_String
 
     Write-OutputBox "Testing Always_Match rule..."
     $AlwaysResult = & $YaraExe $AlwaysRule $TestFile
+    Write-OutputBox "AlwaysResult: [$AlwaysResult]"
+    Write-OutputBox "ExitCode: $LASTEXITCODE"
 
     if ($AlwaysResult -match "Always_Match") {
         Write-OutputBox "PASS: Always_Match rule worked."
@@ -821,6 +823,8 @@ rule Test_Malware_String
 
     Write-OutputBox "Testing malware string rule..."
     $TestResult = & $YaraExe $TestRule $TestFile
+    Write-OutputBox "TestResult: [$TestResult]"
+    Write-OutputBox "ExitCode: $LASTEXITCODE"
 
     if ($TestResult -match "Test_Malware_String") {
         Write-OutputBox "PASS: Test_Malware_String rule worked."
