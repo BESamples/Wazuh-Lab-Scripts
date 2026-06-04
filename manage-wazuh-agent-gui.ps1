@@ -944,7 +944,7 @@ function Update-WazuhStatus {
 $form = New-Object System.Windows.Forms.Form
 $form.AutoScroll = $true
 $form.Text = "Wazuh Agent Manager GUI"
-$form.Size = New-Object System.Drawing.Size(820,1050)
+$form.Size = New-Object System.Drawing.Size(850,650)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
