@@ -4,6 +4,44 @@
 # Run as Administrator
 # ============================================================
 
+# ============================================================
+# TABLE OF CONTENTS
+# ============================================================
+#
+# SECTION 1  - ADMIN CHECK
+# SECTION 2  - HELPER FUNCTION: WRITE TO OUTPUT BOX
+# SECTION 3  - CHECK / INSTALL MICROSOFT VC++ RUNTIME FOR YARA
+# SECTION 4  - INSTALL WAZUH AGENT
+# SECTION 5  - UNINSTALL WAZUH AGENT
+# SECTION 6  - ADD DEFAULT FIM MONITORING
+# SECTION 7  - INSTALL SYSMON
+# SECTION 8  - GET CUSTOM FIM PATHS
+# SECTION 9  - ADD CUSTOM FIM PATH
+# SECTION 10 - RESTART WAZUH SERVICE
+# SECTION 11 - INSTALL YARA FROM LOCAL ZIP
+# SECTION 12 - DOWNLOAD LAB TOOLS
+# SECTION 13 - RUN YARA TROUBLESHOOTER TEST
+# SECTION 14 - SERVER 2019 YARA TEST
+# SECTION 15 - BROWSE FOR FIM FOLDER
+# SECTION 16 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 17 - CREATE MAIN GUI WINDOW
+# SECTION 18 - TOP INPUT LABELS
+# SECTION 19 - TOP INPUT CONTROLS
+# SECTION 20 - WAZUH STATUS INDICATOR
+# SECTION 21 - MAIN ACTION BUTTONS
+# SECTION 22 - FIM PATH MANAGER CONTROLS
+# SECTION 23 - OUTPUT BOX
+# SECTION 24 - SHOW GUI
+#
+# QUICK SEARCH
+# "Install-Yara"
+# "Test-YaraInstall"
+# "Test-YaraServer2019"
+# "Update-WazuhStatus"
+# "SECTION 21"
+#
+# ============================================================
+
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
@@ -845,8 +883,15 @@ rule Test_Malware_String
     Write-OutputBox "Test file: $TestFile"
 }
 
+
 # ============================================================
-# SECTION 14 - BROWSE FOR FIM FOLDER
+# SECTION 14 - Server 2019 Yara Test
+# ============================================================
+function Test-YaraServer2019 {
+    ...
+}
+# ============================================================
+# SECTION 15 - BROWSE FOR FIM FOLDER
 # ============================================================
 
 function Browse-FIMFolder {
@@ -860,7 +905,7 @@ function Browse-FIMFolder {
 }
 
 # ============================================================
-# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 16 - UPDATE WAZUH STATUS DISPLAY
 # ============================================================
 
 function Update-WazuhStatus {
@@ -938,7 +983,7 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
-# SECTION 16 - CREATE MAIN GUI WINDOW
+# SECTION 17 - CREATE MAIN GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
@@ -948,7 +993,7 @@ $form.Size = New-Object System.Drawing.Size(850,650)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# SECTION 17 - TOP INPUT LABELS
+# SECTION 18 - TOP INPUT LABELS
 # ============================================================
 
 $lblManagerIP = New-Object System.Windows.Forms.Label
@@ -982,7 +1027,7 @@ $lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblVcInstaller)
 
 # ============================================================
-# SECTION 18 - TOP INPUT CONTROLS
+# SECTION 19 - TOP INPUT CONTROLS
 # ============================================================
 
 $txtManagerIP = New-Object System.Windows.Forms.TextBox
@@ -1060,7 +1105,7 @@ if ($comboVcInstaller.Items.Count -gt 0) {
 $form.Controls.Add($comboVcInstaller)
 
 # ============================================================
-# SECTION 19 - WAZUH STATUS INDICATOR
+# SECTION 20 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
@@ -1112,7 +1157,7 @@ $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
 # ============================================================
-# SECTION 20 - MAIN ACTION BUTTONS
+# SECTION 21 - MAIN ACTION BUTTONS
 # ============================================================
 
 $btnInstall = New-Object System.Windows.Forms.Button
@@ -1200,6 +1245,17 @@ $btnDownloadLabSim.Size = New-Object System.Drawing.Size(180,40)
 $btnDownloadLabSim.Add_Click({ Download-LabSimulator })
 $form.Controls.Add($btnDownloadLabSim)
 
+$btnYaraServer2019 = New-Object System.Windows.Forms.Button
+$btnYaraServer2019.Text = "Server 2019 YARA Test"
+$btnYaraServer2019.Location = New-Object System.Drawing.Point(620,405)
+$btnYaraServer2019.Size = New-Object System.Drawing.Size(160,40)
+
+$btnYaraServer2019.Add_Click({
+    Test-YaraServer2019
+})
+
+$form.Controls.Add($btnYaraServer2019)
+
 $btnDownloadADLab = New-Object System.Windows.Forms.Button
 $btnDownloadADLab.Text = "Download AD Lab GUI"
 $btnDownloadADLab.Location = New-Object System.Drawing.Point(220,465)
@@ -1231,7 +1287,7 @@ $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
-# SECTION 21 - FIM PATH MANAGER CONTROLS
+# SECTION 22 - FIM PATH MANAGER CONTROLS
 # ============================================================
 
 $lblFimPath = New-Object System.Windows.Forms.Label
@@ -1278,7 +1334,7 @@ $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
 # ============================================================
-# SECTION 22 - OUTPUT BOX
+# SECTION 23- OUTPUT BOX
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
@@ -1290,7 +1346,7 @@ $OutputBox.ReadOnly = $true
 $form.Controls.Add($OutputBox)
 
 # ============================================================
-# SECTION 23 - SHOW GUI
+# SECTION 24 - SHOW GUI
 # ============================================================
 
 $form.Topmost = $false
