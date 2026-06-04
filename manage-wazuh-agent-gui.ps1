@@ -1,45 +1,7 @@
 # ============================================================
 # Wazuh Agent Manager GUI
-# Version 1.7
+# Version 2.0
 # Run as Administrator
-# ============================================================
-
-# ============================================================
-# TABLE OF CONTENTS
-# ============================================================
-#
-# SECTION 1  - ADMIN CHECK
-# SECTION 2  - HELPER FUNCTION: WRITE TO OUTPUT BOX
-# SECTION 3  - CHECK / INSTALL MICROSOFT VC++ RUNTIME FOR YARA
-# SECTION 4  - INSTALL WAZUH AGENT
-# SECTION 5  - UNINSTALL WAZUH AGENT
-# SECTION 6  - ADD DEFAULT FIM MONITORING
-# SECTION 7  - INSTALL SYSMON
-# SECTION 8  - GET CUSTOM FIM PATHS
-# SECTION 9  - ADD CUSTOM FIM PATH
-# SECTION 10 - RESTART WAZUH SERVICE
-# SECTION 11 - INSTALL YARA FROM LOCAL ZIP
-# SECTION 12 - DOWNLOAD LAB TOOLS
-# SECTION 13 - RUN YARA TROUBLESHOOTER TEST
-# SECTION 14 - SERVER 2019 YARA TEST
-# SECTION 15 - BROWSE FOR FIM FOLDER
-# SECTION 16 - UPDATE WAZUH STATUS DISPLAY
-# SECTION 17 - CREATE MAIN GUI WINDOW
-# SECTION 18 - TOP INPUT LABELS
-# SECTION 19 - TOP INPUT CONTROLS
-# SECTION 20 - WAZUH STATUS INDICATOR
-# SECTION 21 - MAIN ACTION BUTTONS
-# SECTION 22 - FIM PATH MANAGER CONTROLS
-# SECTION 23 - OUTPUT BOX
-# SECTION 24 - SHOW GUI
-#
-# QUICK SEARCH
-# "Install-Yara"
-# "Test-YaraInstall"
-# "Test-YaraServer2019"
-# "Update-WazuhStatus"
-# "SECTION 21"
-#
 # ============================================================
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -78,34 +40,141 @@ function Write-OutputBox {
 }
 
 # ============================================================
-# SECTION 3 - CHECK / INSTALL MICROSOFT VC++ RUNTIME FOR YARA
+# SECTION 3 - CHECK / INSTALL MICROSOFT VC++ X64 RUNTIME FOR YARA
 # ============================================================
+
+function Get-VcRuntimeEntries {
+
+    $RegistryPaths = @(
+        "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+        "HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+    )
+
+    $Entries = foreach ($RegPath in $RegistryPaths) {
+        Get-ItemProperty $RegPath -ErrorAction SilentlyContinue |
+            Where-Object {
+                $_.DisplayName -match "Microsoft Visual C\+\+" -and
+                $_.DisplayName -match "Redistributable"
+            }
+    }
+
+    return $Entries
+}
 
 function Test-VcRuntime {
 
-    $RuntimePaths = @(
-        "C:\Windows\System32\VCRUNTIME140.dll",
-        "C:\Windows\SysWOW64\VCRUNTIME140.dll"
-    )
-
-    foreach ($Path in $RuntimePaths) {
-        if (Test-Path $Path) {
-            return $true
+    $Vc64 = Get-VcRuntimeEntries |
+        Where-Object {
+            $_.DisplayName -match "x64" -or
+            $_.DisplayName -match "\(64-bit\)"
         }
+
+    if ($Vc64) {
+        return $true
     }
 
     return $false
 }
 
+function Show-VcRuntimeStatus {
+
+    Write-OutputBox "Checking Microsoft VC++ Runtime..."
+
+    $VcEntries = Get-VcRuntimeEntries
+
+    $Vc64 = $VcEntries |
+        Where-Object {
+            $_.DisplayName -match "x64" -or
+            $_.DisplayName -match "\(64-bit\)"
+        }
+
+    $Vc86 = $VcEntries |
+        Where-Object {
+            $_.DisplayName -match "x86" -or
+            $_.DisplayName -match "\(32-bit\)"
+        }
+
+    if ($Vc64) {
+        Write-OutputBox "PASS: VC++ x64 Runtime installed."
+        foreach ($Item in $Vc64) {
+            Write-OutputBox "  x64: $($Item.DisplayName)"
+        }
+    }
+    else {
+        Write-OutputBox "FAIL: VC++ x64 Runtime NOT installed."
+        Write-OutputBox "YARA 64-bit needs the x64 VC++ Runtime."
+    }
+
+    if ($Vc86) {
+        Write-OutputBox "INFO: VC++ x86 Runtime installed. This does not replace x64."
+        foreach ($Item in $Vc86) {
+            Write-OutputBox "  x86: $($Item.DisplayName)"
+        }
+    }
+    else {
+        Write-OutputBox "INFO: VC++ x86 Runtime not detected."
+    }
+
+    Write-OutputBox "Download x64 installer if needed:"
+    Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+}
+
+function Uninstall-VcX86Runtime {
+
+    $Vc86 = Get-VcRuntimeEntries |
+        Where-Object {
+            $_.DisplayName -match "x86" -or
+            $_.DisplayName -match "\(32-bit\)"
+        }
+
+    if (-not $Vc86) {
+        Write-OutputBox "No VC++ x86 Runtime found to uninstall."
+        return
+    }
+
+    Write-OutputBox "VC++ x86 Runtime entries found:"
+    foreach ($Item in $Vc86) {
+        Write-OutputBox "  $($Item.DisplayName)"
+    }
+
+    $Confirm = [System.Windows.Forms.MessageBox]::Show(
+        $form,
+        "This will uninstall detected Microsoft Visual C++ x86 Redistributable entries.`r`n`r`nOnly do this in the lab VM if you are sure.`r`n`r`nContinue?",
+        "Confirm VC++ x86 Uninstall",
+        "YesNo",
+        "Warning"
+    )
+
+    if ($Confirm -ne "Yes") {
+        Write-OutputBox "VC++ x86 uninstall cancelled."
+        return
+    }
+
+    foreach ($Item in $Vc86) {
+
+        if ($Item.UninstallString -match "\{[A-Fa-f0-9\-]+\}") {
+            $Guid = $Matches[0]
+
+            Write-OutputBox "Uninstalling x86 runtime: $($Item.DisplayName)"
+            Start-Process msiexec.exe -Wait -ArgumentList "/x $Guid /qn /norestart"
+        }
+        else {
+            Write-OutputBox "Could not find MSI GUID for: $($Item.DisplayName)"
+        }
+    }
+
+    Write-OutputBox "VC++ x86 uninstall attempt complete. Reboot may be required."
+}
+
 function Check-VcRuntimeFromGUI {
+
+    Show-VcRuntimeStatus
 
     if (Test-VcRuntime) {
 
-        Write-OutputBox "PASS: Microsoft Visual C++ Runtime found."
-
         [System.Windows.Forms.MessageBox]::Show(
             $form,
-            "Microsoft Visual C++ Runtime found.",
+            "Microsoft Visual C++ x64 Runtime found.",
             "Runtime Found",
             "OK",
             "Information"
@@ -114,30 +183,48 @@ function Check-VcRuntimeFromGUI {
         return
     }
 
-    Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
-    Write-OutputBox "Download VC++ Redistributable 2015-2022 x64 from:"
-    Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-
     $VcInstaller = $comboVcInstaller.SelectedItem
 
     if ($VcInstaller) {
 
+        if ($VcInstaller -match "x86") {
+            Write-OutputBox "ERROR: Selected installer appears to be x86:"
+            Write-OutputBox $VcInstaller
+            Write-OutputBox "YARA 64-bit needs vc_redist.x64.exe."
+
+            [System.Windows.Forms.MessageBox]::Show(
+                $form,
+                "The selected installer appears to be x86.`r`n`r`nDownload/select vc_redist.x64.exe instead.",
+                "Wrong Runtime Installer",
+                "OK",
+                "Warning"
+            )
+
+            return
+        }
+
         $InstallerPath = Join-Path "$env:USERPROFILE\Downloads" $VcInstaller
 
-        Write-OutputBox "VC++ installer detected:"
+        if (!(Test-Path $InstallerPath)) {
+            Write-OutputBox "ERROR: VC++ installer not found:"
+            Write-OutputBox $InstallerPath
+            return
+        }
+
+        Write-OutputBox "VC++ x64 installer detected:"
         Write-OutputBox $InstallerPath
 
         $InstallNow = [System.Windows.Forms.MessageBox]::Show(
             $form,
-            "VC++ Runtime is missing.`r`n`r`nInstall detected VC++ installer now?",
-            "Install VC++ Runtime",
+            "VC++ x64 Runtime is missing.`r`n`r`nInstall detected x64 VC++ installer now?",
+            "Install VC++ x64 Runtime",
             "YesNo",
             "Question"
         )
 
         if ($InstallNow -eq "Yes") {
 
-            Write-OutputBox "Launching VC++ installer..."
+            Write-OutputBox "Launching VC++ x64 installer..."
 
             Start-Process `
                 -FilePath $InstallerPath `
@@ -148,11 +235,11 @@ function Check-VcRuntimeFromGUI {
 
             if (Test-VcRuntime) {
 
-                Write-OutputBox "PASS: VC++ Runtime installed successfully."
+                Write-OutputBox "PASS: VC++ x64 Runtime installed successfully."
 
                 [System.Windows.Forms.MessageBox]::Show(
                     $form,
-                    "VC++ Runtime installed successfully.",
+                    "VC++ x64 Runtime installed successfully.",
                     "Install Complete",
                     "OK",
                     "Information"
@@ -160,11 +247,11 @@ function Check-VcRuntimeFromGUI {
             }
             else {
 
-                Write-OutputBox "WARNING: Runtime still not detected after install."
+                Write-OutputBox "WARNING: x64 Runtime still not detected after install."
 
                 [System.Windows.Forms.MessageBox]::Show(
                     $form,
-                    "VC++ installer finished, but runtime was not detected. A reboot may be needed.",
+                    "VC++ installer finished, but x64 runtime was not detected. A reboot may be needed.",
                     "Install Warning",
                     "OK",
                     "Warning"
@@ -175,11 +262,13 @@ function Check-VcRuntimeFromGUI {
         return
     }
 
-    Write-OutputBox "No VC++ installer found in Downloads."
+    Write-OutputBox "No VC++ x64 installer found in Downloads."
+    Write-OutputBox "Download x64 installer from:"
+    Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
 
     [System.Windows.Forms.MessageBox]::Show(
         $form,
-        "VC++ Runtime is missing.`r`n`r`nDownload VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe`r`n`r`nSave it to Downloads, then reopen this GUI or run Check VC++ Runtime again.",
+        "VC++ x64 Runtime is missing.`r`n`r`nDownload VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe`r`n`r`nSave it to Downloads, then reopen this GUI or run Check VC++ Runtime again.",
         "Runtime Missing",
         "OK",
         "Warning"
@@ -883,89 +972,8 @@ rule Test_Malware_String
     Write-OutputBox "Test file: $TestFile"
 }
 
-
 # ============================================================
-# SECTION 14 - Server 2019 Yara Test
-# ============================================================
-
-function Test-YaraServer2019 {
-    Write-OutputBox "Running YARA Server 2019 test..."
-
-    $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
-    $RulesFolder = "$YaraFolder\rules"
-    $YaraExe = "$YaraFolder\yara64.exe"
-    $RuleFile = "$RulesFolder\test-malware.yar"
-    $TestFolder = "C:\Wazuh-Test"
-    $TestFile = "$TestFolder\evil.txt"
-
-    if (-not (Test-VcRuntime)) {
-        Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
-        Write-OutputBox "Install VC++ Redistributable x64, then run this test again."
-        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-        return
-    }
-
-    if (-not (Test-Path $YaraExe)) {
-        Write-OutputBox "FAIL: yara64.exe not found at: $YaraExe"
-        return
-    }
-
-    if (-not (Test-Path $RulesFolder)) {
-        Write-OutputBox "Creating rules folder: $RulesFolder"
-        New-Item -ItemType Directory -Path $RulesFolder -Force | Out-Null
-    }
-
-    if (-not (Test-Path $RuleFile)) {
-        Write-OutputBox "Creating test rule: $RuleFile"
-
-        Set-Content -Path $RuleFile -Encoding ASCII -Value @'
-rule Test_Malware_String
-{
-    strings:
-        $a = "MALWARE_TEST_STRING"
-
-    condition:
-        $a
-}
-'@
-    }
-
-    if (-not (Test-Path $TestFolder)) {
-        Write-OutputBox "Creating test folder: $TestFolder"
-        New-Item -ItemType Directory -Path $TestFolder -Force | Out-Null
-    }
-
-    if (-not (Test-Path $TestFile)) {
-        Write-OutputBox "Creating test file: $TestFile"
-        Set-Content -Path $TestFile -Value "MALWARE_TEST_STRING" -Encoding ASCII
-    }
-
-    Write-OutputBox "YARA executable: $YaraExe"
-    Write-OutputBox "Rule file: $RuleFile"
-    Write-OutputBox "Test file: $TestFile"
-
-    $result = & $YaraExe $RuleFile $TestFile 2>&1
-    $exitCode = $LASTEXITCODE
-
-    Write-OutputBox "TestResult: $result"
-    Write-OutputBox "ExitCode: $exitCode"
-
-    if ($exitCode -eq -1073741515) {
-        Write-OutputBox "FAIL: YARA could not start. Server 2019 may be missing Microsoft Visual C++ Runtime."
-        Write-OutputBox "Try installing VC++ Redistributable x64, then run this test again."
-        return
-    }
-
-    if ($result -match "Test_Malware_String|MALWARE_TEST_STRING|MALWARE") {
-        Write-OutputBox "PASS: YARA rule matched the test file."
-    }
-    else {
-        Write-OutputBox "FAIL: YARA ran, but no match was returned."
-    }
-}
-
-# ============================================================
-# SECTION 15 - BROWSE FOR FIM FOLDER
+# SECTION 14 - BROWSE FOR FIM FOLDER
 # ============================================================
 
 function Browse-FIMFolder {
@@ -979,7 +987,7 @@ function Browse-FIMFolder {
 }
 
 # ============================================================
-# SECTION 16 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
 # ============================================================
 
 function Update-WazuhStatus {
@@ -1057,7 +1065,7 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
-# SECTION 17 - CREATE MAIN GUI WINDOW
+# SECTION 16 - CREATE MAIN GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
@@ -1067,7 +1075,7 @@ $form.Size = New-Object System.Drawing.Size(850,650)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# SECTION 18 - TOP INPUT LABELS
+# SECTION 17 - TOP INPUT LABELS
 # ============================================================
 
 $lblManagerIP = New-Object System.Windows.Forms.Label
@@ -1101,7 +1109,7 @@ $lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblVcInstaller)
 
 # ============================================================
-# SECTION 19 - TOP INPUT CONTROLS
+# SECTION 18 - TOP INPUT CONTROLS
 # ============================================================
 
 $txtManagerIP = New-Object System.Windows.Forms.TextBox
@@ -1166,6 +1174,7 @@ $VcInstallers = Get-ChildItem `
     -Path "$env:USERPROFILE\Downloads" `
     -Filter "vc_redist*.exe" `
     -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match "x64" } |
     Sort-Object LastWriteTime -Descending
 
 foreach ($item in $VcInstallers) {
@@ -1179,7 +1188,7 @@ if ($comboVcInstaller.Items.Count -gt 0) {
 $form.Controls.Add($comboVcInstaller)
 
 # ============================================================
-# SECTION 20 - WAZUH STATUS INDICATOR
+# SECTION 19 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
@@ -1231,7 +1240,7 @@ $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
 # ============================================================
-# SECTION 21 - MAIN ACTION BUTTONS
+# SECTION 20 - MAIN ACTION BUTTONS
 # ============================================================
 
 $btnInstall = New-Object System.Windows.Forms.Button
@@ -1298,6 +1307,13 @@ $btnCheckRuntime.Size = New-Object System.Drawing.Size(180,40)
 $btnCheckRuntime.Add_Click({ Check-VcRuntimeFromGUI })
 $form.Controls.Add($btnCheckRuntime)
 
+$btnVcStatus = New-Object System.Windows.Forms.Button
+$btnVcStatus.Text = "VC++ Status"
+$btnVcStatus.Location = New-Object System.Drawing.Point(620,285)
+$btnVcStatus.Size = New-Object System.Drawing.Size(160,40)
+$btnVcStatus.Add_Click({ Show-VcRuntimeStatus })
+$form.Controls.Add($btnVcStatus)
+
 $btnYara = New-Object System.Windows.Forms.Button
 $btnYara.Text = "Install YARA"
 $btnYara.Location = New-Object System.Drawing.Point(220,405)
@@ -1318,17 +1334,6 @@ $btnDownloadLabSim.Location = New-Object System.Drawing.Point(20,465)
 $btnDownloadLabSim.Size = New-Object System.Drawing.Size(180,40)
 $btnDownloadLabSim.Add_Click({ Download-LabSimulator })
 $form.Controls.Add($btnDownloadLabSim)
-
-$btnYaraServer2019 = New-Object System.Windows.Forms.Button
-$btnYaraServer2019.Text = "Server 2019 YARA Test"
-$btnYaraServer2019.Location = New-Object System.Drawing.Point(620,405)
-$btnYaraServer2019.Size = New-Object System.Drawing.Size(160,40)
-
-$btnYaraServer2019.Add_Click({
-    Test-YaraServer2019
-})
-
-$form.Controls.Add($btnYaraServer2019)
 
 $btnDownloadADLab = New-Object System.Windows.Forms.Button
 $btnDownloadADLab.Text = "Download AD Lab GUI"
@@ -1361,7 +1366,7 @@ $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
-# SECTION 22 - FIM PATH MANAGER CONTROLS
+# SECTION 21 - FIM PATH MANAGER CONTROLS
 # ============================================================
 
 $lblFimPath = New-Object System.Windows.Forms.Label
@@ -1408,7 +1413,7 @@ $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
 # ============================================================
-# SECTION 23- OUTPUT BOX
+# SECTION 22 - OUTPUT BOX
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
@@ -1420,7 +1425,7 @@ $OutputBox.ReadOnly = $true
 $form.Controls.Add($OutputBox)
 
 # ============================================================
-# SECTION 24 - SHOW GUI
+# SECTION 23 - SHOW GUI
 # ============================================================
 
 $form.Topmost = $false
