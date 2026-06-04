@@ -887,9 +887,83 @@ rule Test_Malware_String
 # ============================================================
 # SECTION 14 - Server 2019 Yara Test
 # ============================================================
+
 function Test-YaraServer2019 {
-    ...
+    Write-OutputBox "Running YARA Server 2019 test..."
+
+    $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
+    $RulesFolder = "$YaraFolder\rules"
+    $YaraExe = "$YaraFolder\yara64.exe"
+    $RuleFile = "$RulesFolder\test-malware.yar"
+    $TestFolder = "C:\Wazuh-Test"
+    $TestFile = "$TestFolder\evil.txt"
+
+    if (-not (Test-VcRuntime)) {
+        Write-OutputBox "FAIL: Microsoft Visual C++ Runtime is missing."
+        Write-OutputBox "Install VC++ Redistributable x64, then run this test again."
+        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+        return
+    }
+
+    if (-not (Test-Path $YaraExe)) {
+        Write-OutputBox "FAIL: yara64.exe not found at: $YaraExe"
+        return
+    }
+
+    if (-not (Test-Path $RulesFolder)) {
+        Write-OutputBox "Creating rules folder: $RulesFolder"
+        New-Item -ItemType Directory -Path $RulesFolder -Force | Out-Null
+    }
+
+    if (-not (Test-Path $RuleFile)) {
+        Write-OutputBox "Creating test rule: $RuleFile"
+
+        Set-Content -Path $RuleFile -Encoding ASCII -Value @'
+rule Test_Malware_String
+{
+    strings:
+        $a = "MALWARE_TEST_STRING"
+
+    condition:
+        $a
 }
+'@
+    }
+
+    if (-not (Test-Path $TestFolder)) {
+        Write-OutputBox "Creating test folder: $TestFolder"
+        New-Item -ItemType Directory -Path $TestFolder -Force | Out-Null
+    }
+
+    if (-not (Test-Path $TestFile)) {
+        Write-OutputBox "Creating test file: $TestFile"
+        Set-Content -Path $TestFile -Value "MALWARE_TEST_STRING" -Encoding ASCII
+    }
+
+    Write-OutputBox "YARA executable: $YaraExe"
+    Write-OutputBox "Rule file: $RuleFile"
+    Write-OutputBox "Test file: $TestFile"
+
+    $result = & $YaraExe $RuleFile $TestFile 2>&1
+    $exitCode = $LASTEXITCODE
+
+    Write-OutputBox "TestResult: $result"
+    Write-OutputBox "ExitCode: $exitCode"
+
+    if ($exitCode -eq -1073741515) {
+        Write-OutputBox "FAIL: YARA could not start. Server 2019 may be missing Microsoft Visual C++ Runtime."
+        Write-OutputBox "Try installing VC++ Redistributable x64, then run this test again."
+        return
+    }
+
+    if ($result -match "Test_Malware_String|MALWARE_TEST_STRING|MALWARE") {
+        Write-OutputBox "PASS: YARA rule matched the test file."
+    }
+    else {
+        Write-OutputBox "FAIL: YARA ran, but no match was returned."
+    }
+}
+
 # ============================================================
 # SECTION 15 - BROWSE FOR FIM FOLDER
 # ============================================================
