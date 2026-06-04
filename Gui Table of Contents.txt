@@ -1,0 +1,72 @@
+# ============================================================
+# WAZUH AGENT MANAGER GUI
+# VERSION 2.0
+# TABLE OF CONTENTS
+# ============================================================
+#
+# SECTION 1  - ADMIN CHECK
+# SECTION 2  - HELPER FUNCTION: WRITE TO OUTPUT BOX
+# SECTION 3  - CHECK / INSTALL MICROSOFT VC++ X64 RUNTIME FOR YARA
+# SECTION 4  - INSTALL WAZUH AGENT
+# SECTION 5  - UNINSTALL WAZUH AGENT
+# SECTION 6  - ADD DEFAULT FIM MONITORING
+# SECTION 7  - INSTALL SYSMON
+# SECTION 8  - GET CUSTOM FIM PATHS
+# SECTION 9  - ADD CUSTOM FIM PATH
+# SECTION 10 - RESTART WAZUH SERVICE
+# SECTION 11 - INSTALL YARA FROM LOCAL ZIP
+# SECTION 12 - DOWNLOAD LAB TOOLS
+# SECTION 13 - RUN YARA TROUBLESHOOTER TEST
+# SECTION 14 - BROWSE FOR FIM FOLDER
+# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 16 - CREATE MAIN GUI WINDOW
+# SECTION 17 - TOP INPUT LABELS
+# SECTION 18 - TOP INPUT CONTROLS
+# SECTION 19 - WAZUH STATUS INDICATOR
+# SECTION 20 - MAIN ACTION BUTTONS
+# SECTION 21 - FIM PATH MANAGER CONTROLS
+# SECTION 22 - OUTPUT BOX
+# SECTION 23 - SHOW GUI
+#
+# ============================================================
+# FEATURE MAP
+# ============================================================
+#
+# WAZUH FEATURES
+#   - Install Wazuh Agent ............ Section 4
+#   - Uninstall Wazuh Agent .......... Section 5
+#   - Restart Wazuh Service .......... Section 10
+#   - Agent Status Display ........... Section 15
+#
+# FIM FEATURES
+#   - Add Default FIM Paths .......... Section 6
+#   - View Current FIM Paths ......... Section 8
+#   - Add Custom FIM Paths ........... Section 9
+#   - Browse FIM Folder .............. Section 14
+#   - FIM GUI Controls ............... Section 21
+#
+# SYSMON FEATURES
+#   - Install Sysmon ................. Section 7
+#
+# YARA FEATURES
+#   - VC++ Runtime Validation ........ Section 3
+#   - Install YARA ................... Section 11
+#   - YARA Troubleshooter ............ Section 13
+#
+# LAB TOOLS
+#   - Download Lab Simulator ......... Section 12
+#   - Download AD Lab GUI ............ Section 12
+#   - Launch Lab Simulator ........... Section 12
+#   - Launch AD Lab GUI .............. Section 12
+#
+# GUI LAYOUT
+#   - Main Window .................... Section 16
+#   - Labels ......................... Section 17
+#   - Input Controls ................. Section 18
+#   - Status Indicators .............. Section 19
+#   - Action Buttons ................. Section 20
+#   - FIM Controls ................... Section 21
+#   - Output Console ................. Section 22
+#   - GUI Startup .................... Section 23
+#
+# ============================================================
