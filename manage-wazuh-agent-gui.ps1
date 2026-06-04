@@ -1,10 +1,4 @@
 # ============================================================
-# Wazuh Agent Manager GUI
-# Version 2.0
-# Run as Administrator
-# ============================================================
-
-# ============================================================
 # WAZUH AGENT MANAGER GUI
 # VERSION 2.0
 # TABLE OF CONTENTS
@@ -19,7 +13,7 @@
 # SECTION 7  - INSTALL SYSMON
 # SECTION 8  - GET CUSTOM FIM PATHS
 # SECTION 9  - ADD CUSTOM FIM PATH
-# SECTION 10 - RESTART WAZUH SERVICE
+# SECTION 10 - WAZUH SERVICE / OSSEC CONFIG TOOLS
 # SECTION 11 - INSTALL YARA FROM LOCAL ZIP
 # SECTION 12 - DOWNLOAD LAB TOOLS
 # SECTION 13 - RUN YARA TROUBLESHOOTER TEST
@@ -38,10 +32,11 @@
 # FEATURE MAP
 # ============================================================
 #
-# WAZUH FEATURES
+## WAZUH FEATURES
 #   - Install Wazuh Agent ............ Section 4
 #   - Uninstall Wazuh Agent .......... Section 5
 #   - Restart Wazuh Service .......... Section 10
+#   - Open ossec.conf ................ Section 10
 #   - Agent Status Display ........... Section 15
 #
 # FIM FEATURES
@@ -709,7 +704,7 @@ function Add-FIMPathFromGUI {
 }
 
 # ============================================================
-# SECTION 10 - RESTART WAZUH SERVICE
+# SECTION 10 - WAZUH SERVICE / OSSEC CONFIG TOOLS
 # ============================================================
 
 function Restart-WazuhService {
@@ -736,7 +731,18 @@ function Restart-WazuhService {
 
     Write-OutputBox "Wazuh service restarted."
 }
+function Open-OssecConf {
 
+    $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
+
+    if (!(Test-Path $OssecConf)) {
+        Write-OutputBox "ossec.conf not found. Is Wazuh installed?"
+        return
+    }
+
+    Write-OutputBox "Opening ossec.conf in Notepad..."
+    Start-Process notepad.exe -ArgumentList "`"$OssecConf`""
+}
 # ============================================================
 # SECTION 11 - INSTALL YARA FROM LOCAL ZIP
 # ============================================================
@@ -1350,6 +1356,13 @@ $btnRestartWazuh.Location = New-Object System.Drawing.Point(220,345)
 $btnRestartWazuh.Size = New-Object System.Drawing.Size(180,40)
 $btnRestartWazuh.Add_Click({ Restart-WazuhService })
 $form.Controls.Add($btnRestartWazuh)
+
+$btnOpenOssec = New-Object System.Windows.Forms.Button
+$btnOpenOssec.Text = "Open ossec.conf"
+$btnOpenOssec.Location = New-Object System.Drawing.Point(620,345)
+$btnOpenOssec.Size = New-Object System.Drawing.Size(160,40)
+$btnOpenOssec.Add_Click({ Open-OssecConf })
+$form.Controls.Add($btnOpenOssec)
 
 $btnRestart = New-Object System.Windows.Forms.Button
 $btnRestart.Text = "Restart Computer"
