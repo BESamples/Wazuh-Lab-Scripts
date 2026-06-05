@@ -1065,9 +1065,9 @@ function Download-YaraRules {
     }
 
     $Rules = @{
-        "lab-pii.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/YARA-Rules/lab-pii.yar"
-        "lab-malware-test.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/YARA-Rules/lab-malware-test.yar"
-        "lab-ransomware-test.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/YARA-Rules/lab-ransomware-test.yar"
+        "lab-pii.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Yara-Rules/lab-pii.yar"
+        "lab-malware-test.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Yara-Rules/lab-malware-test.yar"
+        "lab-ransomware-test.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Yara-Rules/lab-ransomware-test.yar"
     }
 
     foreach ($Rule in $Rules.GetEnumerator()) {
