@@ -1458,7 +1458,7 @@ $form.Controls.Add($btnTestYara)
 
 $btnDownloadYaraRules = New-Object System.Windows.Forms.Button
 $btnDownloadYaraRules.Text = "Download YARA Rules"
-$btnDownloadYaraRules.Location = New-Object System.Drawing.Point(620,405)
+$btnDownloadYaraRules.Location = New-Object System.Drawing.Point(620,437)
 $btnDownloadYaraRules.Size = New-Object System.Drawing.Size(160,40)
 $btnDownloadYaraRules.Add_Click({ Download-YaraRules })
 $form.Controls.Add($btnDownloadYaraRules)
