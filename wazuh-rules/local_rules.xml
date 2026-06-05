@@ -11,42 +11,42 @@
     <description>Custom: Successful Windows login detected</description>
   </rule>
 
-  <!-- PowerShell activity from Wazuh built-in Windows/PowerShell rules -->
+  <!-- PowerShell activity -->
   <rule id="100102" level="8">
     <if_sid>91815</if_sid>
     <description>Custom: PowerShell execution detected</description>
   </rule>
 
- <!-- FIM / PII detections -->
+  <!-- FIM / filename-based PII detections -->
+  <rule id="100103" level="10">
+    <if_sid>554</if_sid>
+    <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
+    <description>Added sensitive-looking file by filename: $(file)</description>
+  </rule>
 
-<rule id="100103" level="10">
-  <if_sid>554</if_sid>
-  <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
-  <description>Added sensitive-looking file: $(file)</description>
-</rule>
+  <rule id="100104" level="10">
+    <if_sid>550</if_sid>
+    <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
+    <description>Modified sensitive-looking file by filename: $(file)</description>
+  </rule>
 
-<rule id="100104" level="10">
-  <if_sid>550</if_sid>
-  <field name="file" type="pcre2">(?i).*(ssn|social|pii|password|payroll|confidential|secret).*</field>
-  <description>Modified sensitive-looking file: $(file)</description>
-</rule>
- 
+  <!-- FIM / suspicious file types -->
   <rule id="100107" level="9">
     <if_sid>554</if_sid>
-    <field name="file" type="pcre2">(?i)\.ps1$|\.bat$|\.exe$</field>
+    <field name="file" type="pcre2">(?i).*\.(ps1|bat|exe)$</field>
     <description>Executable or script file added to monitored directory: $(file)</description>
   </rule>
 
   <rule id="100108" level="12">
     <if_sid>554</if_sid>
-    <field name="file" type="pcre2">(?i)\.locked$|\.encrypted$|\.crypt$</field>
+    <field name="file" type="pcre2">(?i).*\.(locked|encrypted|crypt)$</field>
     <description>Possible ransomware-style encrypted file extension detected: $(file)</description>
   </rule>
 
   <!-- Sysmon PowerShell / lab attack simulation rules -->
   <rule id="100109" level="12">
     <if_group>sysmon_event1</if_group>
-    <field name="win.eventdata.commandLine" type="pcre2">(?i)-encodedcommand|\s-enc\s</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(-encodedcommand|\s-enc\s)</field>
     <description>LAB: Encoded PowerShell command detected</description>
   </rule>
 
@@ -64,7 +64,7 @@
 
   <rule id="100522" level="12">
     <if_group>sysmon_event1</if_group>
-    <field name="win.eventdata.commandLine" type="pcre2">(?i)invoke-restmethod|invoke-webrequest|curl|wget</field>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)(invoke-restmethod|invoke-webrequest|curl|wget)</field>
     <description>LAB: PowerShell web callback or download activity detected</description>
   </rule>
 
@@ -85,23 +85,37 @@
     <description>Mass file modifications detected: possible ransomware activity</description>
   </rule>
 
+  <!-- YARA generic detection -->
   <rule id="100302" level="10">
     <match>YARA_MATCH:</match>
-    <description>YARA DETECTION on Endpoint</description>
+    <description>LAB: YARA detection on endpoint</description>
   </rule>
+
+  <!-- YARA PII-specific detections -->
   <rule id="100310" level="12">
-  <match>PII_SSN_Detected</match>
-  <description>LAB: Social Security Number detected by YARA</description>
-</rule>
+    <match>PII_SSN_Detected</match>
+    <description>LAB: Social Security Number detected by YARA</description>
+  </rule>
 
-<rule id="100311" level="10">
-  <match>PII_Password_Detected</match>
-  <description>LAB: Password-related content detected by YARA</description>
-</rule>
+  <rule id="100311" level="10">
+    <match>PII_Password_Detected</match>
+    <description>LAB: Password-related content detected by YARA</description>
+  </rule>
 
-<rule id="100312" level="10">
-  <match>PII_Payroll_Detected</match>
-  <description>LAB: Payroll-related content detected by YARA</description>
-</rule>
-  
+  <rule id="100312" level="10">
+    <match>PII_Payroll_Detected</match>
+    <description>LAB: Payroll-related content detected by YARA</description>
+  </rule>
+
+  <!-- YARA malware/ransomware lab detections -->
+  <rule id="100313" level="12">
+    <match>Test_Malware_String</match>
+    <description>LAB: Malware test string detected by YARA</description>
+  </rule>
+
+  <rule id="100314" level="13">
+    <match>Ransomware_Note_Detected</match>
+    <description>LAB: Ransomware note content detected by YARA</description>
+  </rule>
+
 </group>
