@@ -17,16 +17,17 @@
 # SECTION 11 - INSTALL YARA FROM LOCAL ZIP
 # SECTION 12 - DOWNLOAD LAB TOOLS
 # SECTION 13 - RUN YARA TROUBLESHOOTER TEST
-# SECTION 14 - BROWSE FOR FIM FOLDER
-# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
-# SECTION 16 - CREATE MAIN GUI WINDOW
-# SECTION 17 - TOP INPUT LABELS
-# SECTION 18 - TOP INPUT CONTROLS
-# SECTION 19 - WAZUH STATUS INDICATOR
-# SECTION 20 - MAIN ACTION BUTTONS
-# SECTION 21 - FIM PATH MANAGER CONTROLS
-# SECTION 22 - OUTPUT BOX
-# SECTION 23 - SHOW GUI
+# SECTION 14 - Download Yara Rules
+# SECTION 15 - BROWSE FOR FIM FOLDER
+# SECTION 16 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 17 - CREATE MAIN GUI WINDOW
+# SECTION 18 - TOP INPUT LABELS
+# SECTION 19 - TOP INPUT CONTROLS
+# SECTION 20 - WAZUH STATUS INDICATOR
+# SECTION 21 - MAIN ACTION BUTTONS
+# SECTION 22 - FIM PATH MANAGER CONTROLS
+# SECTION 23 - OUTPUT BOX
+# SECTION 24 - SHOW GUI
 #
 # ============================================================
 # FEATURE MAP
@@ -53,6 +54,7 @@
 #   - VC++ Runtime Validation ........ Section 3
 #   - Install YARA ................... Section 11
 #   - YARA Troubleshooter ............ Section 13
+#   - YARA Rule Downloader ............ Section 14
 #
 # LAB TOOLS
 #   - Download Lab Simulator ......... Section 12
@@ -1052,7 +1054,47 @@ rule Test_Malware_String
 }
 
 # ============================================================
-# SECTION 14 - BROWSE FOR FIM FOLDER
+# SECTION 14 - Download Yara Rules
+# ============================================================
+function Download-YaraRules {
+
+    $RulesFolder = "C:\Yara-Rules"
+
+    if (!(Test-Path $RulesFolder)) {
+        New-Item -ItemType Directory -Force -Path $RulesFolder | Out-Null
+    }
+
+    $Rules = @{
+        "lab-pii.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/YARA-Rules/lab-pii.yar"
+        "lab-malware-test.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/YARA-Rules/lab-malware-test.yar"
+        "lab-ransomware-test.yar" = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/YARA-Rules/lab-ransomware-test.yar"
+    }
+
+    foreach ($Rule in $Rules.GetEnumerator()) {
+        $OutFile = Join-Path $RulesFolder $Rule.Key
+
+        Write-OutputBox "Downloading YARA rule: $($Rule.Key)"
+
+        try {
+    Invoke-WebRequest `
+        -Uri $Rule.Value `
+        -OutFile $OutFile `
+        -UseBasicParsing
+
+    Write-OutputBox "Downloaded: $($Rule.Key)"
+}
+        catch {
+            Write-OutputBox "FAILED: $($Rule.Key)"
+            Write-OutputBox $_.Exception.Message
+        }
+    }
+
+    Write-OutputBox "YARA rules downloaded to C:\Yara-Rules"
+    Write-OutputBox "Ready for YARA-Wazuh testing."
+}
+
+# ============================================================
+# SECTION 15 - BROWSE FOR FIM FOLDER
 # ============================================================
 
 function Browse-FIMFolder {
@@ -1066,7 +1108,7 @@ function Browse-FIMFolder {
 }
 
 # ============================================================
-# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 16 - UPDATE WAZUH STATUS DISPLAY
 # ============================================================
 
 function Update-WazuhStatus {
@@ -1144,7 +1186,7 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
-# SECTION 16 - CREATE MAIN GUI WINDOW
+# SECTION 17 - CREATE MAIN GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
@@ -1154,7 +1196,7 @@ $form.Size = New-Object System.Drawing.Size(850,650)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# SECTION 17 - TOP INPUT LABELS
+# SECTION 18 - TOP INPUT LABELS
 # ============================================================
 
 $lblManagerIP = New-Object System.Windows.Forms.Label
@@ -1188,7 +1230,7 @@ $lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblVcInstaller)
 
 # ============================================================
-# SECTION 18 - TOP INPUT CONTROLS
+# SECTION 19 - TOP INPUT CONTROLS
 # ============================================================
 
 $txtManagerIP = New-Object System.Windows.Forms.TextBox
@@ -1267,7 +1309,7 @@ if ($comboVcInstaller.Items.Count -gt 0) {
 $form.Controls.Add($comboVcInstaller)
 
 # ============================================================
-# SECTION 19 - WAZUH STATUS INDICATOR
+# SECTION 20 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
@@ -1319,7 +1361,7 @@ $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
 # ============================================================
-# SECTION 20 - MAIN ACTION BUTTONS
+# SECTION 21 - MAIN ACTION BUTTONS
 # ============================================================
 
 $btnInstall = New-Object System.Windows.Forms.Button
@@ -1414,6 +1456,13 @@ $btnTestYara.Size = New-Object System.Drawing.Size(180,40)
 $btnTestYara.Add_Click({ Test-YaraInstall })
 $form.Controls.Add($btnTestYara)
 
+$btnDownloadYaraRules = New-Object System.Windows.Forms.Button
+$btnDownloadYaraRules.Text = "Download YARA Rules"
+$btnDownloadYaraRules.Location = New-Object System.Drawing.Point(620,405)
+$btnDownloadYaraRules.Size = New-Object System.Drawing.Size(160,40)
+$btnDownloadYaraRules.Add_Click({ Download-YaraRules })
+$form.Controls.Add($btnDownloadYaraRules)
+
 $btnDownloadLabSim = New-Object System.Windows.Forms.Button
 $btnDownloadLabSim.Text = "Download Lab Simulator"
 $btnDownloadLabSim.Location = New-Object System.Drawing.Point(20,465)
@@ -1452,7 +1501,7 @@ $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
-# SECTION 21 - FIM PATH MANAGER CONTROLS
+# SECTION 22 - FIM PATH MANAGER CONTROLS
 # ============================================================
 
 $lblFimPath = New-Object System.Windows.Forms.Label
@@ -1499,7 +1548,7 @@ $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
 # ============================================================
-# SECTION 22 - OUTPUT BOX
+# SECTION 23 - OUTPUT BOX
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
@@ -1511,7 +1560,7 @@ $OutputBox.ReadOnly = $true
 $form.Controls.Add($OutputBox)
 
 # ============================================================
-# SECTION 23 - SHOW GUI
+# SECTION 24 - SHOW GUI
 # ============================================================
 
 $form.Topmost = $false
