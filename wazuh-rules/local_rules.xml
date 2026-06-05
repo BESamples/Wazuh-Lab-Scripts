@@ -89,5 +89,19 @@
     <match>YARA_MATCH:</match>
     <description>YARA DETECTION on Endpoint</description>
   </rule>
+  <rule id="100310" level="12">
+  <match>PII_SSN_Detected</match>
+  <description>LAB: Social Security Number detected by YARA</description>
+</rule>
+
+<rule id="100311" level="10">
+  <match>PII_Password_Detected</match>
+  <description>LAB: Password-related content detected by YARA</description>
+</rule>
+
+<rule id="100312" level="10">
+  <match>PII_Payroll_Detected</match>
+  <description>LAB: Payroll-related content detected by YARA</description>
+</rule>
   
 </group>
