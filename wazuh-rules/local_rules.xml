@@ -50,6 +50,13 @@
     <description>LAB: Encoded PowerShell command detected</description>
   </rule>
 
+    <!-- TEMP TEST: Any Sysmon Event 1 -->
+  <rule id="100529" level="6">
+    <if_group>sysmon_event1</if_group>
+    <description>LAB TEST: Any Sysmon Event 1 process creation detected</description>
+    <group>lab_sysmon_dashboard,</group>
+  </rule>
+
   <rule id="100520" level="10">
     <if_group>sysmon_event1</if_group>
     <field name="win.eventdata.commandLine" type="pcre2">(?i)fake-updater\.ps1</field>
