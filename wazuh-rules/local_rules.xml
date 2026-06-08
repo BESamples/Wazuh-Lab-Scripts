@@ -75,10 +75,11 @@
     <description>LAB: PowerShell web callback or download activity detected</description>
   </rule>
 
-  <rule id="100523" level="13">
-    <if_group>sysmon_event1</if_group>
+    <rule id="100523" level="13">
+    <if_sid>92029</if_sid>
     <field name="win.eventdata.commandLine" type="pcre2">(?i)c:\\users\\public\\.*\.ps1</field>
     <description>LAB: PowerShell script executed from Public user directory</description>
+    <group>lab_sysmon_dashboard,sysmon_public_script,</group>
   </rule>
 
   <!-- Correlation / frequency rules -->
