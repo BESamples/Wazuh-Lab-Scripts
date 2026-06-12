@@ -1272,7 +1272,7 @@ $form.Controls.Add($lblYaraZip)
 
 $lblVcInstaller = New-Object System.Windows.Forms.Label
 $lblVcInstaller.Text = "VC++ Installer"
-$lblVcInstaller.Location = New-Object System.Drawing.Point(20,180)
+$lblVcInstaller.Location = New-Object System.Drawing.Point(20,175)
 $lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblVcInstaller)
 
@@ -1334,7 +1334,7 @@ if ($comboYaraZip.Items.Count -gt 0) {
 $form.Controls.Add($comboYaraZip)
 
 $comboVcInstaller = New-Object System.Windows.Forms.ComboBox
-$comboVcInstaller.Location = New-Object System.Drawing.Point(160,180)
+$comboVcInstaller.Location = New-Object System.Drawing.Point(160,175)
 $comboVcInstaller.Size = New-Object System.Drawing.Size(400,20)
 $comboVcInstaller.DropDownStyle = "DropDownList"
 
@@ -1361,49 +1361,49 @@ $form.Controls.Add($comboVcInstaller)
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
 $lblInstallStatus.Text = "Wazuh Status"
-$lblInstallStatus.Location = New-Object System.Drawing.Point(20,220)
+$lblInstallStatus.Location = New-Object System.Drawing.Point(20,230)
 $lblInstallStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblInstallStatus)
 
 $lblInstallStatusValue = New-Object System.Windows.Forms.Label
 $lblInstallStatusValue.Text = "Checking..."
-$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,220)
+$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,230)
 $lblInstallStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblInstallStatusValue)
 
 $lblManagerStatus = New-Object System.Windows.Forms.Label
 $lblManagerStatus.Text = "Current Manager"
-$lblManagerStatus.Location = New-Object System.Drawing.Point(350,220)
+$lblManagerStatus.Location = New-Object System.Drawing.Point(350,230)
 $lblManagerStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblManagerStatus)
 
 $lblManagerStatusValue = New-Object System.Windows.Forms.Label
 $lblManagerStatusValue.Text = "Checking..."
-$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,220)
+$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,230)
 $lblManagerStatusValue.Size = New-Object System.Drawing.Size(200,20)
 $form.Controls.Add($lblManagerStatusValue)
 
 $lblAgentStatus = New-Object System.Windows.Forms.Label
 $lblAgentStatus.Text = "Current Agent"
-$lblAgentStatus.Location = New-Object System.Drawing.Point(20,245)
+$lblAgentStatus.Location = New-Object System.Drawing.Point(20,255)
 $lblAgentStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblAgentStatus)
 
 $lblAgentStatusValue = New-Object System.Windows.Forms.Label
 $lblAgentStatusValue.Text = "Checking..."
-$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,245)
+$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,255)
 $lblAgentStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblAgentStatusValue)
 
 $lblRegistrationStatus = New-Object System.Windows.Forms.Label
 $lblRegistrationStatus.Text = "Agent Registration"
-$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,245)
+$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,255)
 $lblRegistrationStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblRegistrationStatus)
 
 $lblRegistrationStatusValue = New-Object System.Windows.Forms.Label
 $lblRegistrationStatusValue.Text = "Checking..."
-$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,245)
+$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,255)
 $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
