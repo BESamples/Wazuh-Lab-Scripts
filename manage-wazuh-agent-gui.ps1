@@ -938,6 +938,53 @@ function Launch-ADLabGUI {
     }
 }
 
+function Download-DlpLabGUI {
+
+    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/windows-dlp-lab-gui.ps1"
+    $Destination = "$PSScriptRoot\windows-dlp-lab-gui.ps1"
+
+    if (Test-Path $Destination) {
+        $Overwrite = [System.Windows.Forms.MessageBox]::Show(
+            $form,
+            "DLP Lab GUI already exists. Overwrite?",
+            "Confirm Overwrite",
+            "YesNo",
+            "Question"
+        )
+
+        if ($Overwrite -ne "Yes") {
+            Write-OutputBox "DLP Lab GUI download cancelled."
+            return
+        }
+    }
+
+    Write-OutputBox "Downloading DLP Lab GUI..."
+
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $Destination
+        Write-OutputBox "Download complete:"
+        Write-OutputBox $Destination
+    }
+    catch {
+        Write-OutputBox "DLP Lab GUI download failed."
+        Write-OutputBox $_.Exception.Message
+    }
+}
+
+function Launch-DlpLabGUI {
+
+    $ScriptPath = "$PSScriptRoot\windows-dlp-lab-gui.ps1"
+
+    if (Test-Path $ScriptPath) {
+        Write-OutputBox "Launching DLP Lab GUI..."
+
+        Start-Process powershell.exe `
+            -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`""
+    }
+    else {
+        Write-OutputBox "DLP Lab GUI not found. Download it first."
+    }
+}
 
 # ============================================================
 # SECTION 13 - RUN YARA TROUBLESHOOTER TEST
@@ -1380,7 +1427,7 @@ $form.Controls.Add($btnUninstall)
 
 $btnFIM = New-Object System.Windows.Forms.Button
 $btnFIM.Text = "Add Default FIM"
-$btnFIM.Location = New-Object System.Drawing.Point(420,285)
+$btnFIM.Location = New-Object System.Drawing.Point(600,285)
 $btnFIM.Size = New-Object System.Drawing.Size(180,40)
 $btnFIM.Add_Click({ Add-FIMMonitoring })
 $form.Controls.Add($btnFIM)
@@ -1492,6 +1539,19 @@ $btnOpenADLab.Size = New-Object System.Drawing.Size(160,40)
 $btnOpenADLab.Add_Click({ Launch-ADLabGUI })
 $form.Controls.Add($btnOpenADLab)
 
+$btnDownloadDlp = New-Object System.Windows.Forms.Button
+$btnDownloadDlp.Text = "Download DLP GUI"
+$btnDownloadDlp.Location = New-Object System.Drawing.Point(20,525)
+$btnDownloadDlp.Size = New-Object System.Drawing.Size(180,40)
+$btnDownloadDlp.Add_Click({ Download-DlpLabGUI })
+$form.Controls.Add($btnDownloadDlp)
+
+$btnOpenDlp = New-Object System.Windows.Forms.Button
+$btnOpenDlp.Text = "Open DLP GUI"
+$btnOpenDlp.Location = New-Object System.Drawing.Point(220,525)
+$btnOpenDlp.Size = New-Object System.Drawing.Size(180,40)
+$btnOpenDlp.Add_Click({ Launch-DlpLabGUI })
+$form.Controls.Add($btnOpenDlp)
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
