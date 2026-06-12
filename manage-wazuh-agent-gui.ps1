@@ -1566,44 +1566,44 @@ $form.Controls.Add($btnExit)
 
 $lblFimPath = New-Object System.Windows.Forms.Label
 $lblFimPath.Text = "FIM Folder Path"
-$lblFimPath.Location = New-Object System.Drawing.Point(20,540)
+$lblFimPath.Location = New-Object System.Drawing.Point(20,650)
 $lblFimPath.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblFimPath)
 
 $txtFimPath = New-Object System.Windows.Forms.TextBox
-$txtFimPath.Location = New-Object System.Drawing.Point(160,600)
+$txtFimPath.Location = New-Object System.Drawing.Point(160,650)
 $txtFimPath.Size = New-Object System.Drawing.Size(320,20)
 $form.Controls.Add($txtFimPath)
 
 $btnBrowseFim = New-Object System.Windows.Forms.Button
 $btnBrowseFim.Text = "Browse"
-$btnBrowseFim.Location = New-Object System.Drawing.Point(500,595)
+$btnBrowseFim.Location = New-Object System.Drawing.Point(500,645)
 $btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
 $btnBrowseFim.Add_Click({ Browse-FIMFolder })
 $form.Controls.Add($btnBrowseFim)
 
 $btnAddFimPath = New-Object System.Windows.Forms.Button
 $btnAddFimPath.Text = "Add FIM Path"
-$btnAddFimPath.Location = New-Object System.Drawing.Point(20,640)
+$btnAddFimPath.Location = New-Object System.Drawing.Point(20,690)
 $btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
 $btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
 $form.Controls.Add($btnAddFimPath)
 
 $btnRefreshFim = New-Object System.Windows.Forms.Button
 $btnRefreshFim.Text = "Refresh FIM Paths"
-$btnRefreshFim.Location = New-Object System.Drawing.Point(180,640)
+$btnRefreshFim.Location = New-Object System.Drawing.Point(180,690)
 $btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
 $btnRefreshFim.Add_Click({ Get-FIMPaths })
 $form.Controls.Add($btnRefreshFim)
 
 $lblFimList = New-Object System.Windows.Forms.Label
 $lblFimList.Text = "Custom / Lab FIM Paths"
-$lblFimList.Location = New-Object System.Drawing.Point(20,625)
+$lblFimList.Location = New-Object System.Drawing.Point(20,725)
 $lblFimList.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblFimList)
 
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,170)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,750)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
@@ -1612,7 +1612,7 @@ $form.Controls.Add($listFimPaths)
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,810)
+$OutputBox.Location = New-Object System.Drawing.Point(20,850)
 $OutputBox.Size = New-Object System.Drawing.Size(660,140)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
