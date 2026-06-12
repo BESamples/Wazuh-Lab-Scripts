@@ -1,6 +1,6 @@
 # ============================================================
 # WAZUH AGENT MANAGER GUI
-# VERSION 2.0
+# VERSION 2.2
 # TABLE OF CONTENTS
 # ============================================================
 #
@@ -1427,7 +1427,7 @@ $form.Controls.Add($btnUninstall)
 
 $btnFIM = New-Object System.Windows.Forms.Button
 $btnFIM.Text = "Add Default FIM"
-$btnFIM.Location = New-Object System.Drawing.Point(600,285)
+$btnFIM.Location = New-Object System.Drawing.Point(420,285)
 $btnFIM.Size = New-Object System.Drawing.Size(180,40)
 $btnFIM.Add_Click({ Add-FIMMonitoring })
 $form.Controls.Add($btnFIM)
@@ -1571,27 +1571,27 @@ $lblFimPath.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblFimPath)
 
 $txtFimPath = New-Object System.Windows.Forms.TextBox
-$txtFimPath.Location = New-Object System.Drawing.Point(160,540)
+$txtFimPath.Location = New-Object System.Drawing.Point(160,600)
 $txtFimPath.Size = New-Object System.Drawing.Size(320,20)
 $form.Controls.Add($txtFimPath)
 
 $btnBrowseFim = New-Object System.Windows.Forms.Button
 $btnBrowseFim.Text = "Browse"
-$btnBrowseFim.Location = New-Object System.Drawing.Point(500,535)
+$btnBrowseFim.Location = New-Object System.Drawing.Point(500,595)
 $btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
 $btnBrowseFim.Add_Click({ Browse-FIMFolder })
 $form.Controls.Add($btnBrowseFim)
 
 $btnAddFimPath = New-Object System.Windows.Forms.Button
 $btnAddFimPath.Text = "Add FIM Path"
-$btnAddFimPath.Location = New-Object System.Drawing.Point(20,580)
+$btnAddFimPath.Location = New-Object System.Drawing.Point(20,640)
 $btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
 $btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
 $form.Controls.Add($btnAddFimPath)
 
 $btnRefreshFim = New-Object System.Windows.Forms.Button
 $btnRefreshFim.Text = "Refresh FIM Paths"
-$btnRefreshFim.Location = New-Object System.Drawing.Point(180,580)
+$btnRefreshFim.Location = New-Object System.Drawing.Point(180,640)
 $btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
 $btnRefreshFim.Add_Click({ Get-FIMPaths })
 $form.Controls.Add($btnRefreshFim)
@@ -1603,7 +1603,7 @@ $lblFimList.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblFimList)
 
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,650)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,170)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
@@ -1612,7 +1612,7 @@ $form.Controls.Add($listFimPaths)
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,750)
+$OutputBox.Location = New-Object System.Drawing.Point(20,810)
 $OutputBox.Size = New-Object System.Drawing.Size(660,140)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
