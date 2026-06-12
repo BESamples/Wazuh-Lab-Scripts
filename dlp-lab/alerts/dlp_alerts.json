@@ -1,0 +1,74 @@
+[
+    {
+        "file_path": "sample_files/false_negative_secret.txt",
+        "match_type": "aws_access_key",
+        "severity": "high",
+        "classification": "high",
+        "match_count": 1,
+        "scanner": "dlp_scanner"
+    },
+    {
+        "file_path": "sample_files/false_negative_secret.txt",
+        "match_type": "database_password",
+        "severity": "high",
+        "classification": "high",
+        "match_count": 1,
+        "scanner": "dlp_scanner"
+    },
+    {
+        "file_path": "sample_files/payment_data.txt",
+        "match_type": "credit_card",
+        "severity": "high",
+        "classification": "high",
+        "match_count": 1,
+        "scanner": "dlp_scanner"
+    },
+    {
+        "file_path": "sample_files/payment_data.txt",
+        "match_type": "confidential_keyword",
+        "severity": "medium",
+        "classification": "medium",
+        "match_count": 1,
+        "scanner": "dlp_scanner"
+    },
+    {
+        "file_path": "sample_files/employee_record.txt",
+        "match_type": "ssn",
+        "severity": "high",
+        "classification": "high",
+        "match_count": 1,
+        "scanner": "dlp_scanner"
+    },
+    {
+        "file_path": "sample_files/employee_record.txt",
+        "match_type": "confidential_keyword",
+        "severity": "medium",
+        "classification": "medium",
+        "match_count": 1,
+        "scanner": "dlp_scanner"
+    },
+    {
+        "file_path": "sample_files/payroll_backup.txt",
+        "match_type": "ssn",
+        "severity": "high",
+        "classification": "high",
+        "match_count": 1,
+        "scanner": "dlp_scanner"
+    },
+    {
+        "file_path": "sample_files/payroll_backup.txt",
+        "match_type": "confidential_keyword",
+        "severity": "medium",
+        "classification": "medium",
+        "match_count": 1,
+        "scanner": "dlp_scanner"
+    },
+    {
+        "file_path": "sample_files/api_config.txt",
+        "match_type": "api_key",
+        "severity": "high",
+        "classification": "high",
+        "match_count": 2,
+        "scanner": "dlp_scanner"
+    }
+]

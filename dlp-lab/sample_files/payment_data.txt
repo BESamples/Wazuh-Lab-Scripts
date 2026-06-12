@@ -1,0 +1,3 @@
+Customer payment test
+Card: 4111-1111-1111-1111
+Restricted payment information.
