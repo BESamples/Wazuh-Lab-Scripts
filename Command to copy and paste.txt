@@ -1,3 +1,1 @@
-$conf = Get-ChildItem -Path "C:\Program Files","C:\Program Files (x86)" -Filter ossec.conf -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1
-$conf.FullName
-Select-String -Path $conf.FullName -Pattern "dlp_alerts.jsonl" -Context 3,3
+'{"timestamp":"' + (Get-Date).ToUniversalTime().ToString("o") + '","scanner":"windows_powershell_dlp_scanner","host":"' + $env:COMPUTERNAME + '","file_path":"C:\\DLP_Test\\manual_wazuh_test.txt","file_name":"manual_wazuh_test.txt","match_type":"ssn","severity":"high","classification":"high","match_count":1,"source_type":"manual_test","file_hash_sha256":"manual"}' | Add-Content "C:\ProgramData\DLP\alerts\dlp_alerts.jsonl"
