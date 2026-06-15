@@ -6,4 +6,4 @@ Write-EventLog -LogName Application -Source WindowsDLP -EventId 7001 -EntryType 
 
 Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='WindowsDLP'} -MaxEvents 5 | Select-Object TimeCreated, ProviderName, Id, Message
 
-Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='WindowsDLP'} -MaxEvents 5 | Select-Object TimeCreated, ProviderName, Id, Message
+Select-String -Path "C:\Program Files (x86)\ossec-agent\ossec.conf" -Pattern "Application|eventchannel" -Context 2,2
