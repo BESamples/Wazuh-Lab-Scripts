@@ -176,5 +176,12 @@
     <description>Windows DLP detected possible database password</description>
     <group>dlp,windows_dlp,password,</group>
   </rule>
+    <!-- Windows DLP Application Event Log -->
+  <rule id="100710" level="10">
+    <field name="win.system.providerName">WindowsDLP</field>
+    <description>Windows DLP Application event detected</description>
+    <group>dlp,windows_dlp,eventlog,</group>
+  </rule>
+
   
 </group>
