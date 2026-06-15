@@ -7,3 +7,6 @@ Write-EventLog -LogName Application -Source WindowsDLP -EventId 7001 -EntryType 
 Get-WinEvent -FilterHashtable @{LogName='Application'; ProviderName='WindowsDLP'} -MaxEvents 5 | Select-Object TimeCreated, ProviderName, Id, Message
 
 Select-String -Path "C:\Program Files (x86)\ossec-agent\ossec.conf" -Pattern "Application|eventchannel" -Context 2,2
+
+
+Write-EventLog -LogName Application -Source WindowsDLP -EventId 7002 -EntryType Warning -Message "DLP_TEST_NEW severity=high match_type=ssn file_path=C:\DLP_Test\fresh_rule_test.txt"
