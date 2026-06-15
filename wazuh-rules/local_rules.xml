@@ -1,4 +1,4 @@
-<group name="local,syscheck,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,yara,">
+<group name="local,syscheck,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,yara,dlp,windows_dlp,credit_card">
 
   <!-- Windows login activity -->
   <rule id="100100" level="8">
