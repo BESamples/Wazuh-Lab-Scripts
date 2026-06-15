@@ -126,4 +126,55 @@
     <description>LAB: Ransomware note content detected by YARA</description>
   </rule>
 
+  <!-- Windows PowerShell DLP Scanner Alerts -->
+
+  <rule id="100700" level="7">
+    <decoded_as>json</decoded_as>
+    <field name="scanner">windows_powershell_dlp_scanner</field>
+    <description>Windows DLP scanner alert detected</description>
+    <group>dlp,windows_dlp,</group>
+  </rule>
+
+  <rule id="100701" level="12">
+    <if_sid>100700</if_sid>
+    <field name="severity">high</field>
+    <description>HIGH severity Windows DLP alert detected</description>
+    <group>dlp,windows_dlp,high,</group>
+  </rule>
+
+  <rule id="100702" level="8">
+    <if_sid>100700</if_sid>
+    <field name="severity">medium</field>
+    <description>MEDIUM severity Windows DLP alert detected</description>
+    <group>dlp,windows_dlp,medium,</group>
+  </rule>
+
+  <rule id="100703" level="10">
+    <if_sid>100700</if_sid>
+    <field name="match_type">ssn</field>
+    <description>Windows DLP detected possible SSN data</description>
+    <group>dlp,windows_dlp,ssn,</group>
+  </rule>
+
+  <rule id="100704" level="10">
+    <if_sid>100700</if_sid>
+    <field name="match_type">credit_card</field>
+    <description>Windows DLP detected possible credit card data</description>
+    <group>dlp,windows_dlp,credit_card,</group>
+  </rule>
+
+  <rule id="100705" level="12">
+    <if_sid>100700</if_sid>
+    <field name="match_type">aws_access_key</field>
+    <description>Windows DLP detected possible AWS access key</description>
+    <group>dlp,windows_dlp,aws,</group>
+  </rule>
+
+  <rule id="100706" level="12">
+    <if_sid>100700</if_sid>
+    <field name="match_type">database_password</field>
+    <description>Windows DLP detected possible database password</description>
+    <group>dlp,windows_dlp,password,</group>
+  </rule>
+  
 </group>
