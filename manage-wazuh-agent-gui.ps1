@@ -1,6 +1,6 @@
 # ============================================================
 # WAZUH AGENT MANAGER GUI
-# VERSION 2.2
+# VERSION 2.3
 # TABLE OF CONTENTS
 # ============================================================
 #
@@ -59,8 +59,10 @@
 # LAB TOOLS
 #   - Download Lab Simulator ......... Section 12
 #   - Download AD Lab GUI ............ Section 12
+#   - Download FSRM DLP Lab........... Section 12
 #   - Launch Lab Simulator ........... Section 12
 #   - Launch AD Lab GUI .............. Section 12
+#   - Launch FSRM DLP Server 2019 .... Section 12
 #
 # GUI LAYOUT
 #   - Main Window .................... Section 16
@@ -984,6 +986,64 @@ function Launch-DlpLabGUI {
     else {
         Write-OutputBox "DLP Lab GUI not found. Download it first."
     }
+    function Test-IsWindowsServer2019 {
+
+    $Os = Get-CimInstance Win32_OperatingSystem
+
+    if ($Os.Caption -match "Windows Server 2019") {
+        return $true
+    }
+
+    return $false
+}
+
+function Download-FsrmDlpLab {
+
+    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/fsrm-dlp-lab-setup.ps1"
+    $Destination = "$PSScriptRoot\fsrm-dlp-lab-setup.ps1"
+
+    Write-OutputBox "Downloading FSRM DLP lab script..."
+
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
+        Write-OutputBox "Download complete:"
+        Write-OutputBox $Destination
+    }
+    catch {
+        Write-OutputBox "FSRM DLP script download failed."
+        Write-OutputBox $_.Exception.Message
+    }
+}
+
+function Launch-FsrmDlpLab {
+
+    if (-not (Test-IsWindowsServer2019)) {
+        Write-OutputBox "BLOCKED: FSRM DLP lab can only run on Windows Server 2019."
+
+        [System.Windows.Forms.MessageBox]::Show(
+            $form,
+            "This FSRM DLP lab script can only run on Windows Server 2019.",
+            "Wrong Operating System",
+            "OK",
+            "Warning"
+        )
+
+        return
+    }
+
+    $ScriptPath = "$PSScriptRoot\fsrm-dlp-lab-setup.ps1"
+
+    if (!(Test-Path $ScriptPath)) {
+        Write-OutputBox "FSRM DLP script not found. Download it first."
+        return
+    }
+
+    Write-OutputBox "Launching FSRM DLP lab script on Server 2019..."
+
+    Start-Process powershell.exe `
+        -Verb RunAs `
+        -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`" -RunNow"
+    }
 }
 
 # ============================================================
@@ -1560,6 +1620,20 @@ $btnExit.Size = New-Object System.Drawing.Size(90,40)
 $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
+$btnDownloadFsrmDlp = New-Object System.Windows.Forms.Button
+$btnDownloadFsrmDlp.Text = "Download FSRM DLP"
+$btnDownloadFsrmDlp.Location = New-Object System.Drawing.Point(420,525)
+$btnDownloadFsrmDlp.Size = New-Object System.Drawing.Size(180,40)
+$btnDownloadFsrmDlp.Add_Click({ Download-FsrmDlpLab })
+$form.Controls.Add($btnDownloadFsrmDlp)
+
+$btnRunFsrmDlp = New-Object System.Windows.Forms.Button
+$btnRunFsrmDlp.Text = "Run FSRM DLP"
+$btnRunFsrmDlp.Location = New-Object System.Drawing.Point(620,525)
+$btnRunFsrmDlp.Size = New-Object System.Drawing.Size(160,40)
+$btnRunFsrmDlp.Add_Click({ Launch-FsrmDlpLab })
+$form.Controls.Add($btnRunFsrmDlp)
+
 # ============================================================
 # SECTION 22 - FIM PATH MANAGER CONTROLS
 # ============================================================
@@ -1598,12 +1672,12 @@ $form.Controls.Add($btnRefreshFim)
 
 $lblFimList = New-Object System.Windows.Forms.Label
 $lblFimList.Text = "Custom / Lab FIM Paths"
-$lblFimList.Location = New-Object System.Drawing.Point(20,725)
+$lblFimList.Location = New-Object System.Drawing.Point(20,735)
 $lblFimList.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblFimList)
 
 $listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,750)
+$listFimPaths.Location = New-Object System.Drawing.Point(20,760)
 $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
@@ -1612,7 +1686,7 @@ $form.Controls.Add($listFimPaths)
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,850)
+$OutputBox.Location = New-Object System.Drawing.Point(20,860)
 $OutputBox.Size = New-Object System.Drawing.Size(660,140)
 $OutputBox.Multiline = $true
 $OutputBox.ScrollBars = "Vertical"
