@@ -1,6 +1,6 @@
 # ============================================================
 # WAZUH AGENT MANAGER GUI
-# VERSION 2.3
+# VERSION 2.4
 # TABLE OF CONTENTS
 # ============================================================
 #
@@ -17,7 +17,7 @@
 # SECTION 11 - INSTALL YARA FROM LOCAL ZIP
 # SECTION 12 - DOWNLOAD LAB TOOLS
 # SECTION 13 - RUN YARA TROUBLESHOOTER TEST
-# SECTION 14 - Download Yara Rules
+# SECTION 14 - DOWNLOAD YARA RULES
 # SECTION 15 - BROWSE FOR FIM FOLDER
 # SECTION 16 - UPDATE WAZUH STATUS DISPLAY
 # SECTION 17 - CREATE MAIN GUI WINDOW
@@ -33,19 +33,19 @@
 # FEATURE MAP
 # ============================================================
 #
-## WAZUH FEATURES
+# WAZUH FEATURES
 #   - Install Wazuh Agent ............ Section 4
 #   - Uninstall Wazuh Agent .......... Section 5
 #   - Restart Wazuh Service .......... Section 10
 #   - Open ossec.conf ................ Section 10
-#   - Agent Status Display ........... Section 15
+#   - Agent Status Display ........... Section 16
 #
 # FIM FEATURES
 #   - Add Default FIM Paths .......... Section 6
 #   - View Current FIM Paths ......... Section 8
 #   - Add Custom FIM Paths ........... Section 9
-#   - Browse FIM Folder .............. Section 14
-#   - FIM GUI Controls ............... Section 21
+#   - Browse FIM Folder .............. Section 15
+#   - FIM GUI Controls ............... Section 22
 #
 # SYSMON FEATURES
 #   - Install Sysmon ................. Section 7
@@ -54,25 +54,27 @@
 #   - VC++ Runtime Validation ........ Section 3
 #   - Install YARA ................... Section 11
 #   - YARA Troubleshooter ............ Section 13
-#   - YARA Rule Downloader ............ Section 14
+#   - YARA Rule Downloader ........... Section 14
 #
 # LAB TOOLS
 #   - Download Lab Simulator ......... Section 12
 #   - Download AD Lab GUI ............ Section 12
-#   - Download FSRM DLP Lab........... Section 12
+#   - Download DLP GUI ............... Section 12
+#   - Download FSRM DLP Lab .......... Section 12
 #   - Launch Lab Simulator ........... Section 12
 #   - Launch AD Lab GUI .............. Section 12
+#   - Launch DLP GUI ................. Section 12
 #   - Launch FSRM DLP Server 2019 .... Section 12
 #
 # GUI LAYOUT
-#   - Main Window .................... Section 16
-#   - Labels ......................... Section 17
-#   - Input Controls ................. Section 18
-#   - Status Indicators .............. Section 19
-#   - Action Buttons ................. Section 20
-#   - FIM Controls ................... Section 21
-#   - Output Console ................. Section 22
-#   - GUI Startup .................... Section 23
+#   - Main Window .................... Section 17
+#   - Labels ......................... Section 18
+#   - Input Controls ................. Section 19
+#   - Status Indicators .............. Section 20
+#   - Action Buttons ................. Section 21
+#   - FIM Controls ................... Section 22
+#   - Output Console ................. Section 23
+#   - GUI Startup .................... Section 24
 #
 # ============================================================
 
@@ -735,6 +737,8 @@ function Restart-WazuhService {
 
     Write-OutputBox "Wazuh service restarted."
 }
+
+
 function Open-OssecConf {
 
     $OssecConf = "C:\Program Files (x86)\ossec-agent\ossec.conf"
@@ -747,6 +751,7 @@ function Open-OssecConf {
     Write-OutputBox "Opening ossec.conf in Notepad..."
     Start-Process notepad.exe -ArgumentList "`"$OssecConf`""
 }
+
 # ============================================================
 # SECTION 11 - INSTALL YARA FROM LOCAL ZIP
 # ============================================================
@@ -940,6 +945,7 @@ function Launch-ADLabGUI {
     }
 }
 
+
 function Download-DlpLabGUI {
 
     $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/windows-dlp/windows_dlp-gui.ps1"
@@ -963,7 +969,7 @@ function Download-DlpLabGUI {
     Write-OutputBox "Downloading DLP Lab GUI..."
 
     try {
-        Invoke-WebRequest -Uri $Url -OutFile $Destination
+        Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
         Write-OutputBox "Download complete:"
         Write-OutputBox $Destination
     }
@@ -986,9 +992,13 @@ function Launch-DlpLabGUI {
     else {
         Write-OutputBox "DLP Lab GUI not found. Download it first."
     }
-    function Test-IsWindowsServer2019 {
+}
+
+function Test-IsWindowsServer2019 {
 
     $Os = Get-CimInstance Win32_OperatingSystem
+
+    Write-OutputBox "Detected OS: $($Os.Caption)"
 
     if ($Os.Caption -match "Windows Server 2019") {
         return $true
@@ -1001,6 +1011,21 @@ function Download-FsrmDlpLab {
 
     $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/fsrm-dlp-lab-setup.ps1"
     $Destination = "$PSScriptRoot\fsrm-dlp-lab-setup.ps1"
+
+    if (Test-Path $Destination) {
+        $Overwrite = [System.Windows.Forms.MessageBox]::Show(
+            $form,
+            "FSRM DLP lab script already exists. Overwrite?",
+            "Confirm Overwrite",
+            "YesNo",
+            "Question"
+        )
+
+        if ($Overwrite -ne "Yes") {
+            Write-OutputBox "FSRM DLP download cancelled."
+            return
+        }
+    }
 
     Write-OutputBox "Downloading FSRM DLP lab script..."
 
@@ -1043,8 +1068,8 @@ function Launch-FsrmDlpLab {
     Start-Process powershell.exe `
         -Verb RunAs `
         -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`" -RunNow"
-    }
 }
+
 
 # ============================================================
 # SECTION 13 - RUN YARA TROUBLESHOOTER TEST
@@ -1161,8 +1186,9 @@ rule Test_Malware_String
 }
 
 # ============================================================
-# SECTION 14 - Download Yara Rules
+# SECTION 14 - DOWNLOAD YARA RULES
 # ============================================================
+
 function Download-YaraRules {
 
     $RulesFolder = "C:\Yara-Rules"
@@ -1183,13 +1209,13 @@ function Download-YaraRules {
         Write-OutputBox "Downloading YARA rule: $($Rule.Key)"
 
         try {
-    Invoke-WebRequest `
-        -Uri $Rule.Value `
-        -OutFile $OutFile `
-        -UseBasicParsing
+            Invoke-WebRequest `
+                -Uri $Rule.Value `
+                -OutFile $OutFile `
+                -UseBasicParsing
 
-    Write-OutputBox "Downloaded: $($Rule.Key)"
-}
+            Write-OutputBox "Downloaded: $($Rule.Key)"
+        }
         catch {
             Write-OutputBox "FAILED: $($Rule.Key)"
             Write-OutputBox $_.Exception.Message
@@ -1204,6 +1230,8 @@ function Download-YaraRules {
 # SECTION 15 - BROWSE FOR FIM FOLDER
 # ============================================================
 
+# ============================================================
+
 function Browse-FIMFolder {
 
     $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
@@ -1215,7 +1243,7 @@ function Browse-FIMFolder {
 }
 
 # ============================================================
-# SECTION 16 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
 # ============================================================
 
 function Update-WazuhStatus {
@@ -1293,7 +1321,7 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
-# SECTION 17 - CREATE MAIN GUI WINDOW
+# SECTION 16 - CREATE MAIN GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
@@ -1303,7 +1331,7 @@ $form.Size = New-Object System.Drawing.Size(850,650)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# SECTION 18 - TOP INPUT LABELS
+# SECTION 17 - TOP INPUT LABELS
 # ============================================================
 
 $lblManagerIP = New-Object System.Windows.Forms.Label
@@ -1332,12 +1360,12 @@ $form.Controls.Add($lblYaraZip)
 
 $lblVcInstaller = New-Object System.Windows.Forms.Label
 $lblVcInstaller.Text = "VC++ Installer"
-$lblVcInstaller.Location = New-Object System.Drawing.Point(20,175)
+$lblVcInstaller.Location = New-Object System.Drawing.Point(20,180)
 $lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblVcInstaller)
 
 # ============================================================
-# SECTION 19 - TOP INPUT CONTROLS
+# SECTION 18 - TOP INPUT CONTROLS
 # ============================================================
 
 $txtManagerIP = New-Object System.Windows.Forms.TextBox
@@ -1394,7 +1422,7 @@ if ($comboYaraZip.Items.Count -gt 0) {
 $form.Controls.Add($comboYaraZip)
 
 $comboVcInstaller = New-Object System.Windows.Forms.ComboBox
-$comboVcInstaller.Location = New-Object System.Drawing.Point(160,175)
+$comboVcInstaller.Location = New-Object System.Drawing.Point(160,180)
 $comboVcInstaller.Size = New-Object System.Drawing.Size(400,20)
 $comboVcInstaller.DropDownStyle = "DropDownList"
 
@@ -1416,54 +1444,54 @@ if ($comboVcInstaller.Items.Count -gt 0) {
 $form.Controls.Add($comboVcInstaller)
 
 # ============================================================
-# SECTION 20 - WAZUH STATUS INDICATOR
+# SECTION 19 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
 $lblInstallStatus.Text = "Wazuh Status"
-$lblInstallStatus.Location = New-Object System.Drawing.Point(20,230)
+$lblInstallStatus.Location = New-Object System.Drawing.Point(20,220)
 $lblInstallStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblInstallStatus)
 
 $lblInstallStatusValue = New-Object System.Windows.Forms.Label
 $lblInstallStatusValue.Text = "Checking..."
-$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,230)
+$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,220)
 $lblInstallStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblInstallStatusValue)
 
 $lblManagerStatus = New-Object System.Windows.Forms.Label
 $lblManagerStatus.Text = "Current Manager"
-$lblManagerStatus.Location = New-Object System.Drawing.Point(350,230)
+$lblManagerStatus.Location = New-Object System.Drawing.Point(350,220)
 $lblManagerStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblManagerStatus)
 
 $lblManagerStatusValue = New-Object System.Windows.Forms.Label
 $lblManagerStatusValue.Text = "Checking..."
-$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,230)
+$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,220)
 $lblManagerStatusValue.Size = New-Object System.Drawing.Size(200,20)
 $form.Controls.Add($lblManagerStatusValue)
 
 $lblAgentStatus = New-Object System.Windows.Forms.Label
 $lblAgentStatus.Text = "Current Agent"
-$lblAgentStatus.Location = New-Object System.Drawing.Point(20,255)
+$lblAgentStatus.Location = New-Object System.Drawing.Point(20,245)
 $lblAgentStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblAgentStatus)
 
 $lblAgentStatusValue = New-Object System.Windows.Forms.Label
 $lblAgentStatusValue.Text = "Checking..."
-$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,255)
+$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,245)
 $lblAgentStatusValue.Size = New-Object System.Drawing.Size(180,20)
 $form.Controls.Add($lblAgentStatusValue)
 
 $lblRegistrationStatus = New-Object System.Windows.Forms.Label
 $lblRegistrationStatus.Text = "Agent Registration"
-$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,255)
+$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,245)
 $lblRegistrationStatus.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblRegistrationStatus)
 
 $lblRegistrationStatusValue = New-Object System.Windows.Forms.Label
 $lblRegistrationStatusValue.Text = "Checking..."
-$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,255)
+$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,245)
 $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
@@ -1492,6 +1520,13 @@ $btnFIM.Size = New-Object System.Drawing.Size(180,40)
 $btnFIM.Add_Click({ Add-FIMMonitoring })
 $form.Controls.Add($btnFIM)
 
+$btnVcStatus = New-Object System.Windows.Forms.Button
+$btnVcStatus.Text = "VC++ Status"
+$btnVcStatus.Location = New-Object System.Drawing.Point(620,285)
+$btnVcStatus.Size = New-Object System.Drawing.Size(160,40)
+$btnVcStatus.Add_Click({ Show-VcRuntimeStatus })
+$form.Controls.Add($btnVcStatus)
+
 $btnSysmon = New-Object System.Windows.Forms.Button
 $btnSysmon.Text = "Install Sysmon"
 $btnSysmon.Location = New-Object System.Drawing.Point(20,345)
@@ -1506,21 +1541,13 @@ $btnRestartWazuh.Size = New-Object System.Drawing.Size(180,40)
 $btnRestartWazuh.Add_Click({ Restart-WazuhService })
 $form.Controls.Add($btnRestartWazuh)
 
-$btnOpenOssec = New-Object System.Windows.Forms.Button
-$btnOpenOssec.Text = "Open ossec.conf"
-$btnOpenOssec.Location = New-Object System.Drawing.Point(620,345)
-$btnOpenOssec.Size = New-Object System.Drawing.Size(160,40)
-$btnOpenOssec.Add_Click({ Open-OssecConf })
-$form.Controls.Add($btnOpenOssec)
-
 $btnRestart = New-Object System.Windows.Forms.Button
 $btnRestart.Text = "Restart Computer"
 $btnRestart.Location = New-Object System.Drawing.Point(420,345)
 $btnRestart.Size = New-Object System.Drawing.Size(180,40)
-
 $btnRestart.Add_Click({
-
     $ConfirmRestart = [System.Windows.Forms.MessageBox]::Show(
+        $form,
         "Restart this computer now?",
         "Confirm Restart",
         "YesNo",
@@ -1532,8 +1559,14 @@ $btnRestart.Add_Click({
         Restart-Computer -Force
     }
 })
-
 $form.Controls.Add($btnRestart)
+
+$btnOpenOssec = New-Object System.Windows.Forms.Button
+$btnOpenOssec.Text = "Open ossec.conf"
+$btnOpenOssec.Location = New-Object System.Drawing.Point(620,345)
+$btnOpenOssec.Size = New-Object System.Drawing.Size(160,40)
+$btnOpenOssec.Add_Click({ Open-OssecConf })
+$form.Controls.Add($btnOpenOssec)
 
 $btnCheckRuntime = New-Object System.Windows.Forms.Button
 $btnCheckRuntime.Text = "Check VC++ Runtime"
@@ -1541,13 +1574,6 @@ $btnCheckRuntime.Location = New-Object System.Drawing.Point(20,405)
 $btnCheckRuntime.Size = New-Object System.Drawing.Size(180,40)
 $btnCheckRuntime.Add_Click({ Check-VcRuntimeFromGUI })
 $form.Controls.Add($btnCheckRuntime)
-
-$btnVcStatus = New-Object System.Windows.Forms.Button
-$btnVcStatus.Text = "VC++ Status"
-$btnVcStatus.Location = New-Object System.Drawing.Point(620,285)
-$btnVcStatus.Size = New-Object System.Drawing.Size(160,40)
-$btnVcStatus.Add_Click({ Show-VcRuntimeStatus })
-$form.Controls.Add($btnVcStatus)
 
 $btnYara = New-Object System.Windows.Forms.Button
 $btnYara.Text = "Install YARA"
@@ -1582,7 +1608,6 @@ $btnDownloadADLab.Text = "Download AD Lab GUI"
 $btnDownloadADLab.Location = New-Object System.Drawing.Point(220,465)
 $btnDownloadADLab.Size = New-Object System.Drawing.Size(180,40)
 $btnDownloadADLab.Add_Click({ Download-ADLabGUI })
-
 $form.Controls.Add($btnDownloadADLab)
 
 $btnOpenLabSim = New-Object System.Windows.Forms.Button
@@ -1613,13 +1638,6 @@ $btnOpenDlp.Size = New-Object System.Drawing.Size(180,40)
 $btnOpenDlp.Add_Click({ Launch-DlpLabGUI })
 $form.Controls.Add($btnOpenDlp)
 
-$btnExit = New-Object System.Windows.Forms.Button
-$btnExit.Text = "Exit"
-$btnExit.Location = New-Object System.Drawing.Point(650,345)
-$btnExit.Size = New-Object System.Drawing.Size(90,40)
-$btnExit.Add_Click({ $form.Close() })
-$form.Controls.Add($btnExit)
-
 $btnDownloadFsrmDlp = New-Object System.Windows.Forms.Button
 $btnDownloadFsrmDlp.Text = "Download FSRM DLP"
 $btnDownloadFsrmDlp.Location = New-Object System.Drawing.Point(420,525)
@@ -1633,6 +1651,13 @@ $btnRunFsrmDlp.Location = New-Object System.Drawing.Point(620,525)
 $btnRunFsrmDlp.Size = New-Object System.Drawing.Size(160,40)
 $btnRunFsrmDlp.Add_Click({ Launch-FsrmDlpLab })
 $form.Controls.Add($btnRunFsrmDlp)
+
+$btnExit = New-Object System.Windows.Forms.Button
+$btnExit.Text = "Exit"
+$btnExit.Location = New-Object System.Drawing.Point(620,585)
+$btnExit.Size = New-Object System.Drawing.Size(160,40)
+$btnExit.Add_Click({ $form.Close() })
+$form.Controls.Add($btnExit)
 
 # ============================================================
 # SECTION 22 - FIM PATH MANAGER CONTROLS
