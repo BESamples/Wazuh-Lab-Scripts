@@ -948,7 +948,7 @@ function Launch-ADLabGUI {
 
 function Download-DlpLabGUI {
 
-    $Url = "https://github.com/BESamples/Wazuh-Lab-Scripts/blob/main/Powershell-Scripts/setup-fsrm-dlp-lab.ps1"
+    $Url = "https://github.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/setup-fsrm-dlp-lab.ps1"
     $Destination = "$PSScriptRoot\setup-fsrm-dlp-lab.ps1"
 
     if (Test-Path $Destination) {
