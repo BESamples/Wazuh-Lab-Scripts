@@ -44,7 +44,14 @@ function Ensure-Folder {
 
 # Cleaner than scanning the whole C:\SensitiveData folder.
 # This prevents the file management task from scanning its own Quarantine folder.
-$ScanPath = Join-Path $RootPath "Scan"
+$ScanPaths = @(
+    $ScanPath,
+    "C:\Users\Public\Documents",
+    "C:\Users\Public\Downloads",
+    "$env:USERPROFILE\Documents",
+    "$env:USERPROFILE\Downloads",
+    "C:\WazuhLab\PII"
+)
 $QuarantineRoot = Join-Path $RootPath "Quarantine"
 $PiiQuarantine = Join-Path $QuarantineRoot "PII"
 $PciQuarantine = Join-Path $QuarantineRoot "PCI"
@@ -217,7 +224,7 @@ Write-Step "SECTION 9 - Creating DLP classification rules"
 New-FsrmClassificationRule `
     -Name "DLP Detect SSN - PII" `
     -Description "Detects SSN pattern and labels file as PII." `
-    -Namespace @($ScanPath) `
+    -Namespace $ScanPaths `
     -Property $PropertyName `
     -PropertyValue "PII" `
     -ClassificationMechanism "Content Classifier" `
@@ -230,7 +237,7 @@ Write-Host "Created rule: DLP Detect SSN - PII" -ForegroundColor Green
 New-FsrmClassificationRule `
     -Name "DLP Detect Credit Card - PCI" `
     -Description "Detects credit card-like numbers and labels file as PCI." `
-    -Namespace @($ScanPath) `
+    -Namespace $ScanPaths `
     -Property $PropertyName `
     -PropertyValue "PCI" `
     -ClassificationMechanism "Content Classifier" `
@@ -243,7 +250,7 @@ Write-Host "Created rule: DLP Detect Credit Card - PCI" -ForegroundColor Green
 New-FsrmClassificationRule `
     -Name "DLP Detect Confidential Keywords" `
     -Description "Detects confidential keywords and labels file as Confidential." `
-    -Namespace @($ScanPath) `
+    -Namespace $ScanPaths `
     -Property $PropertyName `
     -PropertyValue "Confidential" `
     -ClassificationMechanism "Content Classifier" `
@@ -283,7 +290,7 @@ function New-DlpQuarantineJob {
     New-FsrmFileManagementJob `
         -Name $JobName `
         -Description "DLP lab remediation: move $ClassificationValue files to quarantine." `
-        -Namespace @($ScanPath) `
+        -Namespace $ScanPaths `
         -Condition @($Condition) `
         -Action $Action `
         -Schedule $Schedule
