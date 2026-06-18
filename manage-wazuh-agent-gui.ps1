@@ -1013,31 +1013,14 @@ function Test-IsWindowsServer2019 {
 # ============================================================
 
 function Download-FsrmDlpLab {
-
     $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/setup-fsrm-dlp-lab.ps1"
     $Destination = "$PSScriptRoot\setup-fsrm-dlp-lab.ps1"
-
-    if (Test-Path $Destination) {
-        $Overwrite = [System.Windows.Forms.MessageBox]::Show(
-            $form,
-            "FSRM DLP lab script already exists. Overwrite?",
-            "Confirm Overwrite",
-            "YesNo",
-            "Question"
-        )
-
-        if ($Overwrite -ne "Yes") {
-            Write-OutputBox "FSRM DLP download cancelled."
-            return
-        }
-    }
 
     Write-OutputBox "Downloading FSRM DLP lab script..."
 
     try {
         Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
-        Write-OutputBox "Download complete:"
-        Write-OutputBox $Destination
+        Write-OutputBox "Download complete: $Destination"
     }
     catch {
         Write-OutputBox "FSRM DLP script download failed."
@@ -1046,18 +1029,8 @@ function Download-FsrmDlpLab {
 }
 
 function Launch-FsrmDlpLab {
-
     if (-not (Test-IsWindowsServer2019)) {
         Write-OutputBox "BLOCKED: FSRM DLP lab can only run on Windows Server 2019."
-
-        [System.Windows.Forms.MessageBox]::Show(
-            $form,
-            "This FSRM DLP lab script can only run on Windows Server 2019.",
-            "Wrong Operating System",
-            "OK",
-            "Warning"
-        )
-
         return
     }
 
@@ -1068,40 +1041,19 @@ function Launch-FsrmDlpLab {
         return
     }
 
-    Write-OutputBox "Launching FSRM DLP lab script on Server 2019..."
-
-    Start-Process powershell.exe `
-        -Verb RunAs `
-        -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`" -RunNow"
+    Start-Process powershell.exe -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`" -RunNow"
 }
 
 function Run-FsrmClassificationNow {
-
-    if (-not (Test-IsWindowsServer2019)) {
-        Write-OutputBox "BLOCKED: FSRM Classification only runs on Windows Server 2019."
-        return
-    }
+    if (-not (Test-IsWindowsServer2019)) { return }
 
     Import-Module FileServerResourceManager -ErrorAction SilentlyContinue
-
     Write-OutputBox "Starting FSRM classification..."
-
     Start-FsrmClassification -Confirm:$false
-    Start-Sleep -Seconds 5
-
-    $Status = Get-FsrmClassification
-    Write-OutputBox "FSRM Classification Status: $($Status.Status)"
-
-    if ($Status.LastError) {
-        Write-OutputBox "LastError: $($Status.LastError)"
-    }
+}
 
 function Run-FsrmQuarantineNow {
-
-    if (-not (Test-IsWindowsServer2019)) {
-        Write-OutputBox "BLOCKED: FSRM Quarantine only runs on Windows Server 2019."
-        return
-    }
+    if (-not (Test-IsWindowsServer2019)) { return }
 
     Import-Module FileServerResourceManager -ErrorAction SilentlyContinue
 
@@ -1112,8 +1064,6 @@ function Run-FsrmQuarantineNow {
     )
 
     foreach ($Job in $Jobs) {
-        Write-OutputBox "Starting FSRM job: $Job"
-
         try {
             Start-FsrmFileManagementJob -Name $Job -Confirm:$false
             Write-OutputBox "Started: $Job"
@@ -1121,23 +1071,20 @@ function Run-FsrmQuarantineNow {
         catch {
             Write-OutputBox "FAILED: $Job"
             Write-OutputBox $_.Exception.Message
+        }
+    }
+}
 
-
-    function Open-FsrmQuarantine {
-
+function Open-FsrmQuarantine {
     $QuarantinePath = "C:\SensitiveData\Quarantine"
 
     if (!(Test-Path $QuarantinePath)) {
         Write-OutputBox "FSRM quarantine folder not found: $QuarantinePath"
         return
-        }
-
-    Write-OutputBox "Opening FSRM quarantine folder..."
-    Start-Process explorer.exe $QuarantinePath
-
     }
-}
 
+    Start-Process explorer.exe $QuarantinePath
+}
 
 # ============================================================
 # SECTION 14 - RUN YARA TROUBLESHOOTER TEST
