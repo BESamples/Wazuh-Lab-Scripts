@@ -44,10 +44,11 @@ function Ensure-Folder {
 
 # Cleaner than scanning the whole C:\SensitiveData folder.
 # This prevents the file management task from scanning its own Quarantine folder.
+$ScanPath = Join-Path $RootPath "Scan"
+
 $ScanPaths = @(
     $ScanPath,
     "C:\Users\Public\Documents",
-    "C:\Users\Public\Downloads",
     "$env:USERPROFILE\Documents",
     "$env:USERPROFILE\Downloads",
     "C:\WazuhLab\PII"
@@ -105,6 +106,10 @@ Write-Step "SECTION 4 - Creating lab folders"
 
 Ensure-Folder $RootPath
 Ensure-Folder $ScanPath
+foreach ($Path in $ScanPaths) {
+    Ensure-Folder $Path
+}
+
 Ensure-Folder $QuarantineRoot
 Ensure-Folder $PiiQuarantine
 Ensure-Folder $PciQuarantine
