@@ -948,8 +948,8 @@ function Launch-ADLabGUI {
 
 function Download-DlpLabGUI {
 
-    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/windows-dlp-lab-gui.ps1"
-    $Destination = "$PSScriptRoot\windows-dlp-lab-gui.ps1"
+   $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/windows-dlp/windows_dlp-gui.ps1"
+$Destination = "$PSScriptRoot\windows-dlp-lab-gui.ps1"
 
     if (Test-Path $Destination) {
         $Overwrite = [System.Windows.Forms.MessageBox]::Show(
@@ -1009,8 +1009,8 @@ function Test-IsWindowsServer2019 {
 
 function Download-FsrmDlpLab {
 
-    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/fsrm-dlp-lab-setup.ps1"
-    $Destination = "$PSScriptRoot\fsrm-dlp-lab-setup.ps1"
+    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-Lab-Scripts/main/Powershell-Scripts/setup-fsrm-dlp-lab.ps1"
+    $Destination = "$PSScriptRoot\setup-fsrm-dlp-lab.ps1"
 
     if (Test-Path $Destination) {
         $Overwrite = [System.Windows.Forms.MessageBox]::Show(
