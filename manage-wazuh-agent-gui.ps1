@@ -1122,7 +1122,20 @@ function Run-FsrmQuarantineNow {
         catch {
             Write-OutputBox "FAILED: $Job"
             Write-OutputBox $_.Exception.Message
-        }
+
+
+    function Open-FsrmQuarantine {
+
+    $QuarantinePath = "C:\SensitiveData\Quarantine"
+
+    if (!(Test-Path $QuarantinePath)) {
+        Write-OutputBox "FSRM quarantine folder not found: $QuarantinePath"
+        return
+    }
+
+    Write-OutputBox "Opening FSRM quarantine folder..."
+    Start-Process explorer.exe $QuarantinePath
+
     }
 }
 
@@ -1722,6 +1735,12 @@ $btnFsrmQuarantineNow.Size = New-Object System.Drawing.Size(180,40)
 $btnFsrmQuarantineNow.Add_Click({ Run-FsrmQuarantineNow })
 $form.Controls.Add($btnFsrmQuarantineNow)
 
+$btnOpenFsrmQuarantine = New-Object System.Windows.Forms.Button
+$btnOpenFsrmQuarantine.Text = "Open FSRM Quarantine"
+$btnOpenFsrmQuarantine.Location = New-Object System.Drawing.Point(420,585)
+$btnOpenFsrmQuarantine.Size = New-Object System.Drawing.Size(180,40)
+$btnOpenFsrmQuarantine.Add_Click({ Open-FsrmQuarantine })
+$form.Controls.Add($btnOpenFsrmQuarantine)
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
