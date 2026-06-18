@@ -400,7 +400,7 @@ function New-GuiButton {
     $Form.Controls.Add($Button)
 }
 
-New-GuiButton "Generate Random PII" 380 300 { Generate-Random-PII }
+New-GuiButton "Generate Random PII" 380 150 { Generate-Random-PII }
 New-GuiButton "Create Custom PII File" 25 410 { Create-Custom-PII }
 
 New-GuiButton "Create Realistic Business File" 25 245 { Create-Realistic-Business-PII }
