@@ -1085,7 +1085,17 @@ function Open-FsrmQuarantine {
 
     Start-Process explorer.exe $QuarantinePath
 }
+function Open-FsrmReports {
+    $ReportPath = "C:\StorageReports"
 
+    if (!(Test-Path $ReportPath)) {
+        Write-OutputBox "FSRM report folder not found: $ReportPath"
+        return
+    }
+
+    Write-OutputBox "Opening FSRM report folder..."
+    Start-Process explorer.exe $ReportPath
+}
 # ============================================================
 # SECTION 14 - RUN YARA TROUBLESHOOTER TEST
 # ============================================================
@@ -1687,6 +1697,13 @@ $btnOpenFsrmQuarantine.Location = New-Object System.Drawing.Point(420,585)
 $btnOpenFsrmQuarantine.Size = New-Object System.Drawing.Size(180,40)
 $btnOpenFsrmQuarantine.Add_Click({ Open-FsrmQuarantine })
 $form.Controls.Add($btnOpenFsrmQuarantine)
+
+$btnOpenFsrmReports = New-Object System.Windows.Forms.Button
+$btnOpenFsrmReports.Text = "Open FSRM Reports"
+$btnOpenFsrmReports.Location = New-Object System.Drawing.Point(420,625)
+$btnOpenFsrmReports.Size = New-Object System.Drawing.Size(180,40)
+$btnOpenFsrmReports.Add_Click({ Open-FsrmReports })
+$form.Controls.Add($btnOpenFsrmReports)
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
