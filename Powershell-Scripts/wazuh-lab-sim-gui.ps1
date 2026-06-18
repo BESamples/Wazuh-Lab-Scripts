@@ -266,6 +266,16 @@ function Clear-Test-Files {
     }
     else {
         Write-Log "No test files found."
+}
+
+    function Change-PII-Location {
+
+    $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
+    $folderBrowser.Description = "Choose where PII test files should be created"
+
+    if ($folderBrowser.ShowDialog() -eq "OK") {
+        $script:PiiPath = $folderBrowser.SelectedPath
+        Write-Log "PII output location changed to: $script:PiiPath"
     }
 }
 
@@ -407,6 +417,8 @@ New-GuiButton "Check Wazuh Agent" 245 355 { Check-Wazuh-Agent }
 New-GuiButton "Restart Wazuh Agent" 465 355 { Restart-Wazuh-Agent }
 
 New-GuiButton "Clear Test Files" 245 410 { Clear-Test-Files }
+
+New-GuiButton "Change PII Location" 465 410 { Change-PII-Location }
 
 $StatusBox = New-Object System.Windows.Forms.TextBox
 $StatusBox.Location = New-Object System.Drawing.Point(25, 470)
