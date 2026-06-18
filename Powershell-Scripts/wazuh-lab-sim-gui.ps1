@@ -266,9 +266,11 @@ function Clear-Test-Files {
     }
     else {
         Write-Log "No test files found."
+    }
 }
 
-    function Change-PII-Location {
+
+function Change-PII-Location {
 
     $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
     $folderBrowser.Description = "Choose where PII test files should be created"
