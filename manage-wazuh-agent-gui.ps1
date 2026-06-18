@@ -1418,6 +1418,74 @@ function New-TabButton {
 }
 
 # ============================================================
+# SECTION 20A - WAZUH TAB
+# ============================================================
+
+# Manager IP
+$lblManagerIP = New-Object System.Windows.Forms.Label
+$lblManagerIP.Text = "Wazuh Manager IP"
+$lblManagerIP.Location = New-Object System.Drawing.Point(20,20)
+$lblManagerIP.Size = New-Object System.Drawing.Size(120,20)
+$tabWazuh.Controls.Add($lblManagerIP)
+
+$txtManagerIP = New-Object System.Windows.Forms.TextBox
+$txtManagerIP.Location = New-Object System.Drawing.Point(150,20)
+$txtManagerIP.Size = New-Object System.Drawing.Size(200,20)
+$txtManagerIP.Text = "192.168.1.50"
+$tabWazuh.Controls.Add($txtManagerIP)
+
+# Agent Name
+$lblAgentName = New-Object System.Windows.Forms.Label
+$lblAgentName.Text = "Agent Name"
+$lblAgentName.Location = New-Object System.Drawing.Point(20,55)
+$tabWazuh.Controls.Add($lblAgentName)
+
+$txtAgentName = New-Object System.Windows.Forms.TextBox
+$txtAgentName.Location = New-Object System.Drawing.Point(150,55)
+$txtAgentName.Size = New-Object System.Drawing.Size(200,20)
+$txtAgentName.Text = $env:COMPUTERNAME
+$tabWazuh.Controls.Add($txtAgentName)
+
+# Status Labels
+$lblWazuhStatus = New-Object System.Windows.Forms.Label
+$lblWazuhStatus.Text = "Status: Unknown"
+$lblWazuhStatus.Location = New-Object System.Drawing.Point(20,100)
+$lblWazuhStatus.Size = New-Object System.Drawing.Size(300,20)
+$tabWazuh.Controls.Add($lblWazuhStatus)
+
+$lblManager = New-Object System.Windows.Forms.Label
+$lblManager.Text = "Manager: Unknown"
+$lblManager.Location = New-Object System.Drawing.Point(20,125)
+$lblManager.Size = New-Object System.Drawing.Size(300,20)
+$tabWazuh.Controls.Add($lblManager)
+
+$lblRegistration = New-Object System.Windows.Forms.Label
+$lblRegistration.Text = "Registration: Unknown"
+$lblRegistration.Location = New-Object System.Drawing.Point(20,150)
+$lblRegistration.Size = New-Object System.Drawing.Size(300,20)
+$tabWazuh.Controls.Add($lblRegistration)
+
+#Buttons
+New-TabButton $tabWazuh "Install Wazuh Agent" 20 200 { Install-WazuhAgent }
+
+New-TabButton $tabWazuh "Uninstall Wazuh Agent" 230 200 { Uninstall-WazuhAgent }
+
+New-TabButton $tabWazuh "Add Default FIM" 440 200 { Add-DefaultFIM }
+
+New-TabButton $tabWazuh "Restart Wazuh" 20 260 { Restart-WazuhService }
+
+New-TabButton $tabWazuh "Restart Computer" 230 260 {
+    Restart-Computer -Force
+}
+
+New-TabButton $tabWazuh "Open ossec.conf" 440 260 {
+    Open-OssecConf
+}
+
+New-TabButton $tabWazuh "Refresh Status" 20 320 {
+    Update-WazuhStatus
+}
+# ============================================================
 # SECTION 21 - OUTPUT BOX
 # ============================================================
 
