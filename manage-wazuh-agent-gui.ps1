@@ -1045,7 +1045,7 @@ function Download-FsrmDlpLab {
     }
 }
 
-   function Launch-FsrmDlpLab {
+function Launch-FsrmDlpLab {
 
     if (-not (Test-IsWindowsServer2019)) {
         Write-OutputBox "BLOCKED: FSRM DLP lab can only run on Windows Server 2019."
@@ -1095,7 +1095,6 @@ function Run-FsrmClassificationNow {
     if ($Status.LastError) {
         Write-OutputBox "LastError: $($Status.LastError)"
     }
-}
 
 function Run-FsrmQuarantineNow {
 
@@ -1131,7 +1130,7 @@ function Run-FsrmQuarantineNow {
     if (!(Test-Path $QuarantinePath)) {
         Write-OutputBox "FSRM quarantine folder not found: $QuarantinePath"
         return
-    }
+        }
 
     Write-OutputBox "Opening FSRM quarantine folder..."
     Start-Process explorer.exe $QuarantinePath
