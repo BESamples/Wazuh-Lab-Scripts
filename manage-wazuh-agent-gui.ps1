@@ -16,10 +16,11 @@
 # SECTION 10 - WAZUH SERVICE / OSSEC CONFIG TOOLS
 # SECTION 11 - INSTALL YARA FROM LOCAL ZIP
 # SECTION 12 - DOWNLOAD LAB TOOLS
-# SECTION 13 - RUN YARA TROUBLESHOOTER TEST
-# SECTION 14 - DOWNLOAD YARA RULES
-# SECTION 15 - BROWSE FOR FIM FOLDER
-# SECTION 16 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 13 - FSRM DLP TOOLS
+# SECTION 14 - RUN YARA TROUBLESHOOTER TEST
+# SECTION 15 - DOWNLOAD YARA RULES
+# SECTION 16 - BROWSE FOR FIM FOLDER
+# SECTION 17 - UPDATE WAZUH STATUS DISPLAY
 # SECTION 17 - CREATE MAIN GUI WINDOW
 # SECTION 18 - TOP INPUT LABELS
 # SECTION 19 - TOP INPUT CONTROLS
@@ -1005,7 +1006,13 @@ function Test-IsWindowsServer2019 {
     }
 
     return $false
+  }
+    }
 }
+
+# ============================================================
+# SECTION 13 - FSRM DLP TOOLS
+# ============================================================
 
 function Download-FsrmDlpLab {
 
@@ -1121,8 +1128,9 @@ function Run-FsrmQuarantineNow {
     }
 }
 
+
 # ============================================================
-# SECTION 13 - RUN YARA TROUBLESHOOTER TEST
+# SECTION 14 - RUN YARA TROUBLESHOOTER TEST
 # ============================================================
 
 function Test-YaraInstall {
@@ -1236,7 +1244,7 @@ rule Test_Malware_String
 }
 
 # ============================================================
-# SECTION 14 - DOWNLOAD YARA RULES
+# SECTION 15 - DOWNLOAD YARA RULES
 # ============================================================
 
 function Download-YaraRules {
@@ -1277,7 +1285,7 @@ function Download-YaraRules {
 }
 
 # ============================================================
-# SECTION 15 - BROWSE FOR FIM FOLDER
+# SECTION 16 - BROWSE FOR FIM FOLDER
 # ============================================================
 
 # ============================================================
@@ -1293,7 +1301,7 @@ function Browse-FIMFolder {
 }
 
 # ============================================================
-# SECTION 15 - UPDATE WAZUH STATUS DISPLAY
+# SECTION 17 - UPDATE WAZUH STATUS DISPLAY
 # ============================================================
 
 function Update-WazuhStatus {
@@ -1371,7 +1379,7 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
-# SECTION 16 - CREATE MAIN GUI WINDOW
+# SECTION 18 - CREATE MAIN GUI WINDOW
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
@@ -1381,7 +1389,7 @@ $form.Size = New-Object System.Drawing.Size(850,650)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# SECTION 17 - TOP INPUT LABELS
+# SECTION 19 - TOP INPUT LABELS
 # ============================================================
 
 $lblManagerIP = New-Object System.Windows.Forms.Label
@@ -1415,7 +1423,7 @@ $lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
 $form.Controls.Add($lblVcInstaller)
 
 # ============================================================
-# SECTION 18 - TOP INPUT CONTROLS
+# SECTION 20 - TOP INPUT CONTROLS
 # ============================================================
 
 $txtManagerIP = New-Object System.Windows.Forms.TextBox
@@ -1494,7 +1502,7 @@ if ($comboVcInstaller.Items.Count -gt 0) {
 $form.Controls.Add($comboVcInstaller)
 
 # ============================================================
-# SECTION 19 - WAZUH STATUS INDICATOR
+# SECTION 21 - WAZUH STATUS INDICATOR
 # ============================================================
 
 $lblInstallStatus = New-Object System.Windows.Forms.Label
@@ -1546,7 +1554,7 @@ $lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
 $form.Controls.Add($lblRegistrationStatusValue)
 
 # ============================================================
-# SECTION 21 - MAIN ACTION BUTTONS
+# SECTION 22 - MAIN ACTION BUTTONS
 # ============================================================
 
 $btnInstall = New-Object System.Windows.Forms.Button
@@ -1725,7 +1733,7 @@ $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
-# SECTION 22 - FIM PATH MANAGER CONTROLS
+# SECTION 23 - FIM PATH MANAGER CONTROLS
 # ============================================================
 
 $lblFimPath = New-Object System.Windows.Forms.Label
@@ -1772,7 +1780,7 @@ $listFimPaths.Size = New-Object System.Drawing.Size(570,80)
 $form.Controls.Add($listFimPaths)
 
 # ============================================================
-# SECTION 23 - OUTPUT BOX
+# SECTION 24 - OUTPUT BOX
 # ============================================================
 
 $OutputBox = New-Object System.Windows.Forms.TextBox
@@ -1784,7 +1792,7 @@ $OutputBox.ReadOnly = $true
 $form.Controls.Add($OutputBox)
 
 # ============================================================
-# SECTION 24 - SHOW GUI
+# SECTION 25 - SHOW GUI
 # ============================================================
 
 $form.Topmost = $false
