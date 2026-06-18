@@ -3,7 +3,18 @@
 # VERSION 2.5
 # TABLE OF CONTENTS
 # ============================================================
+# Menu Page Locations
+# ============================================================
+# 
+# Tab 1 - Wazuh Agent 
+# Tab 2 - Sysmon / YARA
+# Tab 3 - Lab Tools 
+# Tab 4 - FSRM DLP
+# Tab 5 - FIM Paths
 #
+# ============================================================
+# Section MAP
+# ============================================================
 # SECTION 1  - ADMIN CHECK
 # SECTION 2  - HELPER FUNCTION: WRITE TO OUTPUT BOX
 # SECTION 3  - CHECK / INSTALL MICROSOFT VC++ X64 RUNTIME FOR YARA
@@ -1350,414 +1361,96 @@ function Update-WazuhStatus {
 # ============================================================
 
 $form = New-Object System.Windows.Forms.Form
-$form.AutoScroll = $true
-$form.Text = "Wazuh Agent Manager GUI"
-$form.Size = New-Object System.Drawing.Size(850,650)
+$form.Text = "Wazuh Agent Manager GUI - Menu 3.0"
+$form.Size = New-Object System.Drawing.Size(900,700)
 $form.StartPosition = "CenterScreen"
 
 # ============================================================
-# SECTION 19 - TOP INPUT LABELS
+# SECTION 19 - CREATE TAB MENU
 # ============================================================
 
-$lblManagerIP = New-Object System.Windows.Forms.Label
-$lblManagerIP.Text = "Wazuh Manager IP"
-$lblManagerIP.Location = New-Object System.Drawing.Point(20,20)
-$lblManagerIP.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblManagerIP)
+$tabs = New-Object System.Windows.Forms.TabControl
+$tabs.Location = New-Object System.Drawing.Point(10,10)
+$tabs.Size = New-Object System.Drawing.Size(860,480)
+$form.Controls.Add($tabs)
 
-$lblAgentName = New-Object System.Windows.Forms.Label
-$lblAgentName.Text = "Agent Name"
-$lblAgentName.Location = New-Object System.Drawing.Point(20,60)
-$lblAgentName.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblAgentName)
+$tabWazuh = New-Object System.Windows.Forms.TabPage
+$tabWazuh.Text = "Wazuh Agent"
+$tabs.TabPages.Add($tabWazuh)
 
-$lblInstaller = New-Object System.Windows.Forms.Label
-$lblInstaller.Text = "Wazuh Installer"
-$lblInstaller.Location = New-Object System.Drawing.Point(20,100)
-$lblInstaller.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblInstaller)
+$tabYara = New-Object System.Windows.Forms.TabPage
+$tabYara.Text = "Sysmon / YARA"
+$tabs.TabPages.Add($tabYara)
 
-$lblYaraZip = New-Object System.Windows.Forms.Label
-$lblYaraZip.Text = "YARA ZIP"
-$lblYaraZip.Location = New-Object System.Drawing.Point(20,140)
-$lblYaraZip.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblYaraZip)
+$tabLab = New-Object System.Windows.Forms.TabPage
+$tabLab.Text = "Lab Tools"
+$tabs.TabPages.Add($tabLab)
 
-$lblVcInstaller = New-Object System.Windows.Forms.Label
-$lblVcInstaller.Text = "VC++ Installer"
-$lblVcInstaller.Location = New-Object System.Drawing.Point(20,180)
-$lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblVcInstaller)
+$tabFsrm = New-Object System.Windows.Forms.TabPage
+$tabFsrm.Text = "FSRM DLP"
+$tabs.TabPages.Add($tabFsrm)
+
+$tabFim = New-Object System.Windows.Forms.TabPage
+$tabFim.Text = "FIM Paths"
+$tabs.TabPages.Add($tabFim)
 
 # ============================================================
-# SECTION 20 - TOP INPUT CONTROLS
+# SECTION 20 - HELPER FUNCTION: CREATE TAB BUTTON
 # ============================================================
 
-$txtManagerIP = New-Object System.Windows.Forms.TextBox
-$txtManagerIP.Location = New-Object System.Drawing.Point(160,20)
-$txtManagerIP.Size = New-Object System.Drawing.Size(200,20)
-$form.Controls.Add($txtManagerIP)
-
-$txtAgentName = New-Object System.Windows.Forms.TextBox
-$txtAgentName.Location = New-Object System.Drawing.Point(160,60)
-$txtAgentName.Size = New-Object System.Drawing.Size(200,20)
-$txtAgentName.Text = $env:COMPUTERNAME
-$form.Controls.Add($txtAgentName)
-
-$comboInstaller = New-Object System.Windows.Forms.ComboBox
-$comboInstaller.Location = New-Object System.Drawing.Point(160,100)
-$comboInstaller.Size = New-Object System.Drawing.Size(400,20)
-$comboInstaller.DropDownStyle = "DropDownList"
-
-$Installers = Get-ChildItem `
-    -Path "$env:USERPROFILE\Downloads" `
-    -Filter "wazuh-agent-*.msi" `
-    -ErrorAction SilentlyContinue |
-    Sort-Object LastWriteTime -Descending
-
-foreach ($item in $Installers) {
-    $comboInstaller.Items.Add($item.Name) | Out-Null
-}
-
-if ($comboInstaller.Items.Count -gt 0) {
-    $comboInstaller.SelectedIndex = 0
-}
-
-$form.Controls.Add($comboInstaller)
-
-$comboYaraZip = New-Object System.Windows.Forms.ComboBox
-$comboYaraZip.Location = New-Object System.Drawing.Point(160,140)
-$comboYaraZip.Size = New-Object System.Drawing.Size(400,20)
-$comboYaraZip.DropDownStyle = "DropDownList"
-
-$YaraZips = Get-ChildItem `
-    -Path "$env:USERPROFILE\Downloads" `
-    -Filter "*yara*win64*.zip" `
-    -ErrorAction SilentlyContinue |
-    Sort-Object LastWriteTime -Descending
-
-foreach ($item in $YaraZips) {
-    $comboYaraZip.Items.Add($item.Name) | Out-Null
-}
-
-if ($comboYaraZip.Items.Count -gt 0) {
-    $comboYaraZip.SelectedIndex = 0
-}
-
-$form.Controls.Add($comboYaraZip)
-
-$comboVcInstaller = New-Object System.Windows.Forms.ComboBox
-$comboVcInstaller.Location = New-Object System.Drawing.Point(160,180)
-$comboVcInstaller.Size = New-Object System.Drawing.Size(400,20)
-$comboVcInstaller.DropDownStyle = "DropDownList"
-
-$VcInstallers = Get-ChildItem `
-    -Path "$env:USERPROFILE\Downloads" `
-    -Filter "vc_redist*.exe" `
-    -ErrorAction SilentlyContinue |
-    Where-Object { $_.Name -match "x64" } |
-    Sort-Object LastWriteTime -Descending
-
-foreach ($item in $VcInstallers) {
-    $comboVcInstaller.Items.Add($item.Name) | Out-Null
-}
-
-if ($comboVcInstaller.Items.Count -gt 0) {
-    $comboVcInstaller.SelectedIndex = 0
-}
-
-$form.Controls.Add($comboVcInstaller)
-
-# ============================================================
-# SECTION 21 - WAZUH STATUS INDICATOR
-# ============================================================
-
-$lblInstallStatus = New-Object System.Windows.Forms.Label
-$lblInstallStatus.Text = "Wazuh Status"
-$lblInstallStatus.Location = New-Object System.Drawing.Point(20,220)
-$lblInstallStatus.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblInstallStatus)
-
-$lblInstallStatusValue = New-Object System.Windows.Forms.Label
-$lblInstallStatusValue.Text = "Checking..."
-$lblInstallStatusValue.Location = New-Object System.Drawing.Point(160,220)
-$lblInstallStatusValue.Size = New-Object System.Drawing.Size(180,20)
-$form.Controls.Add($lblInstallStatusValue)
-
-$lblManagerStatus = New-Object System.Windows.Forms.Label
-$lblManagerStatus.Text = "Current Manager"
-$lblManagerStatus.Location = New-Object System.Drawing.Point(350,220)
-$lblManagerStatus.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblManagerStatus)
-
-$lblManagerStatusValue = New-Object System.Windows.Forms.Label
-$lblManagerStatusValue.Text = "Checking..."
-$lblManagerStatusValue.Location = New-Object System.Drawing.Point(470,220)
-$lblManagerStatusValue.Size = New-Object System.Drawing.Size(200,20)
-$form.Controls.Add($lblManagerStatusValue)
-
-$lblAgentStatus = New-Object System.Windows.Forms.Label
-$lblAgentStatus.Text = "Current Agent"
-$lblAgentStatus.Location = New-Object System.Drawing.Point(20,245)
-$lblAgentStatus.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblAgentStatus)
-
-$lblAgentStatusValue = New-Object System.Windows.Forms.Label
-$lblAgentStatusValue.Text = "Checking..."
-$lblAgentStatusValue.Location = New-Object System.Drawing.Point(160,245)
-$lblAgentStatusValue.Size = New-Object System.Drawing.Size(180,20)
-$form.Controls.Add($lblAgentStatusValue)
-
-$lblRegistrationStatus = New-Object System.Windows.Forms.Label
-$lblRegistrationStatus.Text = "Agent Registration"
-$lblRegistrationStatus.Location = New-Object System.Drawing.Point(350,245)
-$lblRegistrationStatus.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblRegistrationStatus)
-
-$lblRegistrationStatusValue = New-Object System.Windows.Forms.Label
-$lblRegistrationStatusValue.Text = "Checking..."
-$lblRegistrationStatusValue.Location = New-Object System.Drawing.Point(470,245)
-$lblRegistrationStatusValue.Size = New-Object System.Drawing.Size(220,20)
-$form.Controls.Add($lblRegistrationStatusValue)
-
-# ============================================================
-# SECTION 22 - MAIN ACTION BUTTONS
-# ============================================================
-
-$btnInstall = New-Object System.Windows.Forms.Button
-$btnInstall.Text = "Install Wazuh Agent"
-$btnInstall.Location = New-Object System.Drawing.Point(20,285)
-$btnInstall.Size = New-Object System.Drawing.Size(180,40)
-$btnInstall.Add_Click({ Install-WazuhAgent })
-$form.Controls.Add($btnInstall)
-
-$btnUninstall = New-Object System.Windows.Forms.Button
-$btnUninstall.Text = "Uninstall Wazuh Agent"
-$btnUninstall.Location = New-Object System.Drawing.Point(220,285)
-$btnUninstall.Size = New-Object System.Drawing.Size(180,40)
-$btnUninstall.Add_Click({ Uninstall-WazuhAgent })
-$form.Controls.Add($btnUninstall)
-
-$btnFIM = New-Object System.Windows.Forms.Button
-$btnFIM.Text = "Add Default FIM"
-$btnFIM.Location = New-Object System.Drawing.Point(420,285)
-$btnFIM.Size = New-Object System.Drawing.Size(180,40)
-$btnFIM.Add_Click({ Add-FIMMonitoring })
-$form.Controls.Add($btnFIM)
-
-$btnVcStatus = New-Object System.Windows.Forms.Button
-$btnVcStatus.Text = "VC++ Status"
-$btnVcStatus.Location = New-Object System.Drawing.Point(620,285)
-$btnVcStatus.Size = New-Object System.Drawing.Size(160,40)
-$btnVcStatus.Add_Click({ Show-VcRuntimeStatus })
-$form.Controls.Add($btnVcStatus)
-
-$btnSysmon = New-Object System.Windows.Forms.Button
-$btnSysmon.Text = "Install Sysmon"
-$btnSysmon.Location = New-Object System.Drawing.Point(20,345)
-$btnSysmon.Size = New-Object System.Drawing.Size(180,40)
-$btnSysmon.Add_Click({ Install-Sysmon })
-$form.Controls.Add($btnSysmon)
-
-$btnRestartWazuh = New-Object System.Windows.Forms.Button
-$btnRestartWazuh.Text = "Restart Wazuh"
-$btnRestartWazuh.Location = New-Object System.Drawing.Point(220,345)
-$btnRestartWazuh.Size = New-Object System.Drawing.Size(180,40)
-$btnRestartWazuh.Add_Click({ Restart-WazuhService })
-$form.Controls.Add($btnRestartWazuh)
-
-$btnRestart = New-Object System.Windows.Forms.Button
-$btnRestart.Text = "Restart Computer"
-$btnRestart.Location = New-Object System.Drawing.Point(420,345)
-$btnRestart.Size = New-Object System.Drawing.Size(180,40)
-$btnRestart.Add_Click({
-    $ConfirmRestart = [System.Windows.Forms.MessageBox]::Show(
-        $form,
-        "Restart this computer now?",
-        "Confirm Restart",
-        "YesNo",
-        "Warning"
+function New-TabButton {
+    param(
+        [System.Windows.Forms.Control]$Parent,
+        [string]$Text,
+        [int]$X,
+        [int]$Y,
+        [scriptblock]$Action
     )
 
-    if ($ConfirmRestart -eq "Yes") {
-        Write-OutputBox "Restarting computer..."
-        Restart-Computer -Force
-    }
-})
-$form.Controls.Add($btnRestart)
+    $Button = New-Object System.Windows.Forms.Button
+    $Button.Text = $Text
+    $Button.Location = New-Object System.Drawing.Point($X,$Y)
+    $Button.Size = New-Object System.Drawing.Size(190,40)
+    $Button.Add_Click($Action)
+    $Parent.Controls.Add($Button)
 
-$btnOpenOssec = New-Object System.Windows.Forms.Button
-$btnOpenOssec.Text = "Open ossec.conf"
-$btnOpenOssec.Location = New-Object System.Drawing.Point(620,345)
-$btnOpenOssec.Size = New-Object System.Drawing.Size(160,40)
-$btnOpenOssec.Add_Click({ Open-OssecConf })
-$form.Controls.Add($btnOpenOssec)
+    return $Button
+}
 
-$btnCheckRuntime = New-Object System.Windows.Forms.Button
-$btnCheckRuntime.Text = "Check VC++ Runtime"
-$btnCheckRuntime.Location = New-Object System.Drawing.Point(20,405)
-$btnCheckRuntime.Size = New-Object System.Drawing.Size(180,40)
-$btnCheckRuntime.Add_Click({ Check-VcRuntimeFromGUI })
-$form.Controls.Add($btnCheckRuntime)
+# ============================================================
+# SECTION 21 - OUTPUT BOX
+# ============================================================
 
-$btnYara = New-Object System.Windows.Forms.Button
-$btnYara.Text = "Install YARA"
-$btnYara.Location = New-Object System.Drawing.Point(220,405)
-$btnYara.Size = New-Object System.Drawing.Size(180,40)
-$btnYara.Add_Click({ Install-Yara })
-$form.Controls.Add($btnYara)
+$OutputBox = New-Object System.Windows.Forms.TextBox
+$OutputBox.Location = New-Object System.Drawing.Point(10,505)
+$OutputBox.Size = New-Object System.Drawing.Size(860,110)
+$OutputBox.Multiline = $true
+$OutputBox.ScrollBars = "Vertical"
+$OutputBox.ReadOnly = $true
+$form.Controls.Add($OutputBox)
 
-$btnTestYara = New-Object System.Windows.Forms.Button
-$btnTestYara.Text = "Run YARA Test"
-$btnTestYara.Location = New-Object System.Drawing.Point(420,405)
-$btnTestYara.Size = New-Object System.Drawing.Size(180,40)
-$btnTestYara.Add_Click({ Test-YaraInstall })
-$form.Controls.Add($btnTestYara)
-
-$btnDownloadYaraRules = New-Object System.Windows.Forms.Button
-$btnDownloadYaraRules.Text = "Download YARA Rules"
-$btnDownloadYaraRules.Location = New-Object System.Drawing.Point(620,405)
-$btnDownloadYaraRules.Size = New-Object System.Drawing.Size(160,40)
-$btnDownloadYaraRules.Add_Click({ Download-YaraRules })
-$form.Controls.Add($btnDownloadYaraRules)
-
-$btnDownloadLabSim = New-Object System.Windows.Forms.Button
-$btnDownloadLabSim.Text = "Download Lab Simulator"
-$btnDownloadLabSim.Location = New-Object System.Drawing.Point(20,465)
-$btnDownloadLabSim.Size = New-Object System.Drawing.Size(180,40)
-$btnDownloadLabSim.Add_Click({ Download-LabSimulator })
-$form.Controls.Add($btnDownloadLabSim)
-
-$btnDownloadADLab = New-Object System.Windows.Forms.Button
-$btnDownloadADLab.Text = "Download AD Lab GUI"
-$btnDownloadADLab.Location = New-Object System.Drawing.Point(220,465)
-$btnDownloadADLab.Size = New-Object System.Drawing.Size(180,40)
-$btnDownloadADLab.Add_Click({ Download-ADLabGUI })
-$form.Controls.Add($btnDownloadADLab)
-
-$btnOpenLabSim = New-Object System.Windows.Forms.Button
-$btnOpenLabSim.Text = "Open Lab Simulator"
-$btnOpenLabSim.Location = New-Object System.Drawing.Point(420,465)
-$btnOpenLabSim.Size = New-Object System.Drawing.Size(180,40)
-$btnOpenLabSim.Add_Click({ Launch-LabSimulator })
-$form.Controls.Add($btnOpenLabSim)
-
-$btnOpenADLab = New-Object System.Windows.Forms.Button
-$btnOpenADLab.Text = "Open AD Lab GUI"
-$btnOpenADLab.Location = New-Object System.Drawing.Point(620,465)
-$btnOpenADLab.Size = New-Object System.Drawing.Size(160,40)
-$btnOpenADLab.Add_Click({ Launch-ADLabGUI })
-$form.Controls.Add($btnOpenADLab)
-
-$btnDownloadDlp = New-Object System.Windows.Forms.Button
-$btnDownloadDlp.Text = "Download DLP GUI"
-$btnDownloadDlp.Location = New-Object System.Drawing.Point(20,525)
-$btnDownloadDlp.Size = New-Object System.Drawing.Size(180,40)
-$btnDownloadDlp.Add_Click({ Download-DlpLabGUI })
-$form.Controls.Add($btnDownloadDlp)
-
-$btnOpenDlp = New-Object System.Windows.Forms.Button
-$btnOpenDlp.Text = "Open DLP GUI"
-$btnOpenDlp.Location = New-Object System.Drawing.Point(220,525)
-$btnOpenDlp.Size = New-Object System.Drawing.Size(180,40)
-$btnOpenDlp.Add_Click({ Launch-DlpLabGUI })
-$form.Controls.Add($btnOpenDlp)
-
-$btnDownloadFsrmDlp = New-Object System.Windows.Forms.Button
-$btnDownloadFsrmDlp.Text = "Download FSRM DLP"
-$btnDownloadFsrmDlp.Location = New-Object System.Drawing.Point(420,525)
-$btnDownloadFsrmDlp.Size = New-Object System.Drawing.Size(180,40)
-$btnDownloadFsrmDlp.Add_Click({ Download-FsrmDlpLab })
-$form.Controls.Add($btnDownloadFsrmDlp)
-
-$btnRunFsrmDlp = New-Object System.Windows.Forms.Button
-$btnRunFsrmDlp.Text = "Run FSRM DLP"
-$btnRunFsrmDlp.Location = New-Object System.Drawing.Point(620,525)
-$btnRunFsrmDlp.Size = New-Object System.Drawing.Size(160,40)
-$btnRunFsrmDlp.Add_Click({ Launch-FsrmDlpLab })
-$form.Controls.Add($btnRunFsrmDlp)
-
-$btnFsrmClassifyNow = New-Object System.Windows.Forms.Button
-$btnFsrmClassifyNow.Text = "FSRM Classify Now"
-$btnFsrmClassifyNow.Location = New-Object System.Drawing.Point(20,585)
-$btnFsrmClassifyNow.Size = New-Object System.Drawing.Size(180,40)
-$btnFsrmClassifyNow.Add_Click({ Run-FsrmClassificationNow })
-$form.Controls.Add($btnFsrmClassifyNow)
-
-$btnFsrmQuarantineNow = New-Object System.Windows.Forms.Button
-$btnFsrmQuarantineNow.Text = "FSRM Quarantine Now"
-$btnFsrmQuarantineNow.Location = New-Object System.Drawing.Point(220,585)
-$btnFsrmQuarantineNow.Size = New-Object System.Drawing.Size(180,40)
-$btnFsrmQuarantineNow.Add_Click({ Run-FsrmQuarantineNow })
-$form.Controls.Add($btnFsrmQuarantineNow)
-
-$btnOpenFsrmQuarantine = New-Object System.Windows.Forms.Button
-$btnOpenFsrmQuarantine.Text = "Open FSRM Quarantine"
-$btnOpenFsrmQuarantine.Location = New-Object System.Drawing.Point(420,585)
-$btnOpenFsrmQuarantine.Size = New-Object System.Drawing.Size(180,40)
-$btnOpenFsrmQuarantine.Add_Click({ Open-FsrmQuarantine })
-$form.Controls.Add($btnOpenFsrmQuarantine)
-
-$btnOpenFsrmReports = New-Object System.Windows.Forms.Button
-$btnOpenFsrmReports.Text = "Open FSRM Reports"
-$btnOpenFsrmReports.Location = New-Object System.Drawing.Point(420,625)
-$btnOpenFsrmReports.Size = New-Object System.Drawing.Size(180,40)
-$btnOpenFsrmReports.Add_Click({ Open-FsrmReports })
-$form.Controls.Add($btnOpenFsrmReports)
+# ============================================================
+# SECTION 22 - EXIT BUTTON
+# ============================================================
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
-$btnExit.Location = New-Object System.Drawing.Point(620,585)
-$btnExit.Size = New-Object System.Drawing.Size(160,40)
+$btnExit.Location = New-Object System.Drawing.Point(730,625)
+$btnExit.Size = New-Object System.Drawing.Size(140,35)
 $btnExit.Add_Click({ $form.Close() })
 $form.Controls.Add($btnExit)
 
 # ============================================================
-# SECTION 23 - FIM PATH MANAGER CONTROLS
+# SECTION 23 - SHOW GUI
 # ============================================================
 
-$lblFimPath = New-Object System.Windows.Forms.Label
-$lblFimPath.Text = "FIM Folder Path"
-$lblFimPath.Location = New-Object System.Drawing.Point(20,650)
-$lblFimPath.Size = New-Object System.Drawing.Size(120,20)
-$form.Controls.Add($lblFimPath)
+$form.Topmost = $false
+$form.Add_Shown({
+    $form.Activate()
+    Write-OutputBox "Menu 3.0 loaded."
+})
 
-$txtFimPath = New-Object System.Windows.Forms.TextBox
-$txtFimPath.Location = New-Object System.Drawing.Point(160,650)
-$txtFimPath.Size = New-Object System.Drawing.Size(320,20)
-$form.Controls.Add($txtFimPath)
-
-$btnBrowseFim = New-Object System.Windows.Forms.Button
-$btnBrowseFim.Text = "Browse"
-$btnBrowseFim.Location = New-Object System.Drawing.Point(500,645)
-$btnBrowseFim.Size = New-Object System.Drawing.Size(90,30)
-$btnBrowseFim.Add_Click({ Browse-FIMFolder })
-$form.Controls.Add($btnBrowseFim)
-
-$btnAddFimPath = New-Object System.Windows.Forms.Button
-$btnAddFimPath.Text = "Add FIM Path"
-$btnAddFimPath.Location = New-Object System.Drawing.Point(20,690)
-$btnAddFimPath.Size = New-Object System.Drawing.Size(140,35)
-$btnAddFimPath.Add_Click({ Add-FIMPathFromGUI })
-$form.Controls.Add($btnAddFimPath)
-
-$btnRefreshFim = New-Object System.Windows.Forms.Button
-$btnRefreshFim.Text = "Refresh FIM Paths"
-$btnRefreshFim.Location = New-Object System.Drawing.Point(180,690)
-$btnRefreshFim.Size = New-Object System.Drawing.Size(150,35)
-$btnRefreshFim.Add_Click({ Get-FIMPaths })
-$form.Controls.Add($btnRefreshFim)
-
-$lblFimList = New-Object System.Windows.Forms.Label
-$lblFimList.Text = "Custom / Lab FIM Paths"
-$lblFimList.Location = New-Object System.Drawing.Point(20,735)
-$lblFimList.Size = New-Object System.Drawing.Size(180,20)
-$form.Controls.Add($lblFimList)
-
-$listFimPaths = New-Object System.Windows.Forms.ListBox
-$listFimPaths.Location = New-Object System.Drawing.Point(20,760)
-$listFimPaths.Size = New-Object System.Drawing.Size(570,80)
-$form.Controls.Add($listFimPaths)
+[void]$form.ShowDialog()
 
 # ============================================================
 # SECTION 24 - OUTPUT BOX
