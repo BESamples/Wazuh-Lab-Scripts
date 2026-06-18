@@ -1068,8 +1068,53 @@ function Launch-FsrmDlpLab {
     Start-Process powershell.exe `
         -Verb RunAs `
         -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`" -RunNow"
+function Run-FsrmClassificationNow {
+
+    if (-not (Test-IsWindowsServer2019)) {
+        Write-OutputBox "BLOCKED: FSRM Classification only runs on Windows Server 2019."
+        return
+    }
+
+    Write-OutputBox "Starting FSRM classification..."
+
+    Start-FsrmClassification -Confirm:$false
+
+    Start-Sleep -Seconds 5
+
+    $Status = Get-FsrmClassification
+    Write-OutputBox "FSRM Classification Status: $($Status.Status)"
+
+    if ($Status.LastError) {
+        Write-OutputBox "LastError: $($Status.LastError)"
+    }
 }
 
+function Run-FsrmQuarantineNow {
+
+    if (-not (Test-IsWindowsServer2019)) {
+        Write-OutputBox "BLOCKED: FSRM Quarantine only runs on Windows Server 2019."
+        return
+    }
+
+    $Jobs = @(
+        "Quarantine PII Files",
+        "Quarantine PCI Files",
+        "Quarantine Confidential Files"
+    )
+
+    foreach ($Job in $Jobs) {
+        Write-OutputBox "Starting FSRM job: $Job"
+
+        try {
+            Start-FsrmFileManagementJob -Name $Job -Confirm:$false
+            Write-OutputBox "Started: $Job"
+        }
+        catch {
+            Write-OutputBox "FAILED: $Job"
+            Write-OutputBox $_.Exception.Message
+        }
+    }
+}
 
 # ============================================================
 # SECTION 13 - RUN YARA TROUBLESHOOTER TEST
@@ -1651,6 +1696,21 @@ $btnRunFsrmDlp.Location = New-Object System.Drawing.Point(620,525)
 $btnRunFsrmDlp.Size = New-Object System.Drawing.Size(160,40)
 $btnRunFsrmDlp.Add_Click({ Launch-FsrmDlpLab })
 $form.Controls.Add($btnRunFsrmDlp)
+
+$btnFsrmClassifyNow = New-Object System.Windows.Forms.Button
+$btnFsrmClassifyNow.Text = "FSRM Classify Now"
+$btnFsrmClassifyNow.Location = New-Object System.Drawing.Point(20,585)
+$btnFsrmClassifyNow.Size = New-Object System.Drawing.Size(180,40)
+$btnFsrmClassifyNow.Add_Click({ Run-FsrmClassificationNow })
+$form.Controls.Add($btnFsrmClassifyNow)
+
+$btnFsrmQuarantineNow = New-Object System.Windows.Forms.Button
+$btnFsrmQuarantineNow.Text = "FSRM Quarantine Now"
+$btnFsrmQuarantineNow.Location = New-Object System.Drawing.Point(220,585)
+$btnFsrmQuarantineNow.Size = New-Object System.Drawing.Size(180,40)
+$btnFsrmQuarantineNow.Add_Click({ Run-FsrmQuarantineNow })
+$form.Controls.Add($btnFsrmQuarantineNow)
+
 
 $btnExit = New-Object System.Windows.Forms.Button
 $btnExit.Text = "Exit"
