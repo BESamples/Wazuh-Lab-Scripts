@@ -258,7 +258,6 @@ function Restart-Wazuh-Agent {
     Restart-Service -Name "WazuhSvc" -Force
     Write-Log "Restarted Wazuh agent service."
 }
-
 function Clear-Test-Files {
     if (Test-Path $LabRoot) {
         Remove-Item $LabRoot -Recurse -Force
@@ -269,9 +268,7 @@ function Clear-Test-Files {
     }
 }
 
-
 function Change-PII-Location {
-
     $folderBrowser = New-Object System.Windows.Forms.FolderBrowserDialog
     $folderBrowser.Description = "Choose where PII test files should be created"
 
