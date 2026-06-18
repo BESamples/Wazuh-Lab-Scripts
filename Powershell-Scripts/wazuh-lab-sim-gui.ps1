@@ -401,7 +401,7 @@ function New-GuiButton {
 }
 
 New-GuiButton "Generate Random PII" 380 155 { Generate-Random-PII }
-New-GuiButton "Create Custom PII File" 380 205 { Create-Custom-PII }
+New-GuiButton "Create Custom PII File" 25 410 { Create-Custom-PII }
 
 New-GuiButton "Create Realistic Business File" 25 245 { Create-Realistic-Business-PII }
 New-GuiButton "Create Default PII TXT" 245 245 { Create-PII-Txt }
