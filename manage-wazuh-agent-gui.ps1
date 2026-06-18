@@ -1040,7 +1040,7 @@ function Download-FsrmDlpLab {
     }
 }
 
-function Launch-FsrmDlpLab {
+   function Launch-FsrmDlpLab {
 
     if (-not (Test-IsWindowsServer2019)) {
         Write-OutputBox "BLOCKED: FSRM DLP lab can only run on Windows Server 2019."
@@ -1068,6 +1068,8 @@ function Launch-FsrmDlpLab {
     Start-Process powershell.exe `
         -Verb RunAs `
         -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`" -RunNow"
+}
+
 function Run-FsrmClassificationNow {
 
     if (-not (Test-IsWindowsServer2019)) {
@@ -1075,10 +1077,11 @@ function Run-FsrmClassificationNow {
         return
     }
 
+    Import-Module FileServerResourceManager -ErrorAction SilentlyContinue
+
     Write-OutputBox "Starting FSRM classification..."
 
     Start-FsrmClassification -Confirm:$false
-
     Start-Sleep -Seconds 5
 
     $Status = Get-FsrmClassification
@@ -1095,6 +1098,8 @@ function Run-FsrmQuarantineNow {
         Write-OutputBox "BLOCKED: FSRM Quarantine only runs on Windows Server 2019."
         return
     }
+
+    Import-Module FileServerResourceManager -ErrorAction SilentlyContinue
 
     $Jobs = @(
         "Quarantine PII Files",
