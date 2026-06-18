@@ -1056,7 +1056,7 @@ function Launch-FsrmDlpLab {
         return
     }
 
-    $ScriptPath = "$PSScriptRoot\fsrm-dlp-lab-setup.ps1"
+    $ScriptPath = "$PSScriptRoot\setup-fsrm-dlp-lab.ps1"
 
     if (!(Test-Path $ScriptPath)) {
         Write-OutputBox "FSRM DLP script not found. Download it first."
