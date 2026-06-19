@@ -1586,7 +1586,53 @@ New-TabButton $tabYara "Run YARA Test" 230 180 { Test-YaraInstall }
 
 New-TabButton $tabYara "Download YARA Rules" 440 180 { Download-YaraRules }
 
+# ============================================================
+# SECTION 20C - LAB TOOLS TAB
+# ============================================================
 
+# ------------------------------------------------------------
+# Row 1 - Downloads
+# ------------------------------------------------------------
+
+New-TabButton $tabLab "Download Lab Simulator" 20 20 {
+    Download-LabSimulator
+}
+
+New-TabButton $tabLab "Download AD Lab GUI" 230 20 {
+    Download-AdLabGui
+}
+
+New-TabButton $tabLab "Download DLP GUI" 440 20 {
+    Download-DlpGui
+}
+
+# ------------------------------------------------------------
+# Row 2 - Launch Tools
+# ------------------------------------------------------------
+
+New-TabButton $tabLab "Open Lab Simulator" 20 80 {
+    Open-LabSimulator
+}
+
+New-TabButton $tabLab "Open AD Lab GUI" 230 80 {
+    Open-AdLabGui
+}
+
+New-TabButton $tabLab "Open DLP GUI" 440 80 {
+    Open-DlpGui
+}
+
+# ------------------------------------------------------------
+# Row 3 - Utility Buttons
+# ------------------------------------------------------------
+
+New-TabButton $tabLab "Open Script Folder" 20 140 {
+    Start-Process explorer.exe $PSScriptRoot
+}
+
+New-TabButton $tabLab "Open Downloads Folder" 230 140 {
+    Start-Process explorer.exe "$env:USERPROFILE\Downloads"
+}
 
 
 
