@@ -1622,6 +1622,42 @@ New-TabButton $tabLab "Open Downloads Folder" 230 140 {
     Start-Process explorer.exe "$env:USERPROFILE\Downloads"
 }
 
+# ============================================================
+# SECTION 20D - FSRM DLP TAB
+# Server 2019 only
+# ============================================================
+
+$lblFsrmInfo = New-Object System.Windows.Forms.Label
+$lblFsrmInfo.Text = "FSRM DLP tools are for Windows Server 2019 only."
+$lblFsrmInfo.Location = New-Object System.Drawing.Point(20,20)
+$lblFsrmInfo.Size = New-Object System.Drawing.Size(500,20)
+$tabFsrm.Controls.Add($lblFsrmInfo)
+
+New-TabButton $tabFsrm "Download FSRM DLP" 20 70 {
+    Download-FsrmDlpLab
+}
+
+New-TabButton $tabFsrm "Run FSRM DLP Setup" 230 70 {
+    Launch-FsrmDlpLab
+}
+
+New-TabButton $tabFsrm "FSRM Classify Now" 20 130 {
+    Run-FsrmClassificationNow
+}
+
+New-TabButton $tabFsrm "FSRM Quarantine Now" 230 130 {
+    Run-FsrmQuarantineNow
+}
+
+New-TabButton $tabFsrm "Open FSRM Quarantine" 20 190 {
+    Open-FsrmQuarantine
+}
+
+New-TabButton $tabFsrm "Open FSRM Reports" 230 190 {
+    Open-FsrmReports
+}
+
+
 
 # ============================================================
 # SECTION 21 - OUTPUT BOX
