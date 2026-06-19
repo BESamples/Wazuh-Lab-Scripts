@@ -1578,7 +1578,7 @@ New-TabButton $tabYara "Install Sysmon" 20 120 { Install-Sysmon }
 
 New-TabButton $tabYara "VC++ Status" 230 120 { Show-VcRuntimeStatus }
 
-New-TabButton $tabYara "Check VC++ Runtime" 440 120 { Check-VcRuntimeFromGUI }
+New-TabButton $tabYara "Check / Install" VC++ Runtime" 440 120 { Check-VcRuntimeFromGUI }
 
 New-TabButton $tabYara "Install YARA" 20 180 { Install-Yara }
 
