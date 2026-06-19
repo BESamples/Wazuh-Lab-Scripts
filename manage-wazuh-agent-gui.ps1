@@ -1440,6 +1440,34 @@ $lblAgentName.Text = "Agent Name"
 $lblAgentName.Location = New-Object System.Drawing.Point(20,55)
 $tabWazuh.Controls.Add($lblAgentName)
 
+# Wazuh Installer dropdown
+$lblInstaller = New-Object System.Windows.Forms.Label
+$lblInstaller.Text = "Wazuh Installer"
+$lblInstaller.Location = New-Object System.Drawing.Point(20,90)
+$lblInstaller.Size = New-Object System.Drawing.Size(120,20)
+$tabWazuh.Controls.Add($lblInstaller)
+
+$comboInstaller = New-Object System.Windows.Forms.ComboBox
+$comboInstaller.Location = New-Object System.Drawing.Point(150,90)
+$comboInstaller.Size = New-Object System.Drawing.Size(400,20)
+$comboInstaller.DropDownStyle = "DropDownList"
+
+$Installers = Get-ChildItem `
+    -Path "$env:USERPROFILE\Downloads" `
+    -Filter "wazuh-agent-*.msi" `
+    -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending
+
+foreach ($item in $Installers) {
+    $comboInstaller.Items.Add($item.Name) | Out-Null
+}
+
+if ($comboInstaller.Items.Count -gt 0) {
+    $comboInstaller.SelectedIndex = 0
+}
+
+$tabWazuh.Controls.Add($comboInstaller)
+
 $txtAgentName = New-Object System.Windows.Forms.TextBox
 $txtAgentName.Location = New-Object System.Drawing.Point(150,55)
 $txtAgentName.Size = New-Object System.Drawing.Size(200,20)
