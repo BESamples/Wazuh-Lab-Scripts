@@ -1,90 +1,89 @@
 # ============================================================
 # WAZUH AGENT MANAGER GUI
-# VERSION 2.5
-# TABLE OF CONTENTS
+# VERSION 3.0 - TABBED MENU
 # ============================================================
-# Menu Page Locations
+#
+# MENU PAGE LOCATIONS
 # ============================================================
-# 
-# Tab 1 - Wazuh Agent 
+# Tab 1 - Wazuh Agent
 # Tab 2 - Sysmon / YARA
-# Tab 3 - Lab Tools 
+# Tab 3 - Lab Tools
 # Tab 4 - FSRM DLP
 # Tab 5 - FIM Paths
 #
 # ============================================================
-# Section MAP
+# SECTION MAP
 # ============================================================
-# SECTION 1  - ADMIN CHECK
-# SECTION 2  - HELPER FUNCTION: WRITE TO OUTPUT BOX
-# SECTION 3  - CHECK / INSTALL MICROSOFT VC++ X64 RUNTIME FOR YARA
-# SECTION 4  - INSTALL WAZUH AGENT
-# SECTION 5  - UNINSTALL WAZUH AGENT
-# SECTION 6  - ADD DEFAULT FIM MONITORING
-# SECTION 7  - INSTALL SYSMON
-# SECTION 8  - GET CUSTOM FIM PATHS
-# SECTION 9  - ADD CUSTOM FIM PATH
-# SECTION 10 - WAZUH SERVICE / OSSEC CONFIG TOOLS
-# SECTION 11 - INSTALL YARA FROM LOCAL ZIP
-# SECTION 12 - DOWNLOAD LAB TOOLS
-# SECTION 13 - FSRM DLP TOOLS
-# SECTION 14 - RUN YARA TROUBLESHOOTER TEST
-# SECTION 15 - DOWNLOAD YARA RULES
-# SECTION 16 - BROWSE FOR FIM FOLDER
-# SECTION 17 - UPDATE WAZUH STATUS DISPLAY
-# SECTION 18 - CREATE MAIN GUI WINDOW
-# SECTION 19 - TOP INPUT LABELS
-# SECTION 20 - TOP INPUT CONTROLS
-# SECTION 21 - WAZUH STATUS INDICATOR
-# SECTION 22 - MAIN ACTION BUTTONS
-# SECTION 23 - FIM PATH MANAGER CONTROLS
-
+# SECTION 1   - ADMIN CHECK
+# SECTION 2   - HELPER FUNCTION: WRITE TO OUTPUT BOX
+# SECTION 3   - CHECK / INSTALL MICROSOFT VC++ X64 RUNTIME FOR YARA
+# SECTION 4   - INSTALL WAZUH AGENT
+# SECTION 5   - UNINSTALL WAZUH AGENT
+# SECTION 6   - ADD DEFAULT FIM MONITORING
+# SECTION 7   - INSTALL SYSMON
+# SECTION 8   - GET CUSTOM FIM PATHS
+# SECTION 9   - ADD CUSTOM FIM PATH
+# SECTION 10  - WAZUH SERVICE / OSSEC CONFIG TOOLS
+# SECTION 11  - INSTALL YARA FROM LOCAL ZIP
+# SECTION 12  - DOWNLOAD / LAUNCH LAB TOOLS
+# SECTION 13  - FSRM DLP TOOLS
+# SECTION 14  - RUN YARA TROUBLESHOOTER TEST
+# SECTION 15  - DOWNLOAD YARA RULES
+# SECTION 16  - BROWSE FOR FIM FOLDER
+# SECTION 17  - UPDATE WAZUH STATUS DISPLAY
+# SECTION 18  - CREATE MAIN GUI WINDOW
+# SECTION 19  - CREATE TAB MENU
+# SECTION 20  - HELPER FUNCTION: CREATE TAB BUTTON
+# SECTION 20A - WAZUH AGENT TAB
+# SECTION 20B - SYSMON / YARA TAB
+# SECTION 20C - LAB TOOLS TAB
+# SECTION 20D - FSRM DLP TAB
+# SECTION 20E - FIM PATHS TAB
+# SECTION 21  - OUTPUT BOX
+# SECTION 22  - EXIT BUTTON
+# SECTION 23  - SHOW GUI
+#
 # ============================================================
 # FEATURE MAP
 # ============================================================
 #
 # WAZUH FEATURES
-#   - Install Wazuh Agent ............ Section 4
-#   - Uninstall Wazuh Agent .......... Section 5
-#   - Restart Wazuh Service .......... Section 10
-#   - Open ossec.conf ................ Section 10
-#   - Agent Status Display ........... Section 16
+#   - Install Wazuh Agent ............ Section 4 / Tab 1
+#   - Uninstall Wazuh Agent .......... Section 5 / Tab 1
+#   - Restart Wazuh Service .......... Section 10 / Tab 1
+#   - Open ossec.conf ................ Section 10 / Tab 1
+#   - Agent Status Display ........... Section 17 / Tab 1
 #
-# FIM FEATURES
-#   - Add Default FIM Paths .......... Section 6
-#   - View Current FIM Paths ......... Section 8
-#   - Add Custom FIM Paths ........... Section 9
-#   - Browse FIM Folder .............. Section 15
-#   - FIM GUI Controls ............... Section 22
-#
-# SYSMON FEATURES
-#   - Install Sysmon ................. Section 7
-#
-# YARA FEATURES
-#   - VC++ Runtime Validation ........ Section 3
-#   - Install YARA ................... Section 11
-#   - YARA Troubleshooter ............ Section 13
-#   - YARA Rule Downloader ........... Section 14
+# SYSMON / YARA FEATURES
+#   - Install Sysmon ................. Section 7 / Tab 2
+#   - VC++ Runtime Validation ........ Section 3 / Tab 2
+#   - Install YARA ................... Section 11 / Tab 2
+#   - YARA Troubleshooter ............ Section 14 / Tab 2
+#   - YARA Rule Downloader ........... Section 15 / Tab 2
 #
 # LAB TOOLS
-#   - Download Lab Simulator ......... Section 12
-#   - Download AD Lab GUI ............ Section 12
-#   - Download DLP GUI ............... Section 12
-#   - Download FSRM DLP Lab .......... Section 12
-#   - Launch Lab Simulator ........... Section 12
-#   - Launch AD Lab GUI .............. Section 12
-#   - Launch DLP GUI ................. Section 12
-#   - Launch FSRM DLP Server 2019 .... Section 12
+#   - Download Lab Simulator ......... Section 12 / Tab 3
+#   - Download AD Lab GUI ............ Section 12 / Tab 3
+#   - Download DLP GUI ............... Section 12 / Tab 3
+#   - Launch Lab Simulator ........... Section 12 / Tab 3
+#   - Launch AD Lab GUI .............. Section 12 / Tab 3
+#   - Launch DLP GUI ................. Section 12 / Tab 3
 #
-# GUI LAYOUT
-#   - Main Window .................... Section 17
-#   - Labels ......................... Section 18
-#   - Input Controls ................. Section 19
-#   - Status Indicators .............. Section 20
-#   - Action Buttons ................. Section 21
-#   - FIM Controls ................... Section 22
-#   - Output Console ................. Section 23
-#   - GUI Startup .................... Section 24
+# FSRM DLP FEATURES
+#   - Download FSRM DLP Lab .......... Section 13 / Tab 4
+#   - Run FSRM DLP Setup ............. Section 13 / Tab 4
+#   - Run Classification Now ......... Section 13 / Tab 4
+#   - Run Quarantine Now ............. Section 13 / Tab 4
+#   - Open FSRM Quarantine ........... Section 13 / Tab 4
+#   - Open FSRM Reports .............. Section 13 / Tab 4
+#
+# FIM FEATURES
+#   - Add Default FIM Paths .......... Section 6 / Tab 1
+#   - View Current FIM Paths ......... Section 8 / Tab 5
+#   - Add Custom FIM Paths ........... Section 9 / Tab 5
+#   - Browse FIM Folder .............. Section 16 / Tab 5
+#
+# ============================================================
 #
 # ============================================================
 
