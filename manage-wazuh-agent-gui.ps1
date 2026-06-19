@@ -1287,16 +1287,15 @@ function Update-WazuhStatus {
     $WazuhService = Get-Service WazuhSvc -ErrorAction SilentlyContinue
 
     if ($WazuhService) {
-        $lblInstallStatusValue.Text = "Installed / $($WazuhService.Status)"
-        $lblInstallStatusValue.ForeColor = [System.Drawing.Color]::Green
+        $lblWazuhStatus.Text = "Status: Installed / $($WazuhService.Status)"
+        $lblWazuhStatus.ForeColor = [System.Drawing.Color]::Green
     }
     else {
-        $lblInstallStatusValue.Text = "Not Installed"
-        $lblInstallStatusValue.ForeColor = [System.Drawing.Color]::Red
-        $lblManagerStatusValue.Text = "N/A"
-        $lblAgentStatusValue.Text = $env:COMPUTERNAME
-        $lblRegistrationStatusValue.Text = "Not Installed"
-        $lblRegistrationStatusValue.ForeColor = [System.Drawing.Color]::Red
+        $lblWazuhStatus.Text = "Status: Not Installed"
+        $lblWazuhStatus.ForeColor = [System.Drawing.Color]::Red
+        $lblManager.Text = "Manager: N/A"
+        $lblRegistration.Text = "Registration: Not Installed"
+        $lblRegistration.ForeColor = [System.Drawing.Color]::Red
         return
     }
 
@@ -1306,51 +1305,35 @@ function Update-WazuhStatus {
 
         if ($managerMatch.Success) {
             $ManagerIP = $managerMatch.Groups[1].Value.Trim()
-            $lblManagerStatusValue.Text = $ManagerIP
+            $lblManager.Text = "Manager: $ManagerIP"
 
             if ([string]::IsNullOrWhiteSpace($txtManagerIP.Text)) {
                 $txtManagerIP.Text = $ManagerIP
             }
         }
         else {
-            $lblManagerStatusValue.Text = "Not found"
+            $lblManager.Text = "Manager: Not found in ossec.conf"
         }
     }
     else {
-        $lblManagerStatusValue.Text = "ossec.conf missing"
+        $lblManager.Text = "Manager: ossec.conf missing"
     }
-
-    $FallbackAgentName = $txtAgentName.Text.Trim()
-
-    if ([string]::IsNullOrWhiteSpace($FallbackAgentName)) {
-        $FallbackAgentName = $env:COMPUTERNAME
-    }
-
-    $lblAgentStatusValue.Text = $FallbackAgentName
 
     if (Test-Path $ClientKeys) {
         $keyLine = Get-Content $ClientKeys -ErrorAction SilentlyContinue | Select-Object -First 1
 
         if (-not [string]::IsNullOrWhiteSpace($keyLine)) {
-            $parts = $keyLine -split ' '
-
-            if ($parts.Count -ge 2) {
-                $AgentName = $parts[1]
-                $lblAgentStatusValue.Text = $AgentName
-                $txtAgentName.Text = $AgentName
-            }
-
-            $lblRegistrationStatusValue.Text = "Registered"
-            $lblRegistrationStatusValue.ForeColor = [System.Drawing.Color]::Green
+            $lblRegistration.Text = "Registration: Registered / client.keys present"
+            $lblRegistration.ForeColor = [System.Drawing.Color]::Green
         }
         else {
-            $lblRegistrationStatusValue.Text = "Not Registered / Check Manager"
-            $lblRegistrationStatusValue.ForeColor = [System.Drawing.Color]::Red
+            $lblRegistration.Text = "Registration: Not Registered / client.keys empty"
+            $lblRegistration.ForeColor = [System.Drawing.Color]::Red
         }
     }
     else {
-        $lblRegistrationStatusValue.Text = "Not Registered / client.keys missing"
-        $lblRegistrationStatusValue.ForeColor = [System.Drawing.Color]::Red
+        $lblRegistration.Text = "Registration: client.keys missing"
+        $lblRegistration.ForeColor = [System.Drawing.Color]::Red
     }
 }
 
