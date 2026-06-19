@@ -1511,6 +1511,86 @@ New-TabButton $tabWazuh "Open ossec.conf" 440 290 {
 New-TabButton $tabWazuh "Refresh Status" 20 350 {
     Update-WazuhStatus
 }
+
+# ============================================================
+# SECTION 20B - SYSMON / YARA TAB
+# ============================================================
+
+# YARA ZIP dropdown
+$lblYaraZip = New-Object System.Windows.Forms.Label
+$lblYaraZip.Text = "YARA ZIP"
+$lblYaraZip.Location = New-Object System.Drawing.Point(20,20)
+$lblYaraZip.Size = New-Object System.Drawing.Size(120,20)
+$tabYara.Controls.Add($lblYaraZip)
+
+$comboYaraZip = New-Object System.Windows.Forms.ComboBox
+$comboYaraZip.Location = New-Object System.Drawing.Point(150,20)
+$comboYaraZip.Size = New-Object System.Drawing.Size(420,20)
+$comboYaraZip.DropDownStyle = "DropDownList"
+
+$YaraZips = Get-ChildItem `
+    -Path "$env:USERPROFILE\Downloads" `
+    -Filter "*yara*win64*.zip" `
+    -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending
+
+foreach ($item in $YaraZips) {
+    $comboYaraZip.Items.Add($item.Name) | Out-Null
+}
+
+if ($comboYaraZip.Items.Count -gt 0) {
+    $comboYaraZip.SelectedIndex = 0
+}
+
+$tabYara.Controls.Add($comboYaraZip)
+
+# VC++ Installer dropdown
+$lblVcInstaller = New-Object System.Windows.Forms.Label
+$lblVcInstaller.Text = "VC++ Installer"
+$lblVcInstaller.Location = New-Object System.Drawing.Point(20,60)
+$lblVcInstaller.Size = New-Object System.Drawing.Size(120,20)
+$tabYara.Controls.Add($lblVcInstaller)
+
+$comboVcInstaller = New-Object System.Windows.Forms.ComboBox
+$comboVcInstaller.Location = New-Object System.Drawing.Point(150,60)
+$comboVcInstaller.Size = New-Object System.Drawing.Size(420,20)
+$comboVcInstaller.DropDownStyle = "DropDownList"
+
+$VcInstallers = Get-ChildItem `
+    -Path "$env:USERPROFILE\Downloads" `
+    -Filter "vc_redist*.exe" `
+    -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -match "x64" } |
+    Sort-Object LastWriteTime -Descending
+
+foreach ($item in $VcInstallers) {
+    $comboVcInstaller.Items.Add($item.Name) | Out-Null
+}
+
+if ($comboVcInstaller.Items.Count -gt 0) {
+    $comboVcInstaller.SelectedIndex = 0
+}
+
+$tabYara.Controls.Add($comboVcInstaller)
+
+# Buttons
+New-TabButton $tabYara "Install Sysmon" 20 120 { Install-Sysmon }
+
+New-TabButton $tabYara "VC++ Status" 230 120 { Show-VcRuntimeStatus }
+
+New-TabButton $tabYara "Check VC++ Runtime" 440 120 { Check-VcRuntimeFromGUI }
+
+New-TabButton $tabYara "Install YARA" 20 180 { Install-Yara }
+
+New-TabButton $tabYara "Run YARA Test" 230 180 { Test-YaraInstall }
+
+New-TabButton $tabYara "Download YARA Rules" 440 180 { Download-YaraRules }
+
+
+
+
+
+
 # ============================================================
 # SECTION 21 - OUTPUT BOX
 # ============================================================
