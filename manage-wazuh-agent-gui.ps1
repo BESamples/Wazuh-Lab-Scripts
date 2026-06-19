@@ -1498,7 +1498,7 @@ New-TabButton $tabWazuh "Install Wazuh Agent" 20 230 { Install-WazuhAgent }
 
 New-TabButton $tabWazuh "Uninstall Wazuh Agent" 230 230 { Uninstall-WazuhAgent }
 
-New-TabButton $tabWazuh "Add Default FIM" 440 230 { Add-DefaultFIM }
+New-TabButton $tabWazuh "Add Default FIM" 440 230 { Add-FIMMonitoring }
 
 New-TabButton $tabWazuh "Restart Wazuh" 20 290 { Restart-WazuhService }
 
@@ -1552,23 +1552,12 @@ $form.Add_Shown({
 # SECTION 24 - OUTPUT BOX
 # ============================================================
 
-$OutputBox = New-Object System.Windows.Forms.TextBox
-$OutputBox.Location = New-Object System.Drawing.Point(20,860)
-$OutputBox.Size = New-Object System.Drawing.Size(660,140)
-$OutputBox.Multiline = $true
-$OutputBox.ScrollBars = "Vertical"
-$OutputBox.ReadOnly = $true
-$form.Controls.Add($OutputBox)
+
 
 # ============================================================
 # SECTION 25 - SHOW GUI
 # ============================================================
 
-$form.Topmost = $false
-$form.Add_Shown({
-    $form.Activate()
-    Update-WazuhStatus
-    Get-FIMPaths
-})
 
-[void]$form.ShowDialog()
+
+
