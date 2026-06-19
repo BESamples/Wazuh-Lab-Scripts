@@ -1657,6 +1657,49 @@ New-TabButton $tabFsrm "Open FSRM Reports" 230 190 {
     Open-FsrmReports
 }
 
+# ============================================================
+# SECTION 20E - FIM PATHS TAB
+# ============================================================
+
+$lblFimInfo = New-Object System.Windows.Forms.Label
+$lblFimInfo.Text = "Manage custom Wazuh FIM monitored folders."
+$lblFimInfo.Location = New-Object System.Drawing.Point(20,20)
+$lblFimInfo.Size = New-Object System.Drawing.Size(500,20)
+$tabFim.Controls.Add($lblFimInfo)
+
+$lblFimPath = New-Object System.Windows.Forms.Label
+$lblFimPath.Text = "FIM Folder Path"
+$lblFimPath.Location = New-Object System.Drawing.Point(20,60)
+$lblFimPath.Size = New-Object System.Drawing.Size(120,20)
+$tabFim.Controls.Add($lblFimPath)
+
+$txtFimPath = New-Object System.Windows.Forms.TextBox
+$txtFimPath.Location = New-Object System.Drawing.Point(150,60)
+$txtFimPath.Size = New-Object System.Drawing.Size(420,20)
+$tabFim.Controls.Add($txtFimPath)
+
+New-TabButton $tabFim "Browse Folder" 20 110 {
+    Browse-FIMFolder
+}
+
+New-TabButton $tabFim "Add FIM Path" 230 110 {
+    Add-FIMPathFromGUI
+}
+
+New-TabButton $tabFim "Refresh FIM Paths" 440 110 {
+    Get-FIMPaths
+}
+
+$lblFimList = New-Object System.Windows.Forms.Label
+$lblFimList.Text = "Current Custom / Lab FIM Paths"
+$lblFimList.Location = New-Object System.Drawing.Point(20,180)
+$lblFimList.Size = New-Object System.Drawing.Size(250,20)
+$tabFim.Controls.Add($lblFimList)
+
+$listFimPaths = New-Object System.Windows.Forms.ListBox
+$listFimPaths.Location = New-Object System.Drawing.Point(20,210)
+$listFimPaths.Size = New-Object System.Drawing.Size(760,160)
+$tabFim.Controls.Add($listFimPaths)
 
 
 # ============================================================
