@@ -1114,7 +1114,7 @@ function Download-SOARLiteProject {
 
 function Launch-SOARLiteProject {
 
-    $SOARScript = "C:\Wazuh-SOAR-Lite-PowerShell\src\Wazuh-SOAR-Lite.ps1"
+    $SOARScript = "C:\Wazuh-SOAR-Lite-PowerShell\src\Wazuh-SOAR-Lite-GUI.ps1"
 
     if (-not (Test-Path $SOARScript)) {
         Write-OutputBox "SOAR Lite script not found."
