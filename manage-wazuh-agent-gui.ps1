@@ -1019,36 +1019,96 @@ function Test-IsWindowsServer2019 {
     return $false
   }
   
-function Download-SoarLite {
+function Download-SOARLiteProject {
 
-    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-SOAR-Lite-PowerShell/main/src/Wazuh-SOAR-Lite.ps1"
-    $Destination = "$PSScriptRoot\Wazuh-SOAR-Lite.ps1"
+    $RepoZipUrl  = "https://github.com/BESamples/Wazuh-SOAR-Lite-PowerShell/archive/refs/heads/main.zip"
+    $InstallPath = "C:\Wazuh-SOAR-Lite-PowerShell"
+    $TempZip     = "$env:TEMP\Wazuh-SOAR-Lite-PowerShell.zip"
+    $ExtractPath = "$env:TEMP\Wazuh-SOAR-Extract"
 
-    Write-OutputBox "Downloading Wazuh SOAR Lite..."
+    Write-OutputBox "Preparing to download Wazuh SOAR-Lite PowerShell project..."
 
     try {
-        Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
-        Write-OutputBox "Download complete:"
-        Write-OutputBox $Destination
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
+        if (Test-Path $InstallPath) {
+
+            $Overwrite = [System.Windows.Forms.MessageBox]::Show(
+                "Wazuh SOAR-Lite already exists at:`n$InstallPath`n`nOverwrite it?",
+                "Confirm Overwrite",
+                "YesNo",
+                "Question"
+            )
+
+            if ($Overwrite -ne "Yes") {
+                Write-OutputBox "SOAR project download cancelled."
+                return
+            }
+
+            $BackupPath = "C:\Wazuh-SOAR-Lite-PowerShell-backup-$(Get-Date -Format yyyyMMddHHmmss)"
+            Rename-Item -Path $InstallPath -NewName (Split-Path $BackupPath -Leaf)
+
+            Write-OutputBox "Old SOAR folder backed up to:"
+            Write-OutputBox $BackupPath
+        }
+
+        if (Test-Path $TempZip) {
+            Remove-Item $TempZip -Force
+        }
+
+        if (Test-Path $ExtractPath) {
+            Remove-Item $ExtractPath -Recurse -Force
+        }
+
+        New-Item -ItemType Directory -Path $ExtractPath -Force | Out-Null
+
+        Write-OutputBox "Downloading SOAR project from GitHub..."
+
+        Invoke-WebRequest `
+            -Uri $RepoZipUrl `
+            -OutFile $TempZip `
+            -UseBasicParsing
+
+        Write-OutputBox "Extracting SOAR project..."
+
+        Expand-Archive `
+            -Path $TempZip `
+            -DestinationPath $ExtractPath `
+            -Force
+
+        $ExtractedFolder = Join-Path $ExtractPath "Wazuh-SOAR-Lite-PowerShell-main"
+
+        if (-not (Test-Path $ExtractedFolder)) {
+            Write-OutputBox "ERROR: Extracted GitHub folder was not found."
+            Write-OutputBox "Expected: $ExtractedFolder"
+            return
+        }
+
+        Move-Item `
+            -Path $ExtractedFolder `
+            -Destination $InstallPath `
+            -Force
+
+        Write-OutputBox "SOAR project downloaded successfully:"
+        Write-OutputBox $InstallPath
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Wazuh SOAR-Lite PowerShell project downloaded successfully.",
+            "Download Complete",
+            "OK",
+            "Information"
+        )
     }
     catch {
-        Write-OutputBox "SOAR Lite download failed."
+        Write-OutputBox "ERROR downloading SOAR project:"
         Write-OutputBox $_.Exception.Message
-    }
-}
 
-function Launch-SoarLite {
-
-    $ScriptPath = "$PSScriptRoot\Wazuh-SOAR-Lite.ps1"
-
-    if (Test-Path $ScriptPath) {
-        Write-OutputBox "Launching Wazuh SOAR Lite..."
-
-        Start-Process powershell.exe `
-            -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`""
-    }
-    else {
-        Write-OutputBox "SOAR Lite script not found. Download it first."
+        [System.Windows.Forms.MessageBox]::Show(
+            "Failed to download SOAR project.`n`n$($_.Exception.Message)",
+            "Download Failed",
+            "OK",
+            "Error"
+        )
     }
 }
 # ============================================================
