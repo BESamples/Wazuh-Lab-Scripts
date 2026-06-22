@@ -1035,6 +1035,8 @@ function Download-SoarLite {
         Write-OutputBox "SOAR Lite download failed."
         Write-OutputBox $_.Exception.Message
     }
+}
+
 function Launch-SoarLite {
 
     $ScriptPath = "$PSScriptRoot\Wazuh-SOAR-Lite.ps1"
