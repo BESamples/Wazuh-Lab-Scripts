@@ -1021,7 +1021,7 @@ function Test-IsWindowsServer2019 {
   
 function Download-SOARLiteProject {
 
-    $RepoZipUrl  = "https://github.com/BESamples/Wazuh-SOAR-Lite-PowerShell/archive/refs/heads/main.zip"
+    $RepoZipUrl  = "https://codeload.github.com/BESamples/Wazuh-SOAR-Lite-PowerShell/zip/refs/heads/main"
     $InstallPath = "C:\Wazuh-SOAR-Lite-PowerShell"
     $TempZip     = "$env:TEMP\Wazuh-SOAR-Lite-PowerShell.zip"
     $ExtractPath = "$env:TEMP\Wazuh-SOAR-Extract"
@@ -1111,6 +1111,48 @@ function Download-SOARLiteProject {
         )
     }
 }
+
+function Launch-SOARLiteProject {
+
+    $SOARScript = "C:\Wazuh-SOAR-Lite-PowerShell\src\Wazuh-SOAR-Lite.ps1"
+
+    if (-not (Test-Path $SOARScript)) {
+        Write-OutputBox "SOAR Lite script not found."
+        Write-OutputBox "Click Download SOAR Lite first."
+        Write-OutputBox "Expected: $SOARScript"
+
+        [System.Windows.Forms.MessageBox]::Show(
+            $form,
+            "SOAR Lite is not downloaded yet.`r`n`r`nClick Download SOAR Lite first.",
+            "SOAR Lite Missing",
+            "OK",
+            "Warning"
+        )
+
+        return
+    }
+
+    Write-OutputBox "Launching SOAR Lite PowerShell menu..."
+    Write-OutputBox $SOARScript
+
+    Start-Process powershell.exe -ArgumentList @(
+        "-NoExit",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "`"$SOARScript`""
+    )
+}
+
+# Backward-compatible aliases for older button names
+function Download-SoarLite {
+    Download-SOARLiteProject
+}
+
+function Launch-SoarLite {
+    Launch-SOARLiteProject
+}
+
 # ============================================================
 # SECTION 13 - FSRM DLP TOOLS
 # ============================================================
@@ -1772,11 +1814,11 @@ New-TabButton $tabLab "Open Downloads Folder" 230 140 {
 }
 
 New-TabButton $tabLab "Download SOAR Lite" 440 140 {
-    Download-SoarLite
+    Download-SOARLiteProject
 }
 
 New-TabButton $tabLab "Open SOAR Lite" 20 200 {
-    Launch-SoarLite
+    Launch-SOARLiteProject
 }
 # ============================================================
 # SECTION 20D - FSRM DLP TAB
@@ -1924,7 +1966,6 @@ $form.Add_Shown({
 })
 
 [void]$form.ShowDialog()
-
 
 
 
