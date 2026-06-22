@@ -1386,6 +1386,27 @@ function Simulate-SysmonProcessActivity {
     Write-OutputBox "Sysmon process simulation complete."
 }
 
+function Enable-ICMPPingLab {
+
+    $Rule = Get-NetFirewallRule `
+        -DisplayName "Allow ICMPv4 Ping Lab" `
+        -ErrorAction SilentlyContinue
+
+    if ($Rule) {
+        Write-OutputBox "ICMP lab firewall rule already exists."
+        return
+    }
+
+    New-NetFirewallRule `
+        -DisplayName "Allow ICMPv4 Ping Lab" `
+        -Protocol ICMPv4 `
+        -IcmpType 8 `
+        -Direction Inbound `
+        -Action Allow
+
+    Write-OutputBox "ICMPv4 Ping Lab rule created."
+}
+
 # ============================================================
 # SECTION 18 - CREATE MAIN GUI WINDOW
 # ============================================================
@@ -1767,6 +1788,9 @@ New-TabButton $tabAttack "Sysmon Process Activity" 230 130 {
     Simulate-SysmonProcessActivity
 }
 
+New-TabButton $tabAttack "Enable Ping Rule" 440 130 {
+    Enable-ICMPPingLab
+}
 # ============================================================
 # SECTION 21 - OUTPUT BOX
 # ============================================================
