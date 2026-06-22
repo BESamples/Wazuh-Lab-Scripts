@@ -1337,6 +1337,49 @@ function Update-WazuhStatus {
 }
 
 # ============================================================
+# SECTION 17A - ATTACK SIMULATION FUNCTIONS
+# ============================================================
+
+function Simulate-MalwareDrop {
+    $Path = "C:\Wazuh-Test\fake-malware.txt"
+    New-Item -ItemType Directory -Path "C:\Wazuh-Test" -Force | Out-Null
+    Set-Content -Path $Path -Value "MALWARE_TEST_STRING"
+    Write-OutputBox "Created fake malware test file: $Path"
+}
+
+function Simulate-CredentialFile {
+    $Path = "C:\Wazuh-Test\fake-passwords.txt"
+    New-Item -ItemType Directory -Path "C:\Wazuh-Test" -Force | Out-Null
+    Set-Content -Path $Path -Value "username=admin`npassword=Password123!"
+    Write-OutputBox "Created fake credential file: $Path"
+}
+
+function Simulate-RansomNote {
+    $Path = "C:\Wazuh-Test\README_RESTORE_FILES.txt"
+    New-Item -ItemType Directory -Path "C:\Wazuh-Test" -Force | Out-Null
+    Set-Content -Path $Path -Value "Your files have been encrypted. Lab simulation only."
+    Write-OutputBox "Created fake ransomware note: $Path"
+}
+
+function Simulate-SuspiciousPowerShell {
+    Write-OutputBox "Running safe suspicious PowerShell activity..."
+
+    powershell.exe -ExecutionPolicy Bypass -Command "Get-Process | Out-File C:\Wazuh-Test\process-list.txt"
+
+    Write-OutputBox "Suspicious PowerShell simulation complete."
+}
+
+function Simulate-SysmonProcessActivity {
+    Write-OutputBox "Launching safe process activity..."
+
+    Start-Process notepad.exe
+    Start-Process cmd.exe -ArgumentList "/c whoami > C:\Wazuh-Test\whoami.txt"
+    Start-Process cmd.exe -ArgumentList "/c ipconfig > C:\Wazuh-Test\ipconfig.txt"
+
+    Write-OutputBox "Sysmon process simulation complete."
+}
+
+# ============================================================
 # SECTION 18 - CREATE MAIN GUI WINDOW
 # ============================================================
 
@@ -1373,6 +1416,10 @@ $tabs.TabPages.Add($tabFsrm)
 $tabFim = New-Object System.Windows.Forms.TabPage
 $tabFim.Text = "FIM Paths"
 $tabs.TabPages.Add($tabFim)
+
+$tabAttack = New-Object System.Windows.Forms.TabPage
+$tabAttack.Text = "Attack Simulation"
+$tabs.TabPages.Add($tabAttack)
 
 # ============================================================
 # SECTION 20 - HELPER FUNCTION: CREATE TAB BUTTON
@@ -1683,6 +1730,35 @@ $listFimPaths.Location = New-Object System.Drawing.Point(20,210)
 $listFimPaths.Size = New-Object System.Drawing.Size(760,160)
 $tabFim.Controls.Add($listFimPaths)
 
+# ============================================================
+# SECTION 20F - ATTACK SIMULATION TAB
+# ============================================================
+
+$lblAttackInfo = New-Object System.Windows.Forms.Label
+$lblAttackInfo.Text = "Safe attack simulations for Wazuh lab alerts."
+$lblAttackInfo.Location = New-Object System.Drawing.Point(20,20)
+$lblAttackInfo.Size = New-Object System.Drawing.Size(500,20)
+$tabAttack.Controls.Add($lblAttackInfo)
+
+New-TabButton $tabAttack "Fake Malware Drop" 20 70 {
+    Simulate-MalwareDrop
+}
+
+New-TabButton $tabAttack "Fake Credential File" 230 70 {
+    Simulate-CredentialFile
+}
+
+New-TabButton $tabAttack "Fake Ransom Note" 440 70 {
+    Simulate-RansomNote
+}
+
+New-TabButton $tabAttack "Suspicious PowerShell" 20 130 {
+    Simulate-SuspiciousPowerShell
+}
+
+New-TabButton $tabAttack "Sysmon Process Activity" 230 130 {
+    Simulate-SysmonProcessActivity
+}
 
 # ============================================================
 # SECTION 21 - OUTPUT BOX
