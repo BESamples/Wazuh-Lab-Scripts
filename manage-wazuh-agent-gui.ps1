@@ -1018,7 +1018,37 @@ function Test-IsWindowsServer2019 {
 
     return $false
   }
+  
+function Download-SoarLite {
 
+    $Url = "https://raw.githubusercontent.com/BESamples/Wazuh-SOAR-Lite-PowerShell/main/src/Wazuh-SOAR-Lite.ps1"
+    $Destination = "$PSScriptRoot\Wazuh-SOAR-Lite.ps1"
+
+    Write-OutputBox "Downloading Wazuh SOAR Lite..."
+
+    try {
+        Invoke-WebRequest -Uri $Url -OutFile $Destination -UseBasicParsing
+        Write-OutputBox "Download complete:"
+        Write-OutputBox $Destination
+    }
+    catch {
+        Write-OutputBox "SOAR Lite download failed."
+        Write-OutputBox $_.Exception.Message
+    }
+function Launch-SoarLite {
+
+    $ScriptPath = "$PSScriptRoot\Wazuh-SOAR-Lite.ps1"
+
+    if (Test-Path $ScriptPath) {
+        Write-OutputBox "Launching Wazuh SOAR Lite..."
+
+        Start-Process powershell.exe `
+            -ArgumentList "-ExecutionPolicy Bypass -File `"$ScriptPath`""
+    }
+    else {
+        Write-OutputBox "SOAR Lite script not found. Download it first."
+    }
+}
 # ============================================================
 # SECTION 13 - FSRM DLP TOOLS
 # ============================================================
@@ -1679,6 +1709,13 @@ New-TabButton $tabLab "Open Downloads Folder" 230 140 {
     Start-Process explorer.exe "$env:USERPROFILE\Downloads"
 }
 
+New-TabButton $tabLab "Download SOAR Lite" 440 140 {
+    Download-SoarLite
+}
+
+New-TabButton $tabLab "Open SOAR Lite" 20 200 {
+    Launch-SoarLite
+}
 # ============================================================
 # SECTION 20D - FSRM DLP TAB
 # Server 2019 only
