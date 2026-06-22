@@ -1144,7 +1144,6 @@ function Launch-SOARLiteProject {
     )
 }
 
-# Backward-compatible aliases for older button names
 function Download-SoarLite {
     Download-SOARLiteProject
 }
@@ -1152,7 +1151,6 @@ function Download-SoarLite {
 function Launch-SoarLite {
     Launch-SOARLiteProject
 }
-
 # ============================================================
 # SECTION 13 - FSRM DLP TOOLS
 # ============================================================
