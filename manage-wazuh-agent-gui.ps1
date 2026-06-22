@@ -1342,9 +1342,13 @@ function Update-WazuhStatus {
 
 function Simulate-MalwareDrop {
     $Path = "C:\Wazuh-Test\fake-malware.txt"
+
     New-Item -ItemType Directory -Path "C:\Wazuh-Test" -Force | Out-Null
-    Set-Content -Path $Path -Value "MALWARE_TEST_STRING"
-    Write-OutputBox "Created fake malware test file: $Path"
+    Set-Content -Path $Path -Value "MALWARE_TEST_STRING" -Encoding ASCII
+
+    Write-OutputBox "Created malware-like file for FIM testing:"
+    Write-OutputBox $Path
+    Write-OutputBox "Check Wazuh for FIM file created/modified alerts."
 }
 
 function Simulate-CredentialFile {
