@@ -83,6 +83,55 @@ validate_wazuh_config() {
   sudo /var/ossec/bin/wazuh-analysisd -t
 }
 
+
+check_wazuh_manager_ready() {
+  local READY=0
+
+  echo "[+] Checking Wazuh manager files..."
+
+  if [ ! -d "/var/ossec" ]; then
+    echo "[!] /var/ossec was not found. Wazuh Manager is not installed on this machine yet."
+    READY=1
+  fi
+
+  if [ ! -x "/var/ossec/bin/wazuh-analysisd" ]; then
+    echo "[!] Wazuh analysis test tool was not found: /var/ossec/bin/wazuh-analysisd"
+    READY=1
+  fi
+
+  if [ ! -f "$ACTIVE_OSSEC" ]; then
+    echo "[!] Active ossec.conf not found: $ACTIVE_OSSEC"
+    READY=1
+  fi
+
+  if [ ! -d "/var/ossec/etc/rules" ]; then
+    echo "[!] Rules directory not found: /var/ossec/etc/rules"
+    READY=1
+  fi
+
+  if [ ! -d "/var/ossec/etc/decoders" ]; then
+    echo "[!] Decoders directory not found: /var/ossec/etc/decoders"
+    READY=1
+  fi
+
+  if [ "$READY" -ne 0 ]; then
+    echo
+    echo "[!] Wazuh Manager files are missing."
+    echo "[!] Run Option 1 - Fresh Lab Bootstrap first, or make sure you are on the Wazuh Manager VM."
+    return 1
+  fi
+
+  # local_rules.xml can be created by this script if the rules folder exists.
+  # local_decoder.xml is safe to create if the decoders folder exists.
+  if [ ! -f "$ACTIVE_DECODERS" ]; then
+    echo "[+] local_decoder.xml not found. Creating it..."
+    sudo touch "$ACTIVE_DECODERS"
+  fi
+
+  echo "[+] Wazuh manager files found."
+  return 0
+}
+
 show_dashboard_info() {
   local IP
   IP=$(hostname -I | awk '{print $1}')
@@ -573,6 +622,11 @@ EOF
 
       cd "$REPO_DIR" || exit
 
+      check_wazuh_manager_ready || {
+        pause
+        continue
+      }
+
       if ! git diff --quiet || ! git diff --cached --quiet; then
         echo "[!] You have uncommitted changes."
         echo "[!] Please run Option 4 or discard changes."
@@ -680,6 +734,10 @@ EOF
     # 12) EDIT ACTIVE OSSEC.CONF
     # ======================================
     12)
+      check_wazuh_manager_ready || {
+        pause
+        continue
+      }
       backup_file "$ACTIVE_OSSEC" "ossec.conf"
       sudo nano "$ACTIVE_OSSEC"
       pause
