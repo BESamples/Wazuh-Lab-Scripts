@@ -1,4 +1,4 @@
-<group name="local,syscheck,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,yara,dlp,windows_dlp,credit_card">
+<group name="local,syscheck,windows,powershell,custom_fim,pii,sysmon,lab_attack_simulation,yara,lab_yara_dashboard,dlp,windows_dlp,credit_card">
 
   <!-- Windows login activity -->
   <rule id="100100" level="8">
@@ -93,38 +93,57 @@
     <description>Mass file modifications detected: possible ransomware activity</description>
   </rule>
 
-  <!-- YARA generic detection -->
-  <rule id="100302" level="10">
-    <match>YARA_MATCH:</match>
-    <description>LAB: YARA detection on endpoint</description>
-  </rule>
+ <!-- YARA decoder grouping rule -->
+<rule id="100302" level="0">
+  <decoded_as>yara_decoder</decoded_as>
+  <description>LAB: YARA scan result grouped</description>
+  <group>yara,</group>
+</rule>
 
-  <!-- YARA PII-specific detections -->
-  <rule id="100310" level="12">
-    <match>PII_SSN_Detected</match>
-    <description>LAB: Social Security Number detected by YARA</description>
-  </rule>
+<!-- YARA generic detection -->
+<rule id="100309" level="10">
+  <if_sid>100302</if_sid>
+  <match type="pcre2">wazuh-yara: INFO - Scan result:</match>
+  <description>LAB: YARA detection on endpoint. Rule: $(yara_rule). File: $(yara_scanned_file)</description>
+  <group>yara,lab_yara_dashboard,</group>
+</rule>
 
-  <rule id="100311" level="10">
-    <match>PII_Password_Detected</match>
-    <description>LAB: Password-related content detected by YARA</description>
-  </rule>
+<!-- YARA PII-specific detections -->
+<rule id="100310" level="12">
+  <if_sid>100302</if_sid>
+  <field name="yara_rule">PII_SSN_Detected</field>
+  <description>LAB: Social Security Number detected by YARA. File: $(yara_scanned_file)</description>
+  <group>yara,pii,</group>
+</rule>
 
-  <rule id="100312" level="10">
-    <match>PII_Payroll_Detected</match>
-    <description>LAB: Payroll-related content detected by YARA</description>
-  </rule>
+<rule id="100311" level="10">
+  <if_sid>100302</if_sid>
+  <field name="yara_rule">PII_Password_Detected</field>
+  <description>LAB: Password-related content detected by YARA. File: $(yara_scanned_file)</description>
+  <group>yara,pii,password,</group>
+</rule>
 
-  <!-- YARA malware/ransomware lab detections -->
-  <rule id="100313" level="12">
-    <match>Test_Malware_String</match>
-    <description>LAB: Malware test string detected by YARA</description>
-  </rule>
+<rule id="100312" level="10">
+  <if_sid>100302</if_sid>
+  <field name="yara_rule">PII_Payroll_Detected</field>
+  <description>LAB: Payroll-related content detected by YARA. File: $(yara_scanned_file)</description>
+  <group>yara,pii,payroll,</group>
+</rule>
 
-  <rule id="100314" level="13">
-    <match>Ransomware_Note_Detected</match>
-    <description>LAB: Ransomware note content detected by YARA</description>
-  </rule>
+<!-- YARA malware/ransomware lab detections -->
+<rule id="100313" level="12">
+  <if_sid>100302</if_sid>
+  <field name="yara_rule">Test_Malware_String</field>
+  <description>LAB: Malware test string detected by YARA. File: $(yara_scanned_file)</description>
+  <group>yara,malware,lab_attack_simulation,</group>
+</rule>
+
+<rule id="100314" level="13">
+  <if_sid>100302</if_sid>
+  <field name="yara_rule">Ransomware_Note_Detected</field>
+  <description>LAB: Ransomware note content detected by YARA. File: $(yara_scanned_file)</description>
+  <group>yara,ransomware,lab_attack_simulation,</group>
+</rule>
 
   <!-- Windows PowerShell DLP Scanner Alerts -->
 
