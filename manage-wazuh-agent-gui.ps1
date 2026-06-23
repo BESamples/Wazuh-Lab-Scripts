@@ -767,24 +767,7 @@ function Open-OssecConf {
 # ============================================================
 # SECTION 11 - INSTALL YARA FROM LOCAL ZIP
 # ============================================================
-
-function Install-Yara {
-
-    if (-not (Test-VcRuntime)) {
-        Write-OutputBox "ERROR: Microsoft Visual C++ Runtime is missing."
-        Write-OutputBox "Run Check VC++ Runtime first or install VC++ Redistributable 2015-2022 x64:"
-        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
-
-        [System.Windows.Forms.MessageBox]::Show(
-            "Microsoft Visual C++ Runtime is missing.`r`n`r`nRun Check VC++ Runtime first, or install VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
-            "Missing Runtime",
-            "OK",
-            "Warning"
-        )
-
-        return
-    }
-    function Create-YaraActiveResponseBat {
+   function Create-YaraActiveResponseBat {
 
     $ArBinPath = "C:\Program Files (x86)\ossec-agent\active-response\bin"
     $BatPath = Join-Path $ArBinPath "yara.bat"
@@ -859,7 +842,23 @@ exit /b 0
     Write-OutputBox "Created YARA active response BAT:"
     Write-OutputBox $BatPath
 }
+function Install-Yara {
 
+    if (-not (Test-VcRuntime)) {
+        Write-OutputBox "ERROR: Microsoft Visual C++ Runtime is missing."
+        Write-OutputBox "Run Check VC++ Runtime first or install VC++ Redistributable 2015-2022 x64:"
+        Write-OutputBox "https://aka.ms/vs/17/release/vc_redist.x64.exe"
+
+        [System.Windows.Forms.MessageBox]::Show(
+            "Microsoft Visual C++ Runtime is missing.`r`n`r`nRun Check VC++ Runtime first, or install VC++ Redistributable 2015-2022 x64:`r`nhttps://aka.ms/vs/17/release/vc_redist.x64.exe",
+            "Missing Runtime",
+            "OK",
+            "Warning"
+        )
+
+        return
+    }
+ 
     $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
     $YaraRulesFolder = "$YaraFolder\rules"
     $YaraZipName = $comboYaraZip.SelectedItem
