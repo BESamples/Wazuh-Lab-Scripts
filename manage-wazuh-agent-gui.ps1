@@ -1846,7 +1846,9 @@ New-TabButton $tabYara "Install / Check VC++" 440 120 { Check-VcRuntimeFromGUI }
 
 New-TabButton $tabYara "Install YARA" 20 180 { Install-Yara }
 
-New-TabButton $tabYara "Create YARA BAT" 20 240 { Create-YaraActiveResponseBat }
+New-TabButton $tabYara "Create YARA BAT" 20 240 {
+    Create-YaraActiveResponseBat
+}
 
 New-TabButton $tabYara "Run YARA Test" 230 180 { Test-YaraInstall }
 
