@@ -784,6 +784,81 @@ function Install-Yara {
 
         return
     }
+    function Create-YaraActiveResponseBat {
+
+    $ArBinPath = "C:\Program Files (x86)\ossec-agent\active-response\bin"
+    $BatPath = Join-Path $ArBinPath "yara.bat"
+
+    if (!(Test-Path $ArBinPath)) {
+        Write-OutputBox "ERROR: Active response bin folder not found:"
+        Write-OutputBox $ArBinPath
+        Write-OutputBox "Install Wazuh Agent first."
+        return
+    }
+
+    $BatContent = @'
+@echo off
+setlocal enabledelayedexpansion
+
+REM ============================================================
+REM Wazuh Active Response - YARA Windows Scanner
+REM Location:
+REM C:\Program Files (x86)\ossec-agent\active-response\bin\yara.bat
+REM ============================================================
+
+set "AR_DIR=C:\Program Files (x86)\ossec-agent\active-response"
+set "BIN_DIR=%AR_DIR%\bin"
+set "LOG_FILE=%AR_DIR%\active-responses.log"
+
+set "YARA_EXE=%BIN_DIR%\yara\yara64.exe"
+set "YARA_RULES=%BIN_DIR%\yara\rules"
+
+echo [%date% %time%] YARA active response started >> "%LOG_FILE%"
+
+for /f "usebackq delims=" %%A in (`powershell -NoProfile -ExecutionPolicy Bypass -Command "$inputText = [Console]::In.ReadToEnd(); try { $json = $inputText | ConvertFrom-Json; $path = $json.parameters.alert.syscheck.path; if (-not $path) { $path = $json.parameters.alert.data.path }; if (-not $path) { $path = $json.parameters.alert.file }; if ($path) { Write-Output $path } } catch { }"`) do (
+    set "TARGET_FILE=%%A"
+)
+
+if not defined TARGET_FILE (
+    echo [%date% %time%] ERROR: No target file path received from Wazuh. >> "%LOG_FILE%"
+    exit /b 1
+)
+
+if not exist "%TARGET_FILE%" (
+    echo [%date% %time%] ERROR: Target file does not exist: %TARGET_FILE% >> "%LOG_FILE%"
+    exit /b 1
+)
+
+if not exist "%YARA_EXE%" (
+    echo [%date% %time%] ERROR: YARA executable not found: %YARA_EXE% >> "%LOG_FILE%"
+    exit /b 1
+)
+
+if not exist "%YARA_RULES%" (
+    echo [%date% %time%] ERROR: YARA rules folder not found: %YARA_RULES% >> "%LOG_FILE%"
+    exit /b 1
+)
+
+echo [%date% %time%] Scanning file: %TARGET_FILE% >> "%LOG_FILE%"
+
+"%YARA_EXE%" -r "%YARA_RULES%" "%TARGET_FILE%" >> "%LOG_FILE%" 2>&1
+
+set "YARA_EXIT=%ERRORLEVEL%"
+
+if "%YARA_EXIT%"=="0" (
+    echo [%date% %time%] YARA scan completed successfully. Check output above for matches. >> "%LOG_FILE%"
+) else (
+    echo [%date% %time%] YARA scan failed or returned code %YARA_EXIT%. >> "%LOG_FILE%"
+)
+
+exit /b 0
+'@
+
+    Set-Content -Path $BatPath -Value $BatContent -Encoding ASCII
+
+    Write-OutputBox "Created YARA active response BAT:"
+    Write-OutputBox $BatPath
+}
 
     $YaraFolder = "C:\Program Files (x86)\ossec-agent\active-response\bin\yara"
     $YaraRulesFolder = "$YaraFolder\rules"
@@ -1770,6 +1845,8 @@ New-TabButton $tabYara "VC++ Status" 230 120 { Show-VcRuntimeStatus }
 New-TabButton $tabYara "Install / Check VC++" 440 120 { Check-VcRuntimeFromGUI }
 
 New-TabButton $tabYara "Install YARA" 20 180 { Install-Yara }
+
+New-TabButton $tabYara "Create YARA BAT" 20 240 { Create-YaraActiveResponseBat }
 
 New-TabButton $tabYara "Run YARA Test" 230 180 { Test-YaraInstall }
 
