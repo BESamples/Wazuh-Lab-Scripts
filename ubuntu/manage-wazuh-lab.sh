@@ -17,9 +17,11 @@ REPO_DIR="$HOME/Wazuh-Lab-Scripts"
 GITHUB_RULES="$REPO_DIR/wazuh-rules/local_rules.xml"
 AUTOENROLL_SNIPPET="$REPO_DIR/wazuh-configs/ossec-auth-autoenroll.xml"
 YARA_AR_SNIPPET="$REPO_DIR/wazuh-configs/ossec-yara-active-response.xml"
+YARA_DECODER_SNIPPET="$REPO_DIR/wazuh-configs/local-yara-decoder.xml"
 
 ACTIVE_RULES="/var/ossec/etc/rules/local_rules.xml"
 ACTIVE_OSSEC="/var/ossec/etc/ossec.conf"
+ACTIVE_DECODERS="/var/ossec/etc/decoders/local_decoder.xml"
 
 BACKUP_DIR="$REPO_DIR/backups"
 LAB_INFO_DIR="$REPO_DIR/wazuh-configs"
@@ -96,6 +98,51 @@ show_dashboard_info() {
   else
     echo "Dashboard credentials file not found."
   fi
+}
+
+
+create_yara_decoder_snippet() {
+  cat > "$YARA_DECODER_SNIPPET" <<'EOF'
+<!-- BEGIN WAZUH LAB YARA DECODER -->
+<decoder name="yara_decoder">
+  <prematch>wazuh-yara:</prematch>
+</decoder>
+
+<decoder name="yara_decoder_child">
+  <parent>yara_decoder</parent>
+  <regex>wazuh-yara: (\S+) - Scan result: (.+)</regex>
+  <order>yara_rule,yara_scanned_file</order>
+</decoder>
+<!-- END WAZUH LAB YARA DECODER -->
+EOF
+
+  echo "[+] YARA decoder snippet ready: $YARA_DECODER_SNIPPET"
+}
+
+apply_yara_decoder() {
+  if [ ! -f "$ACTIVE_DECODERS" ]; then
+    echo "[!] Active decoder file not found: $ACTIVE_DECODERS"
+    return 1
+  fi
+
+  echo "[+] Applying YARA decoder config..."
+  create_yara_decoder_snippet
+
+  backup_file "$ACTIVE_DECODERS" "local_decoder.xml"
+
+  # Remove the previous managed YARA decoder block if this script already added it.
+  sudo awk '
+    /<!-- BEGIN WAZUH LAB YARA DECODER -->/ { skip=1; next }
+    /<!-- END WAZUH LAB YARA DECODER -->/ { skip=0; next }
+    skip != 1 { print }
+  ' "$ACTIVE_DECODERS" | sudo tee "$ACTIVE_DECODERS.tmp" >/dev/null
+
+  # Add the managed YARA decoder block to the bottom of local_decoder.xml.
+  sudo cat "$YARA_DECODER_SNIPPET" | sudo tee -a "$ACTIVE_DECODERS.tmp" >/dev/null
+
+  sudo mv "$ACTIVE_DECODERS.tmp" "$ACTIVE_DECODERS"
+
+  echo "[+] YARA decoder config applied."
 }
 
 
@@ -342,6 +389,15 @@ EOF
       fi
 
       # -----------------------------
+      # Apply YARA decoder
+      # -----------------------------
+      apply_yara_decoder || {
+        echo "[!] Failed to apply YARA decoder config."
+        pause
+        continue
+      }
+
+      # -----------------------------
       # Apply YARA Windows Active Response
       # -----------------------------
       apply_yara_active_response || {
@@ -538,6 +594,12 @@ EOF
 
       backup_file "$ACTIVE_RULES" "local_rules.xml"
       sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+
+      apply_yara_decoder || {
+        echo "[!] Failed to apply YARA decoder config."
+        pause
+        continue
+      }
 
       apply_yara_active_response || {
         echo "[!] Failed to apply YARA Active Response config."
