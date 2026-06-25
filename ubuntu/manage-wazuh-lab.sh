@@ -34,6 +34,43 @@ mkdir -p "$LAB_INFO_DIR"
 # ------------------------------
 # HELPERS
 # ------------------------------
+bootstrap_wazuh_local_files() {
+    echo "[+] Checking Wazuh local rules and decoder files..."
+
+    if [ ! -f "/var/ossec/etc/ossec.conf" ]; then
+        echo "[!] Wazuh manager ossec.conf not found."
+        echo "[!] Make sure Wazuh Manager is installed before deploying rules."
+        return 1
+    fi
+
+    sudo mkdir -p /var/ossec/etc/rules
+    sudo mkdir -p /var/ossec/etc/decoders
+
+    if [ ! -f "/var/ossec/etc/rules/local_rules.xml" ]; then
+        echo "[+] Creating missing local_rules.xml..."
+        sudo touch /var/ossec/etc/rules/local_rules.xml
+    fi
+
+    if [ ! -f "/var/ossec/etc/decoders/local_decoder.xml" ]; then
+        echo "[+] Creating missing local_decoder.xml..."
+        sudo touch /var/ossec/etc/decoders/local_decoder.xml
+    fi
+
+    if getent group wazuh >/dev/null; then
+        WAZUH_GROUP="wazuh"
+    else
+        WAZUH_GROUP="ossec"
+    fi
+
+    sudo chown root:$WAZUH_GROUP /var/ossec/etc/rules/local_rules.xml
+    sudo chown root:$WAZUH_GROUP /var/ossec/etc/decoders/local_decoder.xml
+
+    sudo chmod 660 /var/ossec/etc/rules/local_rules.xml
+    sudo chmod 660 /var/ossec/etc/decoders/local_decoder.xml
+
+    echo "[+] Wazuh local files are ready."
+}
+
 pause() {
   echo
   read -p "Press Enter to continue..."
@@ -404,6 +441,16 @@ EOF
       cd "$REPO_DIR" || exit
 
       # -----------------------------
+      # Fresh install local file prep
+      # -----------------------------
+      
+      bootstrap_wazuh_local_files || {
+        echo "[!] Failed to prepare Wazuh local rules/decoder files."
+        pause
+        continue
+      }
+           
+      # -----------------------------
       # Apply GitHub rules
       # -----------------------------
       if [ -f "$GITHUB_RULES" ]; then
@@ -621,6 +668,12 @@ EOF
       echo "======================================"
 
       cd "$REPO_DIR" || exit
+
+      bootstrap_wazuh_local_files || {
+        echo "[!] Failed to prepare Wazuh local rules/decoder files."
+        pause
+        continue
+      }
 
       check_wazuh_manager_ready || {
         pause
