@@ -190,12 +190,12 @@ show_dashboard_info() {
 create_yara_decoder_snippet() {
   cat > "$YARA_DECODER_SNIPPET" <<'EOF'
 <!-- BEGIN WAZUH LAB YARA DECODER -->
-<decoder name="yara_decoder">
+<decoder name="yara">
   <prematch>wazuh-yara:</prematch>
 </decoder>
 
-<decoder name="yara_decoder_child">
-  <parent>yara_decoder</parent>
+<decoder name="yara-child">
+  <parent>yara</parent>
   <regex>wazuh-yara: (\S+) - Scan result: (.+)</regex>
   <order>yara_rule,yara_scanned_file</order>
 </decoder>
