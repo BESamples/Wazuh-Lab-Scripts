@@ -95,7 +95,7 @@
 
  <!-- YARA decoder grouping rule -->
 <rule id="100302" level="0">
-  <decoded_as>yara_decoder</decoded_as>
+  <decoded_as>yara</decoded_as>
   <description>LAB: YARA scan result grouped</description>
   <group>yara,</group>
 </rule>
