@@ -191,7 +191,57 @@ repo_has_uncommitted_changes() {
 # WAZUH CHECKS / INSTALL
 # ------------------------------
 wazuh_is_installed() {
-  [ -d "/var/ossec" ] && [ -f "$ACTIVE_OSSEC" ]
+  [ -d "/var/ossec" ] && \
+  [ -f "$ACTIVE_OSSEC" ] && \
+  [ -x "/var/ossec/bin/wazuh-analysisd" ]
+}
+
+show_wazuh_install_debug() {
+  echo
+  warn "Wazuh install debug info:"
+  echo "Expected Wazuh dir: /var/ossec"
+  echo "Expected ossec.conf: $ACTIVE_OSSEC"
+  echo
+
+  run_root ls -ld /var/ossec 2>/dev/null || warn "/var/ossec missing"
+  run_root ls -l "$ACTIVE_OSSEC" 2>/dev/null || warn "$ACTIVE_OSSEC missing"
+  run_root ls -l /var/ossec/bin/wazuh-analysisd 2>/dev/null || warn "wazuh-analysisd missing"
+
+  echo
+  echo "Installed Wazuh packages:"
+  dpkg -l 2>/dev/null | grep -E 'wazuh|filebeat|opensearch' || true
+
+  echo
+  echo "Wazuh services:"
+  systemctl is-active wazuh-manager 2>/dev/null && echo "wazuh-manager: active" || echo "wazuh-manager: not active"
+  systemctl is-active wazuh-indexer 2>/dev/null && echo "wazuh-indexer: active" || echo "wazuh-indexer: not active"
+  systemctl is-active wazuh-dashboard 2>/dev/null && echo "wazuh-dashboard: active" || echo "wazuh-dashboard: not active"
+
+  echo
+  echo "Searching for ossec.conf:"
+  run_root find /var/ossec -maxdepth 4 -name ossec.conf -print 2>/dev/null || true
+}
+
+wait_for_wazuh_install_files() {
+  local max_wait="${1:-90}"
+  local elapsed=0
+
+  info "Checking for Wazuh manager files..."
+
+  while [ "$elapsed" -lt "$max_wait" ]; do
+    if wazuh_is_installed; then
+      info "Wazuh manager files found."
+      return 0
+    fi
+
+    sleep 5
+    elapsed=$((elapsed + 5))
+    echo "Waiting for /var/ossec/etc/ossec.conf... ${elapsed}s/${max_wait}s"
+  done
+
+  fail "Wazuh manager files were not found after waiting."
+  show_wazuh_install_debug
+  return 1
 }
 
 wazuh_manager_active() {
@@ -692,6 +742,7 @@ fresh_lab_bootstrap() {
   if ! wazuh_is_installed; then
     install_wazuh_stack || return 1
     install_ran=true
+    start_wazuh_services
   elif ! wazuh_manager_active; then
     info "Wazuh is installed but wazuh-manager is not active. Starting services..."
     start_wazuh_services
@@ -699,10 +750,9 @@ fresh_lab_bootstrap() {
     info "Wazuh already installed and running."
   fi
 
-  if ! wazuh_is_installed; then
-    fail "Wazuh install did not complete successfully. /var/ossec or ossec.conf missing."
-    return 1
-  fi
+  # The Wazuh installer can report finished while systemd/files are still settling.
+  # Wait and show useful diagnostics instead of failing immediately.
+  wait_for_wazuh_install_files 90 || return 1
 
   if [ "$install_ran" = true ]; then
     capture_dashboard_credentials
