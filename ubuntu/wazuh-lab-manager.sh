@@ -1,27 +1,19 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
-# ============================================================
-# Wazuh Lab Manager - Stable No-YARA Version
-# Purpose:
-#   - Fresh Wazuh Manager bootstrap after VM reset
-#   - Deploy GitHub local_rules.xml
-#   - Apply auto-enroll snippet
-#   - Validate before restart
-#
-# YARA is intentionally NOT applied in this version.
-# Add YARA only after Wazuh Manager + agents are confirmed working.
-# ============================================================
-
-set -o pipefail
+# ======================================
+# Wazuh Lab Manager
+# Workflow order:
+# 1 = Bootstrap first
+# 2 = Uninstall/reset
+# 3-5 = Daily rule workflow
+# 6-11 = Monitoring / validation
+# 12-13 = Utilities
+# ======================================
 
 # ------------------------------
-# USER / PATH DETECTION
+# CONFIG
 # ------------------------------
-REAL_USER="${SUDO_USER:-$(id -un)}"
-REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6 2>/dev/null)"
-[ -z "$REAL_HOME" ] && REAL_HOME="$HOME"
-
-REPO_DIR="${REPO_DIR:-$REAL_HOME/Wazuh-Lab-Scripts}"
+REPO_DIR="$HOME/Wazuh-Lab-Scripts"
 GITHUB_RULES="$REPO_DIR/wazuh-rules/local_rules.xml"
 AUTOENROLL_SNIPPET="$REPO_DIR/wazuh-configs/ossec-auth-autoenroll.xml"
 
@@ -33,574 +25,554 @@ LAB_INFO_DIR="$REPO_DIR/wazuh-configs"
 LAB_INFO_FILE="$LAB_INFO_DIR/dashboard-admin.txt"
 INSTALL_LOG="$REPO_DIR/wazuh-install-output.log"
 
-WAZUH_VERSION="4.14"
+mkdir -p "$BACKUP_DIR"
+mkdir -p "$LAB_INFO_DIR"
 
 # ------------------------------
 # HELPERS
 # ------------------------------
-run_root() {
-  if [ "$(id -u)" -eq 0 ]; then
-    "$@"
-  else
-    sudo "$@"
-  fi
-}
-
-run_as_user() {
-  if [ "$(id -u)" -eq 0 ] && [ -n "${SUDO_USER:-}" ] && [ "$REAL_USER" != "root" ]; then
-    sudo -u "$REAL_USER" -H "$@"
-  else
-    "$@"
-  fi
-}
-
 pause() {
   echo
-  read -r -p "Press Enter to continue..."
-}
-
-header() {
-  clear
-  echo "======================================"
-  echo "   Wazuh Lab Manager - Stable No-YARA"
-  echo "======================================"
-}
-
-info() { echo "[+] $*"; }
-warn() { echo "[!] $*"; }
-fail() { echo "[x] $*"; }
-
-ensure_dirs() {
-  run_as_user mkdir -p "$BACKUP_DIR" "$LAB_INFO_DIR"
+  read -p "Press Enter to continue..."
 }
 
 backup_file() {
-  local file="$1"
-  local name="$2"
-  local date backup
+  local FILE="$1"
+  local NAME="$2"
+  local DATE
+  DATE=$(date +"%Y%m%d-%H%M%S")
 
-  date="$(date +"%Y%m%d-%H%M%S")"
-  backup="$BACKUP_DIR/${name}.backup-$date"
-
-  ensure_dirs
-
-  if [ -f "$file" ]; then
-    run_root cp "$file" "$backup"
-    run_root chown "$REAL_USER:$REAL_USER" "$backup" 2>/dev/null || true
-    info "Backup saved to: $backup"
+  if [ -f "$FILE" ]; then
+    sudo cp "$FILE" "$BACKUP_DIR/${NAME}.backup-$DATE"
+    echo "[+] Backup saved to: $BACKUP_DIR/${NAME}.backup-$DATE"
   else
-    warn "File not found for backup: $file"
+    echo "[!] File not found for backup: $FILE"
   fi
-}
-
-safe_git_pull() {
-  if [ ! -d "$REPO_DIR/.git" ]; then
-    warn "Not a Git repo: $REPO_DIR"
-    warn "Skipping Git pull."
-    return 0
-  fi
-
-  cd "$REPO_DIR" || return 1
-  run_as_user git pull origin main --rebase
 }
 
 ensure_git_identity() {
-  if ! run_as_user git config --global user.name >/dev/null 2>&1 || \
-     ! run_as_user git config --global user.email >/dev/null 2>&1; then
-    warn "Git identity not configured."
+  if ! git config --global user.name >/dev/null 2>&1 || ! git config --global user.email >/dev/null 2>&1; then
+    echo "[!] Git identity not configured."
 
-    read -r -p "Enter your name for Git: " git_name
-    read -r -p "Enter your email for Git: " git_email
+    read -p "Enter your name for Git: " git_name
+    read -p "Enter your email for Git: " git_email
 
     if [ -z "$git_name" ] || [ -z "$git_email" ]; then
-      warn "Name and email are both required."
+      echo "[!] Name and email are both required."
       return 1
     fi
 
-    run_as_user git config --global user.name "$git_name"
-    run_as_user git config --global user.email "$git_email"
-    info "Git identity configured."
+    git config --global user.name "$git_name"
+    git config --global user.email "$git_email"
+
+    echo "[+] Git identity configured."
   fi
 
   return 0
 }
 
-wazuh_base_files_exist() {
-  [ -d "/var/ossec" ] && \
-  [ -f "$ACTIVE_OSSEC" ] && \
-  [ -x "/var/ossec/bin/wazuh-analysisd" ]
-}
-
-wait_for_wazuh_base_files() {
-  local timeout="${1:-90}"
-  local count=0
-
-  info "Checking for Wazuh manager files..."
-
-  while [ "$count" -lt "$timeout" ]; do
-    if wazuh_base_files_exist; then
-      info "Wazuh manager files found."
-      return 0
-    fi
-    sleep 3
-    count=$((count + 3))
-    echo "[+] Waiting for /var/ossec and ossec.conf... ${count}s/${timeout}s"
-  done
-
-  fail "Wazuh manager files were not found after waiting."
-  echo
-  echo "Debug checks:"
-  run_root ls -ld /var/ossec 2>/dev/null || true
-  run_root ls -l /var/ossec/etc/ossec.conf 2>/dev/null || true
-  run_root ls -l /var/ossec/bin/wazuh-analysisd 2>/dev/null || true
-  echo
-  echo "Installed Wazuh packages:"
-  dpkg -l | grep -E 'wazuh|filebeat|opensearch' || true
-  echo
-  echo "Recent installer errors:"
-  grep -iE "error|failed|cannot|manager|ossec|dpkg|apt" "$INSTALL_LOG" 2>/dev/null | tail -80 || true
-  return 1
+safe_git_pull() {
+  cd "$REPO_DIR" || return 1
+  git pull origin main --rebase
 }
 
 validate_wazuh_config() {
-  if [ ! -x "/var/ossec/bin/wazuh-analysisd" ]; then
-    fail "Cannot validate. /var/ossec/bin/wazuh-analysisd not found."
-    return 1
-  fi
-
-  run_root /var/ossec/bin/wazuh-analysisd -t
-}
-
-restart_wazuh_if_valid() {
-  info "Validating Wazuh configuration..."
-  if validate_wazuh_config; then
-    info "Validation passed. Restarting wazuh-manager..."
-    run_root systemctl restart wazuh-manager
-  else
-    fail "Config validation failed. Restart cancelled."
-    return 1
-  fi
-}
-
-capture_dashboard_credentials() {
-  local dashboard_user dashboard_pass manager_ip
-
-  if [ ! -f "$INSTALL_LOG" ]; then
-    warn "Install log not found. Cannot capture dashboard password."
-    return 0
-  fi
-
-  dashboard_user="$(grep -i "User:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')"
-  dashboard_pass="$(grep -i "Password:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')"
-  manager_ip="$(hostname -I | awk '{print $1}')"
-
-  if [ -z "$dashboard_pass" ]; then
-    dashboard_pass="NOT FOUND - CHECK $INSTALL_LOG"
-  fi
-
-  ensure_dirs
-
-  cat > "$LAB_INFO_FILE" <<EOF_INFO
-Dashboard URL: https://$manager_ip
-User: ${dashboard_user:-admin}
-Password: $dashboard_pass
-EOF_INFO
-
-  chmod 600 "$LAB_INFO_FILE"
-  run_root chown "$REAL_USER:$REAL_USER" "$LAB_INFO_FILE" 2>/dev/null || true
-
-  info "Dashboard credentials saved to: $LAB_INFO_FILE"
-  cat "$LAB_INFO_FILE"
+  sudo /var/ossec/bin/wazuh-analysisd -t
 }
 
 show_dashboard_info() {
-  local ip
-  ip="$(hostname -I | awk '{print $1}')"
+  local IP
+  IP=$(hostname -I | awk '{print $1}')
 
   echo "======================================"
   echo "   Wazuh Dashboard Info"
   echo "======================================"
-  echo "Dashboard URL: https://$ip"
+  echo "Dashboard URL: https://$IP"
 
   if [ -f "$LAB_INFO_FILE" ]; then
     echo
     cat "$LAB_INFO_FILE"
   else
-    echo
-    warn "Dashboard credentials file not found: $LAB_INFO_FILE"
-    warn "Check installer output or $INSTALL_LOG"
+    echo "Dashboard credentials file not found."
   fi
-}
-
-show_services_status() {
-  echo "======================================"
-  echo "   Wazuh Service Status"
-  echo "======================================"
-  run_root systemctl status wazuh-manager --no-pager 2>/dev/null || true
-  echo
-  run_root systemctl status wazuh-indexer --no-pager 2>/dev/null || true
-  echo
-  run_root systemctl status wazuh-dashboard --no-pager 2>/dev/null || true
-  echo
-  run_root systemctl status filebeat --no-pager 2>/dev/null || true
-}
-
-install_required_tools() {
-  info "Ensuring required tools are installed..."
-  run_root apt update
-  run_root apt install -y curl git nano
-}
-
-install_wazuh_stack() {
-  local install_mode install_exit installer
-
-  installer="$REAL_HOME/wazuh-install.sh"
-
-  info "Downloading Wazuh installer..."
-  run_as_user bash -c "cd '$REAL_HOME' && curl -sO https://packages.wazuh.com/${WAZUH_VERSION}/wazuh-install.sh"
-
-  echo
-  echo "Choose Wazuh install mode:"
-  echo "1) Normal install - use this on a fresh VM reset"
-  echo "2) Overwrite existing Wazuh install (-o) - erases existing Wazuh config/data"
-  echo
-  read -r -p "Choose install mode: " install_mode
-
-  if [ "$install_mode" = "2" ]; then
-    warn "Running Wazuh installer with overwrite option..."
-    run_root bash "$installer" -a -o 2>&1 | tee "$INSTALL_LOG"
-  else
-    info "Running normal Wazuh installer..."
-    run_root bash "$installer" -a 2>&1 | tee "$INSTALL_LOG"
-  fi
-
-  install_exit=${PIPESTATUS[0]}
-
-  run_root chown "$REAL_USER:$REAL_USER" "$INSTALL_LOG" 2>/dev/null || true
-
-  if [ "$install_exit" -ne 0 ]; then
-    fail "Wazuh installer returned a failure code."
-    return 1
-  fi
-
-  wait_for_wazuh_base_files 90
-}
-
-apply_github_rules() {
-  if [ ! -f "$GITHUB_RULES" ]; then
-    warn "GitHub rules file not found: $GITHUB_RULES"
-    return 0
-  fi
-
-  if [ ! -f "$ACTIVE_OSSEC" ]; then
-    fail "Wazuh ossec.conf missing. Cannot deploy rules."
-    return 1
-  fi
-
-  run_root mkdir -p /var/ossec/etc/rules
-
-  info "Applying GitHub local_rules.xml..."
-  backup_file "$ACTIVE_RULES" "local_rules.xml"
-  run_root cp "$GITHUB_RULES" "$ACTIVE_RULES"
-}
-
-apply_auto_enroll() {
-  local tmp
-
-  if [ ! -f "$AUTOENROLL_SNIPPET" ]; then
-    warn "Auto-enroll config not found. Skipping: $AUTOENROLL_SNIPPET"
-    return 0
-  fi
-
-  if [ ! -f "$ACTIVE_OSSEC" ]; then
-    fail "Active ossec.conf not found: $ACTIVE_OSSEC"
-    return 1
-  fi
-
-  if ! run_root grep -q "</ossec_config>" "$ACTIVE_OSSEC"; then
-    fail "Cannot find closing </ossec_config> in $ACTIVE_OSSEC"
-    return 1
-  fi
-
-  info "Applying auto-enroll config..."
-  backup_file "$ACTIVE_OSSEC" "ossec.conf"
-
-  tmp="$(mktemp)"
-
-  run_root sed '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC" | awk -v snippet="$AUTOENROLL_SNIPPET" '
-    /<\/ossec_config>/ && inserted==0 {
-      while ((getline line < snippet) > 0) print line
-      close(snippet)
-      inserted=1
-    }
-    { print }
-  ' > "$tmp"
-
-  run_root cp "$tmp" "$ACTIVE_OSSEC"
-  rm -f "$tmp"
-}
-
-deploy_base_lab_config() {
-  wait_for_wazuh_base_files 10 || return 1
-  apply_github_rules || return 1
-  apply_auto_enroll || return 1
-  restart_wazuh_if_valid
-}
-
-fresh_lab_bootstrap() {
-  local install_ran=false
-
-  echo "======================================"
-  echo "     Fresh Lab Bootstrap Starting"
-  echo "======================================"
-
-  ensure_dirs
-  install_required_tools
-
-  info "Repo path: $REPO_DIR"
-  info "Syncing GitHub repo..."
-  safe_git_pull || warn "Git pull failed. Continuing with local files."
-
-  if ! wazuh_base_files_exist; then
-    install_wazuh_stack || return 1
-    install_ran=true
-  elif ! systemctl is-active --quiet wazuh-manager; then
-    info "Wazuh files exist but wazuh-manager is not active. Starting services..."
-    run_root systemctl start wazuh-manager 2>/dev/null || true
-    run_root systemctl start wazuh-indexer 2>/dev/null || true
-    run_root systemctl start wazuh-dashboard 2>/dev/null || true
-  else
-    info "Wazuh already installed and running."
-  fi
-
-  if [ "$install_ran" = true ]; then
-    capture_dashboard_credentials
-  fi
-
-  deploy_base_lab_config || return 1
-
-  echo
-  echo "======================================"
-  echo "     Bootstrap Complete"
-  echo "======================================"
-  show_dashboard_info
-  echo
-  echo "Agent list:"
-  run_root /var/ossec/bin/agent_control -l 2>/dev/null || true
-}
-
-full_uninstall_cleanup() {
-  echo "======================================"
-  echo "   FULL WAZUH UNINSTALL / CLEANUP"
-  echo "======================================"
-  warn "This completely removes Wazuh."
-  warn "All Wazuh data/config/dashboard/indexer data will be lost."
-  echo
-
-  read -r -p "Type YES to continue: " confirm
-  if [ "$confirm" != "YES" ]; then
-    info "Uninstall cancelled."
-    return 0
-  fi
-
-  info "Stopping services..."
-  run_root systemctl stop wazuh-manager 2>/dev/null || true
-  run_root systemctl stop wazuh-indexer 2>/dev/null || true
-  run_root systemctl stop wazuh-dashboard 2>/dev/null || true
-  run_root systemctl stop filebeat 2>/dev/null || true
-
-  info "Disabling services..."
-  run_root systemctl disable wazuh-manager 2>/dev/null || true
-  run_root systemctl disable wazuh-indexer 2>/dev/null || true
-  run_root systemctl disable wazuh-dashboard 2>/dev/null || true
-  run_root systemctl disable filebeat 2>/dev/null || true
-
-  info "Removing packages..."
-  run_root apt remove --purge -y wazuh-manager wazuh-indexer wazuh-dashboard filebeat 2>/dev/null || true
-  run_root apt autoremove -y
-
-  info "Removing directories..."
-  run_root rm -rf /var/ossec
-  run_root rm -rf /var/lib/wazuh*
-  run_root rm -rf /usr/share/wazuh*
-  run_root rm -rf /etc/wazuh*
-  run_root rm -rf /var/lib/opensearch
-  run_root rm -rf /usr/share/opensearch-dashboards
-  run_root rm -rf /etc/filebeat
-  run_root rm -rf /var/lib/filebeat
-  run_root rm -rf /var/log/filebeat
-  run_root rm -rf /var/log/wazuh*
-
-  info "Reloading systemd..."
-  run_root systemctl daemon-reload
-
-  info "Wazuh fully removed."
-}
-
-edit_github_rules() {
-  run_as_user nano "$GITHUB_RULES"
-}
-
-git_add_commit_push() {
-  local msg
-
-  if [ ! -d "$REPO_DIR/.git" ]; then
-    warn "Not a Git repo: $REPO_DIR"
-    return 1
-  fi
-
-  cd "$REPO_DIR" || return 1
-
-  ensure_git_identity || return 1
-
-  run_as_user git status
-
-  read -r -p "Commit message: " msg
-  if [ -z "$msg" ]; then
-    warn "Commit message cannot be empty."
-    return 1
-  fi
-
-  info "Staging changes..."
-  run_as_user git add .
-
-  info "Committing..."
-  run_as_user git commit -m "$msg" || warn "Nothing to commit or commit failed."
-
-  info "Syncing with GitHub..."
-  safe_git_pull || return 1
-
-  info "Pushing to GitHub..."
-  run_as_user git push
-}
-
-show_install_debug() {
-  echo "======================================"
-  echo "   Wazuh Install Debug"
-  echo "======================================"
-  echo
-  echo "Files:"
-  run_root ls -ld /var/ossec 2>/dev/null || true
-  run_root ls -l /var/ossec/etc/ossec.conf 2>/dev/null || true
-  run_root ls -l /var/ossec/bin/wazuh-analysisd 2>/dev/null || true
-
-  echo
-  echo "Packages:"
-  dpkg -l | grep -E 'wazuh|filebeat|opensearch' || true
-
-  echo
-  echo "Services active?"
-  systemctl is-active wazuh-manager 2>/dev/null || true
-  systemctl is-active wazuh-indexer 2>/dev/null || true
-  systemctl is-active wazuh-dashboard 2>/dev/null || true
-  systemctl is-active filebeat 2>/dev/null || true
-
-  echo
-  echo "Recent install log errors:"
-  grep -iE "error|failed|cannot|manager|ossec|dpkg|apt" "$INSTALL_LOG" 2>/dev/null | tail -80 || true
 }
 
 # ------------------------------
-# MAIN MENU
+# MENU LOOP
 # ------------------------------
 while true; do
-  header
+  clear
 
-  echo "START / RESET"
-  echo "1) Fresh Lab Bootstrap (RUN FIRST after lab reset)"
+  echo "======================================"
+  echo "        Wazuh Lab Manager"
+  echo "======================================"
+
+  echo "🚀 START / RESET"
+  echo "1) Fresh Lab Bootstrap (RUN FIRST)"
   echo "2) Full Wazuh Uninstall / Cleanup (DANGEROUS)"
 
   echo
-  echo "DAILY WORKFLOW"
+  echo "⚙️ DAILY WORKFLOW"
   echo "3) Edit GitHub local_rules.xml"
   echo "4) Git add / commit / push"
-  echo "5) Deploy latest rules + auto-enroll only"
+  echo "5) Deploy latest rules to Wazuh"
 
   echo
-  echo "MONITORING / VALIDATION"
-  echo "6) Test Wazuh rules/config"
-  echo "7) Restart wazuh-manager safely"
-  echo "8) Check Wazuh services status"
+  echo "🔍 MONITORING / VALIDATION"
+  echo "6) Test Wazuh rules"
+  echo "7) Restart wazuh-manager (safe)"
+  echo "8) Check wazuh-manager status"
   echo "9) Check agent list"
-  echo "10) Watch Wazuh logs live"
+  echo "10) Check Wazuh logs live"
   echo "11) Show Wazuh dashboard info"
 
   echo
-  echo "UTILITIES"
+  echo "🧰 UTILITIES"
   echo "12) Edit active ossec.conf"
-  echo "13) Git pull manual sync"
-  echo "14) Show install debug"
+  echo "13) Git pull (manual sync)"
 
   echo
   echo "0) Exit"
   echo "======================================"
 
-  read -r -p "Choose option: " choice
+  read -p "Choose option: " choice
 
-  case "$choice" in
+  case $choice in
+
+    # ======================================
+    # 1) BOOTSTRAP
+    # ======================================
     1)
-      fresh_lab_bootstrap
+      echo "======================================"
+      echo "     Fresh Lab Bootstrap Starting"
+      echo "======================================"
+
+      echo "[+] Ensuring required tools are installed..."
+      sudo apt update
+      sudo apt install -y curl git
+
+      cd "$REPO_DIR" || exit
+
+      echo "[+] Pulling latest GitHub repo..."
+      safe_git_pull || {
+        echo "[!] Git pull failed."
+        pause
+        continue
+      }
+
+      mkdir -p "$BACKUP_DIR"
+      mkdir -p "$LAB_INFO_DIR"
+
+      INSTALL_RAN=false
+
+      # -----------------------------
+      # Install or start Wazuh
+      # -----------------------------
+      if [ ! -d "/var/ossec" ]; then
+        echo "[+] Wazuh not installed or install is incomplete."
+        echo "[+] Starting Wazuh installer..."
+
+        cd "$HOME" || exit
+
+        curl -sO https://packages.wazuh.com/4.14/wazuh-install.sh
+
+        echo
+        echo "[?] Choose Wazuh install mode:"
+        echo "1) Normal install"
+        echo "2) Overwrite existing Wazuh install (-o) - ERASES existing Wazuh config/data"
+        echo
+        read -p "Choose install mode: " install_mode
+
+        if [ "$install_mode" = "2" ]; then
+          echo "[!] Running Wazuh installer with overwrite option..."
+          sudo bash ./wazuh-install.sh -a -o 2>&1 | tee "$INSTALL_LOG"
+        else
+          echo "[+] Running normal Wazuh installer..."
+          sudo bash ./wazuh-install.sh -a 2>&1 | tee "$INSTALL_LOG"
+        fi
+
+        INSTALL_EXIT=${PIPESTATUS[0]}
+
+        if [ $INSTALL_EXIT -ne 0 ]; then
+          echo "[!] Wazuh install failed. Aborting bootstrap."
+          pause
+          continue
+        fi
+
+        INSTALL_RAN=true
+
+      elif ! systemctl is-active --quiet wazuh-manager; then
+        echo "[+] Wazuh installed but not running. Starting services..."
+        sudo systemctl start wazuh-manager
+        sudo systemctl start wazuh-indexer 2>/dev/null
+        sudo systemctl start wazuh-dashboard 2>/dev/null
+
+      else
+        echo "[+] Wazuh already installed and running."
+      fi
+
+      # -----------------------------
+      # Hard stop if install did not create Wazuh
+      # -----------------------------
+      if [ ! -d "/var/ossec" ]; then
+        echo "[!] Wazuh install did not complete successfully."
+        echo "[!] /var/ossec not found. Aborting bootstrap."
+        pause
+        continue
+      fi
+
+      # -----------------------------
+      # Capture credentials only if install ran
+      # -----------------------------
+      if [ "$INSTALL_RAN" = true ]; then
+        echo "[+] Capturing dashboard credentials..."
+
+        DASHBOARD_USER=$(grep -i "User:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
+        DASHBOARD_PASS=$(grep -i "Password:" "$INSTALL_LOG" | tail -n 1 | awk '{print $2}')
+        MANAGER_IP=$(hostname -I | awk '{print $1}')
+
+        if [ -z "$DASHBOARD_PASS" ]; then
+          echo "[!] WARNING: Password not detected in install log."
+          DASHBOARD_PASS="NOT FOUND - CHECK LOG"
+        fi
+
+        cat > "$LAB_INFO_FILE" <<EOF
+Dashboard URL: https://$MANAGER_IP
+User: ${DASHBOARD_USER:-admin}
+Password: $DASHBOARD_PASS
+EOF
+
+        chmod 600 "$LAB_INFO_FILE"
+
+        echo "[+] Dashboard credentials saved:"
+        cat "$LAB_INFO_FILE"
+      fi
+
+      cd "$REPO_DIR" || exit
+
+      # -----------------------------
+      # Apply GitHub rules
+      # -----------------------------
+      if [ -f "$GITHUB_RULES" ]; then
+        echo "[+] Applying GitHub local_rules.xml..."
+        backup_file "$ACTIVE_RULES" "local_rules.xml"
+        sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+      else
+        echo "[!] GitHub rules file not found: $GITHUB_RULES"
+      fi
+
+      # -----------------------------
+      # Apply auto-enroll snippet if present
+      # -----------------------------
+      if [ -f "$AUTOENROLL_SNIPPET" ]; then
+        echo "[+] Applying auto-enroll config..."
+        backup_file "$ACTIVE_OSSEC" "ossec.conf"
+
+        sudo sed -i '/<auth>/,/<\/auth>/d' "$ACTIVE_OSSEC"
+
+        sudo awk -v snippet="$AUTOENROLL_SNIPPET" '
+          /<\/ossec_config>/ && inserted==0 {
+            while ((getline line < snippet) > 0) print line
+            close(snippet)
+            inserted=1
+          }
+          { print }
+        ' "$ACTIVE_OSSEC" | sudo tee "$ACTIVE_OSSEC.tmp" >/dev/null
+
+        sudo mv "$ACTIVE_OSSEC.tmp" "$ACTIVE_OSSEC"
+      else
+        echo "[!] Auto-enroll config not found. Skipping."
+      fi
+
+      # -----------------------------
+      # Validate + restart
+      # -----------------------------
+      echo "[+] Validating Wazuh configuration..."
+      validate_wazuh_config
+
+      if [ $? -eq 0 ]; then
+        echo "[+] Restarting wazuh-manager..."
+        sudo systemctl restart wazuh-manager
+      else
+        echo "[!] Config validation failed."
+        pause
+        continue
+      fi
+
+      echo
+      echo "[+] wazuh-manager status:"
+      sudo systemctl status wazuh-manager --no-pager
+
+      echo
+      echo "[+] wazuh-indexer status:"
+      sudo systemctl status wazuh-indexer --no-pager 2>/dev/null
+
+      echo
+      echo "[+] wazuh-dashboard status:"
+      sudo systemctl status wazuh-dashboard --no-pager 2>/dev/null
+
+      echo
+      echo "[+] Agent list:"
+      sudo /var/ossec/bin/agent_control -l
+
+      echo
+      echo "======================================"
+      echo "     Bootstrap Complete"
+      echo "======================================"
+
+      if [ -f "$LAB_INFO_FILE" ]; then
+        echo
+        echo "Dashboard Credentials:"
+        cat "$LAB_INFO_FILE"
+      fi
+
       pause
       ;;
+
+    # ======================================
+    # 2) FULL UNINSTALL
+    # ======================================
     2)
-      full_uninstall_cleanup
+      echo "======================================"
+      echo "   FULL WAZUH UNINSTALL / CLEANUP"
+      echo "======================================"
+      echo "[!] This will completely remove Wazuh."
+      echo "[!] All data, rules, and configs will be lost."
+      echo
+
+      read -p "Type YES to continue: " confirm
+
+      if [ "$confirm" != "YES" ]; then
+        echo "[+] Uninstall cancelled."
+        pause
+        continue
+      fi
+
+      echo "[+] Stopping services..."
+      sudo systemctl stop wazuh-manager 2>/dev/null
+      sudo systemctl stop wazuh-indexer 2>/dev/null
+      sudo systemctl stop wazuh-dashboard 2>/dev/null
+      sudo systemctl stop filebeat 2>/dev/null
+
+      echo "[+] Disabling services..."
+      sudo systemctl disable wazuh-manager 2>/dev/null
+      sudo systemctl disable wazuh-indexer 2>/dev/null
+      sudo systemctl disable wazuh-dashboard 2>/dev/null
+      sudo systemctl disable filebeat 2>/dev/null
+
+      echo "[+] Removing packages..."
+      sudo apt remove --purge -y wazuh-manager wazuh-indexer wazuh-dashboard filebeat 2>/dev/null
+      sudo apt autoremove -y
+
+      echo "[+] Removing directories..."
+      sudo rm -rf /var/ossec
+      sudo rm -rf /var/lib/wazuh*
+      sudo rm -rf /usr/share/wazuh*
+      sudo rm -rf /etc/wazuh*
+      sudo rm -rf /var/lib/opensearch
+      sudo rm -rf /usr/share/opensearch-dashboards
+      sudo rm -rf /etc/filebeat
+      sudo rm -rf /var/lib/filebeat
+      sudo rm -rf /var/log/filebeat
+
+      echo "[+] Cleaning logs..."
+      sudo rm -rf /var/log/wazuh*
+
+      echo "[+] Reloading systemd..."
+      sudo systemctl daemon-reload
+
+      echo "[+] Verifying filebeat removal..."
+      dpkg -l | grep filebeat || echo "[+] Filebeat package not found."
+
+      echo
+      echo "======================================"
+      echo "   Wazuh fully removed"
+      echo "======================================"
+
       pause
       ;;
+
+    # ======================================
+    # 3) EDIT RULES
+    # ======================================
     3)
-      edit_github_rules
+      nano "$GITHUB_RULES"
       pause
       ;;
+
+    # ======================================
+    # 4) GIT ADD / COMMIT / PUSH
+    # ======================================
     4)
-      git_add_commit_push
+      cd "$REPO_DIR" || exit
+
+      ensure_git_identity || {
+        pause
+        continue
+      }
+
+      git status
+
+      read -p "Commit message: " msg
+      if [ -z "$msg" ]; then
+        echo "[!] Commit message cannot be empty."
+        pause
+        continue
+      fi
+
+      echo "[+] Staging changes..."
+      git add .
+
+      echo "[+] Committing..."
+      git commit -m "$msg" || {
+        echo "[!] Nothing to commit."
+      }
+
+      echo "[+] Syncing with GitHub..."
+      safe_git_pull || {
+        echo "[!] Pull failed."
+        pause
+        continue
+      }
+
+      echo "[+] Pushing to GitHub..."
+      git push
+
       pause
       ;;
+
+    # ======================================
+    # 5) DEPLOY RULES
+    # ======================================
     5)
-      safe_git_pull || warn "Git pull failed. Continuing with local files."
-      deploy_base_lab_config
+      echo "======================================"
+      echo "   Deploying Latest Wazuh Rules"
+      echo "======================================"
+
+      cd "$REPO_DIR" || exit
+
+      if ! git diff --quiet || ! git diff --cached --quiet; then
+        echo "[!] You have uncommitted changes."
+        echo "[!] Please run Option 4 or discard changes."
+        pause
+        continue
+      fi
+
+      safe_git_pull || {
+        echo "[!] Git pull failed."
+        pause
+        continue
+      }
+
+      if [ ! -f "$GITHUB_RULES" ]; then
+        echo "[!] Rules file not found."
+        pause
+        continue
+      fi
+
+      backup_file "$ACTIVE_RULES" "local_rules.xml"
+      sudo cp "$GITHUB_RULES" "$ACTIVE_RULES"
+
+      echo "[+] Testing rules..."
+      validate_wazuh_config
+
+      if [ $? -eq 0 ]; then
+        echo "[+] Restarting wazuh-manager..."
+        sudo systemctl restart wazuh-manager
+      else
+        echo "[!] Rules failed validation."
+      fi
+
       pause
       ;;
+
+    # ======================================
+    # 6) TEST RULES
+    # ======================================
     6)
       validate_wazuh_config
       pause
       ;;
+
+    # ======================================
+    # 7) RESTART WAZUH
+    # ======================================
     7)
-      restart_wazuh_if_valid
+      echo "[+] Testing rules before restart..."
+      validate_wazuh_config
+
+      if [ $? -eq 0 ]; then
+        echo "[+] Restarting wazuh-manager..."
+        sudo systemctl restart wazuh-manager
+      else
+        echo "[!] Rules failed. Restart cancelled."
+      fi
+
       pause
       ;;
+
+    # ======================================
+    # 8) SERVICE STATUS
+    # ======================================
     8)
-      show_services_status
+      sudo systemctl status wazuh-manager --no-pager
       pause
       ;;
+
+    # ======================================
+    # 9) AGENT LIST
+    # ======================================
     9)
-      run_root /var/ossec/bin/agent_control -l 2>/dev/null || warn "agent_control not available. Is Wazuh installed?"
+      sudo /var/ossec/bin/agent_control -l
       pause
       ;;
+
+    # ======================================
+    # 10) LIVE LOGS
+    # ======================================
     10)
-      run_root tail -f /var/ossec/logs/ossec.log
+      sudo tail -f /var/ossec/logs/ossec.log
       ;;
+
+    # ======================================
+    # 11) DASHBOARD INFO
+    # ======================================
     11)
       show_dashboard_info
       pause
       ;;
+
+    # ======================================
+    # 12) EDIT ACTIVE OSSEC.CONF
+    # ======================================
     12)
       backup_file "$ACTIVE_OSSEC" "ossec.conf"
-      run_root nano "$ACTIVE_OSSEC"
+      sudo nano "$ACTIVE_OSSEC"
       pause
       ;;
+
+    # ======================================
+    # 13) MANUAL GIT PULL
+    # ======================================
     13)
-      safe_git_pull
+      cd "$REPO_DIR" || exit
+      safe_git_pull || echo "[!] Pull failed."
       pause
       ;;
-    14)
-      show_install_debug
-      pause
-      ;;
+
+    # ======================================
+    # 0) EXIT
+    # ======================================
     0)
       echo "Exiting."
       exit 0
       ;;
+
+    # ======================================
+    # INVALID
+    # ======================================
     *)
-      warn "Invalid option. Choose 0-14."
+      echo "Invalid option. Choose 0-13."
       pause
       ;;
   esac
