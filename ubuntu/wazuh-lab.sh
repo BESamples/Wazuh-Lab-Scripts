@@ -131,12 +131,12 @@ check_wazuh_ready_for_yara() {
     return 1
   fi
 
-  if [ ! -f "$ACTIVE_OSSEC" ]; then
-    echo "[!] ossec.conf not found: $ACTIVE_OSSEC"
-    return 1
+  if ! sudo test -f "$ACTIVE_OSSEC"; then
+  echo "[!] ossec.conf not found: $ACTIVE_OSSEC"
+  return 1
   fi
 
-  if [ ! -d "/var/ossec/etc/rules" ]; then
+  if ! sudo test -d "/var/ossec/etc/rules"; then
     echo "[!] Rules directory missing: /var/ossec/etc/rules"
     return 1
   fi
@@ -484,7 +484,7 @@ while true; do
       # -----------------------------
       # Hard stop if install did not create Wazuh
       # -----------------------------
-      if [ ! -d "/var/ossec" ]; then
+      if ! sudo test -d "/var/ossec"; then
         echo "[!] Wazuh install did not complete successfully."
         echo "[!] /var/ossec not found. Aborting bootstrap."
         pause
